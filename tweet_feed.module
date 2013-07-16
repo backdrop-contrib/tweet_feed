@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * implementation of hook_menu()
+ */
+function tweet_feed_menu() {
+  $items = array();
+  $items['admin/configure/tweet_feed'] = array(
+    'title' => 'Twitter Feed Settings',
+    'description' => 'The settings for the twitter feed module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tweet_feed_settings_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer tweet feed settings'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * implementation of hook_permission()
+ */
+function tweet_feed_permission()
+{
+  return array(
+    'administer tweet feed settings' => array(
+      'title' => t('Access Tweet Feed Settings'),
+      'description' => t('Allow the changing of OAuth tokens and search queries.'),
+    ),
+  );
+}
+
+/**
+ * tweet_feed_settings_form($form,&$form_state)
+ * our settings for for oauth tokens and search queries
+ */
+function tweet_feed_settings_form($form,&$form_state) {
+  $form = array();
+
+  $form_state['redirect'] = 'admin/configure/tweet_feed';
+
+  $form['consumer_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Consumer Key'),
+    '#max_length' => 255,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_consumer_key',NULL),
+  );
+
+  $form['consumer_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Consumer Secret'),
+    '#max_length' => 255,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_consumer_secret',NULL),
+ );
+
+  $form['oauth_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Oauth Token'),
+    '#max_length' => 255,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_oauth_token',NULL),
+  );
+
+  $form['oauth_token_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Oauth Token Secret'),
+    '#max_length' => 255,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_oauth_token_secret',NULL),
+  );
+
+  $form['search_query'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Twitter Search Query'),
+    '#max_length' => 255,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_search_query',NULL),
+  );
+
+  $form['pull_count'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of Items to Pull'),
+    '#max_length' => 2,
+    '#required' => TRUE,
+    '#default_value' => variable_get('twitter_pull_count',50),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update Settings'),
+  );
+
+  return $form;
+}
+
+/**
+ * tweet_feed_settings_form_submit($form, &$form_state)
+ * process the values associated with our settings form
+ */
+function tweet_feed_settings_form_submit($form,&$form_state) {
+  $form_state['rebuild'] = TRUE;
+  variable_set('twitter_pull_count',$form_state['values']['pull_count']);
+  variable_set('twitter_search_query',$form_state['values']['search_query']);
+  variable_set('twitter_oauth_token_secret',$form_state['values']['oauth_token_secret']);
+  variable_set('twitter_oauth_token',$form_state['values']['oauth_token']);
+  variable_set('twitter_consumer_secret',$form_state['values']['consumer_secret']);
+  variable_set('twitter_consumer_key',$form_state['values']['consumer_key']);
+  drupal_set_message('Twitter Feed settings successfully updated.','status');
+}
+
+/**
+ * implementation of hook_cron()
+ */
+function tweet_feed_cron() {
+  /* load in our oauth class */
+  module_load_include('inc','tweet_feed','inc/twitter-oauth');
+
+  /* Build TwitterOAuth object with client credentials. */
+  $con = new TwitterOAuth(
+    variable_get('twitter_consumer_key',NULL),
+    variable_get('twitter_consumer_secret',NULL),
+    variable_get('twitter_oauth_token',NULL),
+    variable_get('twitter_oauth_token_secret',NULL)
+  );
+
+  /* get the tweets */
+  $tdata = json_decode(
+    $con->oAuthRequest('https://api.twitter.com/1.1/search/tweets.json',
+    'GET',array('q' => variable_get('twitter_search_query',NULL),'count' => variable_get('twitter_pull_count',10)))
+  );
+
+  /* clear out the old to make way for the new */
+  db_query('TRUNCATE TABLE {tweet_feed}');
+
+  foreach($tdata->statuses as $key=>$tweet) {
+    $creation_timestamp = strtotime($tweet->created_at);
+    $data = array(
+      'tweet' => tweet_feed_format_output($tweet->text),
+      'created_at' => $creation_timestamp,
+      'user_id' => $tweet->user->id,
+      'profile_image_url' => $tweet->user->profile_image_url,
+      'screen_name' => $tweet->user->screen_name,
+    );
+    drupal_write_record('tweet_feed',$data);
+  }
+  drupal_set_message('Tweets imported','status');
+}
+
+/**
+ * tweet_feed_format_output($tweet)
+ * makes links, hash tags, and usernames clickable.
+ */
+function tweet_feed_format_output($tweet) {
+  /* look for links and make them clickable */
+  $tweet = preg_replace('/(((f|ht){1}tp:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
+    '<a href="\\1">\\1</a>', $tweet);
+  $tweet = preg_replace('/([[:space:]()[{}])(www.[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
+    '\\1<a href="http:\/\/\\2">\\2</a>', $tweet);
+  $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
+    '<a href="mailto:\\1">\\1</a>', $tweet);
+
+  /* look for twitter handles and make them clickable */
+  /* modified so that slashes in the twitter handle are counted */
+  $pattern  = '/\@([a-zA-Z\_]+)/';
+  $replace  = '<a href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+  $tweet   = preg_replace($pattern,$replace,$tweet);
+  return $tweet;
+}
+
+/**
+ * implementation of hook_views_api()
+ */
+function tweet_feed_views_api() {
+  return array(
+    'api' => 3
+  );
+}

@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * implementation of hook_schema()
+ */
+function tweet_feed_schema() {
+  $schema['tweet_feed'] = array(
+    'description' => 'A cache for twitter feeds.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The unique key.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'tweet' => array(
+        'description' => 'The text of the tweet.',
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => TRUE),
+      'created_at' => array(
+        'description' => 'The date the tweet was posted (timestamp)',
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE),
+      'user_id' => array(
+        'description' => 'The user ID of the poster',
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE),
+      'profile_image_url' => array(
+        'description' => 'The URL of the image for the poster of this tweet',
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => TRUE),
+      'screen_name' => array(
+        'description' => 'The screen name of the person tweeting',
+        'type' => 'varchar',
+        'length' => 24,
+        'not null' => TRUE),
+    ),
+    'primary key' => array('tid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * implementation of hook_uninstall()
+ */
+function tweet_feed_uninstall() {
+  variable_del('twitter_pull_count');
+  variable_set('twitter_search_query');
+  variable_set('twitter_oauth_token_secret');
+  variable_set('twitter_oauth_token');
+  variable_set('twitter_consumer_secret');
+  variable_set('twitter_consumer_key');
+}
