@@ -1,5 +1,4 @@
 name = Tweet Feed
-<<<<<<< HEAD
 description = Views implementation of Twitter Feeds
 package = Other
 core = 7.x
@@ -9,5 +8,3 @@ dependencies[] = oauth_common
 dependencies[] = ctools
 
 configure = admin/configure/tweet_feed
-=======
->>>>>>> 3719fa9... Initial Commit.
