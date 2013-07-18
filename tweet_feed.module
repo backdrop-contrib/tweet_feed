@@ -136,8 +136,9 @@ function tweet_feed_cron() {
 
   foreach($tdata->statuses as $key=>$tweet) {
     $creation_timestamp = strtotime($tweet->created_at);
+    $tweet_html = tweet_feed_format_output($tweet->text);
     $data = array(
-      'tweet' => tweet_feed_format_output($tweet->text),
+      'tweet' => $tweet_html,
       'created_at' => $creation_timestamp,
       'user_id' => $tweet->user->id,
       'profile_image_url' => $tweet->user->profile_image_url,
@@ -160,12 +161,6 @@ function tweet_feed_format_output($tweet) {
     '\\1<a href="http:\/\/\\2">\\2</a>', $tweet);
   $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
     '<a href="mailto:\\1">\\1</a>', $tweet);
-
-  /* look for twitter handles and make them clickable */
-  /* modified so that slashes in the twitter handle are counted */
-  $pattern  = '/\@([a-zA-Z\_]+)/';
-  $replace  = '<a href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
-  $tweet   = preg_replace($pattern,$replace,$tweet);
   return $tweet;
 }
 

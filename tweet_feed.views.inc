@@ -87,7 +87,17 @@ function tweet_feed_views_data() {
  */
 class views_handler_tweet_field extends views_handler_field {
   function render($values) {
-    $value = $this->get_value($values);
-    return $value;
+    $tweet = $this->get_value($values);
+
+    /* look for twitter handles and make them clickable */
+    /* modified so that slashes in the twitter handle are counted */
+    $pattern  = '/\@([a-zA-Z\_]+)/';
+    $replace  = '<a href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+    $tweet   = preg_replace($pattern,$replace,$tweet);
+
+    /* look for twitter hash tags and make them clickable */
+    /* modified so that slashes in the twitter handle are counted */
+    $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1#<a href="http://search.twitter.com/search?q=%23\2">\2</a>', $tweet);
+    return $tweet;
   }
 }
