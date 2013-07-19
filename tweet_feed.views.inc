@@ -97,7 +97,7 @@ class views_handler_tweet_field extends views_handler_field {
 
     /* look for twitter hash tags and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
-    $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1<a href="http://search.twitter.com/search?q=%23\2">#\2</a>', $tweet);
+    $tweet = preg_replace('/(^|\s)#(\w*[a-zA-Z_]+\w*)/', '\1<a href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
     return $tweet;
   }
 }
