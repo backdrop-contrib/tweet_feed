@@ -91,7 +91,7 @@ class views_handler_tweet_field extends views_handler_field {
 
     /* look for twitter handles and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
-    $pattern  = '/\@([a-z0-9git A-Z\_]+)/';
+    $pattern  = '/\@([a-z0-9A-Z\_]+)/';
     $replace  = '<a href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
     $tweet   = preg_replace($pattern,$replace,$tweet);
 
