@@ -88,15 +88,18 @@ class views_handler_tweet_field extends views_handler_field {
   function render($values) {
     $tweet = $this->get_value($values);
 
+    /* based on our preference, assign all links to new windows or to the same window */
+    $target = (variable_get('twitter_new_window',0) == 1) ? '_blank' : '_self';
+
     /* look for twitter handles and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
     $pattern  = '/\@([a-z0-9A-Z\_]+)/';
-    $replace  = '<a href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+    $replace  = '<a target="'.$target.'" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
     $tweet   = preg_replace($pattern,$replace,$tweet);
 
     /* look for twitter hash tags and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
-    $tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+    $tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a target="'.$target.'" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
     return htmlspecialchars_decode($tweet);
   }
 }

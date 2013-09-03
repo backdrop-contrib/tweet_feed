@@ -87,6 +87,12 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_pull_count',50),
   );
 
+  $form['new_window'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Open Links In New Window'),
+    '#default_value' => variable_get('twitter_new_window',0),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Update Settings'),
@@ -107,7 +113,8 @@ function tweet_feed_settings_form_submit($form,&$form_state) {
   variable_set('twitter_oauth_token',$form_state['values']['oauth_token']);
   variable_set('twitter_consumer_secret',$form_state['values']['consumer_secret']);
   variable_set('twitter_consumer_key',$form_state['values']['consumer_key']);
-  drupal_set_message('Twitter Feed settings successfully updated.','status');
+  variable_set('twitter_new_window',$form_state['values']['new_window']);
+  drupal_set_message('Tweet Feed settings successfully updated.','status');
 }
 
 /**
@@ -154,13 +161,16 @@ function tweet_feed_cron() {
  * makes links, hash tags, and usernames clickable.
  */
 function tweet_feed_format_output($tweet) {
+  /* based on our preference, assign all links to new windows or to the same window */
+  $target = (variable_get('twitter_new_window',0) == 1) ? '_blank' : '_self';
+
   /* look for links and make them clickable */
   $tweet = preg_replace('/(((f|ht){1}tp:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '<a href="\\1">\\1</a>', $tweet);
+    '<a target="'.$target.'" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/(((f|ht){1}tps:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '<a href="\\1">\\1</a>', $tweet);
+    '<a target="'.$target.'" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/([[:space:]()[{}])(www.[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '\\1<a href="http:\/\/\\2">\\2</a>', $tweet);
+    '\\1<a target="'.$target.'" href="http:\/\/\\2">\\2</a>', $tweet);
   $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
     '<a href="mailto:\\1">\\1</a>', $tweet);
   return $tweet;

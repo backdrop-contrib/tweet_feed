@@ -54,4 +54,5 @@ function tweet_feed_uninstall() {
   variable_set('twitter_oauth_token');
   variable_set('twitter_consumer_secret');
   variable_set('twitter_consumer_key');
+  variable_set('twitter_new_window');
 }
