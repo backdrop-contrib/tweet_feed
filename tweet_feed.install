@@ -24,8 +24,8 @@ function tweet_feed_schema() {
         'not null' => TRUE),
       'user_id' => array(
         'description' => 'The user ID of the poster',
-        'type' => 'int',
-        'length' => 11,
+        'type' => 'varchar',
+        'length' => 24,
         'not null' => TRUE),
       'profile_image_url' => array(
         'description' => 'The URL of the image for the poster of this tweet',
@@ -49,10 +49,26 @@ function tweet_feed_schema() {
  */
 function tweet_feed_uninstall() {
   variable_del('twitter_pull_count');
-  variable_set('twitter_search_query');
-  variable_set('twitter_oauth_token_secret');
-  variable_set('twitter_oauth_token');
-  variable_set('twitter_consumer_secret');
-  variable_set('twitter_consumer_key');
-  variable_set('twitter_new_window');
+  variable_del('twitter_search_query');
+  variable_del('twitter_oauth_token_secret');
+  variable_del('twitter_oauth_token');
+  variable_del('twitter_consumer_secret');
+  variable_del('twitter_consumer_key');
+  variable_del('twitter_new_window');
+}
+
+/**
+ * Implementation of hook_update().
+ *
+ * Alter the user_id field to be a varchar for handling larger user id numbers
+ */
+function tweet_feed_update_7104() {
+  db_change_field('tweet_feed','user_id','user_id',
+    array(
+      'description' => 'The user ID of the poster',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+    )
+  );
 }

@@ -39,7 +39,7 @@ function tweet_feed_settings_form($form,&$form_state) {
 
   $form_state['redirect'] = 'admin/configure/tweet_feed';
 
-  $form['consumer_key'] = array(
+  $form['twitter_consumer_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Consumer Key'),
     '#max_length' => 255,
@@ -47,7 +47,7 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_consumer_key',NULL),
   );
 
-  $form['consumer_secret'] = array(
+  $form['twitter_consumer_secret'] = array(
     '#type' => 'textfield',
     '#title' => t('Consumer Secret'),
     '#max_length' => 255,
@@ -55,7 +55,7 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_consumer_secret',NULL),
  );
 
-  $form['oauth_token'] = array(
+  $form['twitter_oauth_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Oauth Token'),
     '#max_length' => 255,
@@ -63,7 +63,7 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_oauth_token',NULL),
   );
 
-  $form['oauth_token_secret'] = array(
+  $form['twitter_oauth_token_secret'] = array(
     '#type' => 'textfield',
     '#title' => t('Oauth Token Secret'),
     '#max_length' => 255,
@@ -71,7 +71,7 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_oauth_token_secret',NULL),
   );
 
-  $form['search_query'] = array(
+  $form['twitter_search_query'] = array(
     '#type' => 'textfield',
     '#title' => t('Twitter Search Query'),
     '#max_length' => 255,
@@ -79,7 +79,7 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_search_query',NULL),
   );
 
-  $form['pull_count'] = array(
+  $form['twitter_pull_count'] = array(
     '#type' => 'textfield',
     '#title' => t('Number of Items to Pull'),
     '#max_length' => 2,
@@ -87,34 +87,13 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#default_value' => variable_get('twitter_pull_count',50),
   );
 
-  $form['new_window'] = array(
+  $form['twitter_new_window'] = array(
     '#type' => 'checkbox',
     '#title' => t('Open Links In New Window'),
     '#default_value' => variable_get('twitter_new_window',0),
   );
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Update Settings'),
-  );
-
-  return $form;
-}
-
-/**
- * tweet_feed_settings_form_submit($form, &$form_state)
- * process the values associated with our settings form
- */
-function tweet_feed_settings_form_submit($form,&$form_state) {
-  $form_state['rebuild'] = TRUE;
-  variable_set('twitter_pull_count',$form_state['values']['pull_count']);
-  variable_set('twitter_search_query',$form_state['values']['search_query']);
-  variable_set('twitter_oauth_token_secret',$form_state['values']['oauth_token_secret']);
-  variable_set('twitter_oauth_token',$form_state['values']['oauth_token']);
-  variable_set('twitter_consumer_secret',$form_state['values']['consumer_secret']);
-  variable_set('twitter_consumer_key',$form_state['values']['consumer_key']);
-  variable_set('twitter_new_window',$form_state['values']['new_window']);
-  drupal_set_message('Tweet Feed settings successfully updated.','status');
+  return system_settings_form($form);
 }
 
 /**
@@ -141,19 +120,23 @@ function tweet_feed_cron() {
   /* clear out the old to make way for the new */
   db_query('TRUNCATE TABLE {tweet_feed}');
 
-  foreach($tdata->statuses as $key=>$tweet) {
-    $creation_timestamp = strtotime($tweet->created_at);
-    $tweet_html = tweet_feed_format_output($tweet->text);
-    $data = array(
-      'tweet' => $tweet_html,
-      'created_at' => $creation_timestamp,
-      'user_id' => $tweet->user->id,
-      'profile_image_url' => $tweet->user->profile_image_url,
-      'screen_name' => $tweet->user->screen_name,
-    );
-    drupal_write_record('tweet_feed',$data);
+  if (!empty($tdata)) {
+    foreach($tdata->statuses as $key=>$tweet) {
+      $creation_timestamp = strtotime($tweet->created_at);
+      $tweet_html = tweet_feed_format_output($tweet->text);
+      $data = array(
+        'tweet' => $tweet_html,
+        'created_at' => $creation_timestamp,
+        'user_id' => $tweet->user->id,
+        'profile_image_url' => $tweet->user->profile_image_url,
+        'screen_name' => $tweet->user->screen_name,
+      );
+      drupal_write_record('tweet_feed',$data);
+    }
+    drupal_set_message('Tweets imported','status');
+  } else {
+    drupal_set_message('Tweets failed to import.','error');
   }
-  drupal_set_message('Tweets imported','status');
 }
 
 /**
