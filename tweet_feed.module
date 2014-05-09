@@ -5,14 +5,14 @@
  */
 function tweet_feed_menu() {
   $items = array();
-  $items['admin/configure/tweet_feed'] = array(
-    'title' => 'Twitter Feed Settings',
-    'description' => 'The settings for the twitter feed module',
+  $items['admin/config/services/tweet_feed'] = array(
+    'title' => 'Tweet Feed',
+    'description' => 'The settings for the Tweet Feed module',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tweet_feed_settings_form'),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL_ITEM,
   );
   return $items;
 }
