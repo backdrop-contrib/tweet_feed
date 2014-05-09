@@ -58,8 +58,6 @@ function tweet_feed_uninstall() {
 }
 
 /**
- * Implementation of hook_update().
- *
  * Alter the user_id field to be a varchar for handling larger user id numbers
  */
 function tweet_feed_update_7104() {
@@ -71,4 +69,25 @@ function tweet_feed_update_7104() {
       'not null' => TRUE,
     )
   );
+}
+
+/**
+ * Convert system variable settings from twitter_ to tweet_feed_ 
+ */
+function tweet_feed_update_7105() {
+  variable_set('tweet_feed_consumer_key',variable_get('twitter_consumer_key',NULL));
+  variable_set('tweet_feed_consumer_secret',variable_get('twitter_consumer_secret',NULL));
+  variable_set('tweet_feed_oauth_token',variable_get('twitter_oauth_token',NULL));
+  variable_set('tweet_feed_oauth_token_secret',variable_get('twitter_oauth_token_secret',NULL));
+  variable_set('tweet_feed_search_query',variable_get('twitter_search_query',NULL));
+  variable_set('tweet_feed_pull_count',variable_get('twitter_pull_count',50));
+  variable_set('tweet_feed_new_window',variable_get('twitter_new_window',0));
+
+  variable_del('twitter_pull_count');
+  variable_del('twitter_search_query');
+  variable_del('twitter_oauth_token_secret');
+  variable_del('twitter_oauth_token');
+  variable_del('twitter_consumer_secret');
+  variable_del('twitter_consumer_key');
+  variable_del('twitter_new_window');
 }

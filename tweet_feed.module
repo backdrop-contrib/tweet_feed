@@ -39,58 +39,58 @@ function tweet_feed_settings_form($form,&$form_state) {
 
   $form_state['redirect'] = 'admin/configure/tweet_feed';
 
-  $form['twitter_consumer_key'] = array(
+  $form['tweet_feed_consumer_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Consumer Key'),
     '#max_length' => 255,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_consumer_key',NULL),
+    '#default_value' => variable_get('tweet_feed_consumer_key',NULL),
   );
 
-  $form['twitter_consumer_secret'] = array(
+  $form['tweet_feed_consumer_secret'] = array(
     '#type' => 'textfield',
     '#title' => t('Consumer Secret'),
     '#max_length' => 255,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_consumer_secret',NULL),
+    '#default_value' => variable_get('tweet_feed_consumer_secret',NULL),
  );
 
-  $form['twitter_oauth_token'] = array(
+  $form['tweet_feed_oauth_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Oauth Token'),
     '#max_length' => 255,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_oauth_token',NULL),
+    '#default_value' => variable_get('tweet_feed_oauth_token',NULL),
   );
 
-  $form['twitter_oauth_token_secret'] = array(
+  $form['tweet_feed_oauth_token_secret'] = array(
     '#type' => 'textfield',
     '#title' => t('Oauth Token Secret'),
     '#max_length' => 255,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_oauth_token_secret',NULL),
+    '#default_value' => variable_get('tweet_feed_oauth_token_secret',NULL),
   );
 
-  $form['twitter_search_query'] = array(
+  $form['tweet_feed_search_query'] = array(
     '#type' => 'textfield',
     '#title' => t('Twitter Search Query'),
     '#max_length' => 255,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_search_query',NULL),
+    '#default_value' => variable_get('tweet_feed_search_query',NULL),
   );
 
-  $form['twitter_pull_count'] = array(
+  $form['tweet_feed_pull_count'] = array(
     '#type' => 'textfield',
     '#title' => t('Number of Items to Pull'),
     '#max_length' => 2,
     '#required' => TRUE,
-    '#default_value' => variable_get('twitter_pull_count',50),
+    '#default_value' => variable_get('tweet_feed_pull_count',50),
   );
 
-  $form['twitter_new_window'] = array(
+  $form['tweet_feed_new_window'] = array(
     '#type' => 'checkbox',
     '#title' => t('Open Links In New Window'),
-    '#default_value' => variable_get('twitter_new_window',0),
+    '#default_value' => variable_get('tweet_feed_new_window',0),
   );
 
   return system_settings_form($form);
