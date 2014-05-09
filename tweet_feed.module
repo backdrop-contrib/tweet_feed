@@ -125,7 +125,7 @@ function tweet_feed_cron() {
       $creation_timestamp = strtotime($tweet->created_at);
       $tweet_html = tweet_feed_format_output($tweet->text);
       $data = array(
-        'tweet' => $tweet_html,
+        'tweet' => utf8_encode($tweet_html),
         'created_at' => $creation_timestamp,
         'user_id' => $tweet->user->id,
         'profile_image_url' => $tweet->user->profile_image_url,
