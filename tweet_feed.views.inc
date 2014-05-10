@@ -89,7 +89,7 @@ class views_handler_tweet_field extends views_handler_field {
     $tweet = $this->get_value($values);
 
     /* based on our preference, assign all links to new windows or to the same window */
-    $target = (variable_get('twitter_new_window',0) == 1) ? '_blank' : '_self';
+    $target = (variable_get('tweet_feed_new_window',0) == 1) ? '_blank' : '_self';
 
     /* look for twitter handles and make them clickable */
     /* modified so that slashes in the twitter handle are counted */

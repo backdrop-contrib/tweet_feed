@@ -105,37 +105,43 @@ function tweet_feed_cron() {
 
   /* Build TwitterOAuth object with client credentials. */
   $con = new TwitterOAuth(
-    variable_get('twitter_consumer_key',NULL),
-    variable_get('twitter_consumer_secret',NULL),
-    variable_get('twitter_oauth_token',NULL),
-    variable_get('twitter_oauth_token_secret',NULL)
+    variable_get('tweet_feed_consumer_key',NULL),
+    variable_get('tweet_feed_consumer_secret',NULL),
+    variable_get('tweet_feed_oauth_token',NULL),
+    variable_get('tweet_feed_oauth_token_secret',NULL)
   );
 
   /* get the tweets */
   $tdata = json_decode(
     $con->oAuthRequest('https://api.twitter.com/1.1/search/tweets.json',
-    'GET',array('q' => variable_get('twitter_search_query',NULL),'count' => variable_get('twitter_pull_count',10)))
+    'GET',array('q' => variable_get('tweet_feed_search_query',NULL),'count' => variable_get('tweet_feed_pull_count',10)))
   );
 
   /* clear out the old to make way for the new */
   db_query('TRUNCATE TABLE {tweet_feed}');
 
-  if (!empty($tdata)) {
-    foreach($tdata->statuses as $key=>$tweet) {
-      $creation_timestamp = strtotime($tweet->created_at);
-      $tweet_html = tweet_feed_format_output($tweet->text);
-      $data = array(
-        'tweet' => utf8_encode($tweet_html),
-        'created_at' => $creation_timestamp,
-        'user_id' => $tweet->user->id,
-        'profile_image_url' => $tweet->user->profile_image_url,
-        'screen_name' => $tweet->user->screen_name,
-      );
-      drupal_write_record('tweet_feed',$data);
+  if (!empty($tdata) && is_object($tdata)) {
+  
+    if (!empty($tdata->errors)) {
+      foreach($tdata->errors as $error) {
+        drupal_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error');
+      }
     }
-    drupal_set_message('Tweets imported','status');
-  } else {
-    drupal_set_message('Tweets failed to import.','error');
+    else {
+      foreach($tdata->statuses as $key=>$tweet) {
+        $creation_timestamp = strtotime($tweet->created_at);
+        $tweet_html = tweet_feed_format_output($tweet->text);
+        $data = array(
+          'tweet' => utf8_encode($tweet_html),
+          'created_at' => $creation_timestamp,
+          'user_id' => $tweet->user->id,
+          'profile_image_url' => $tweet->user->profile_image_url,
+          'screen_name' => $tweet->user->screen_name,
+        );
+        drupal_write_record('tweet_feed', $data);
+      }
+      drupal_set_message('Tweets imported', 'status');
+    }
   }
 }
 
@@ -145,7 +151,7 @@ function tweet_feed_cron() {
  */
 function tweet_feed_format_output($tweet) {
   /* based on our preference, assign all links to new windows or to the same window */
-  $target = (variable_get('twitter_new_window',0) == 1) ? '_blank' : '_self';
+  $target = (variable_get('tweet_feed_new_window',0) == 1) ? '_blank' : '_self';
 
   /* look for links and make them clickable */
   $tweet = preg_replace('/(((f|ht){1}tp:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
