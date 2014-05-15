@@ -48,13 +48,16 @@ function tweet_feed_schema() {
  * implementation of hook_uninstall()
  */
 function tweet_feed_uninstall() {
-  variable_del('twitter_pull_count');
-  variable_del('twitter_search_query');
-  variable_del('twitter_oauth_token_secret');
-  variable_del('twitter_oauth_token');
-  variable_del('twitter_consumer_secret');
-  variable_del('twitter_consumer_key');
-  variable_del('twitter_new_window');
+  variable_del('tweet_feed_consumer_key');
+  variable_del('tweet_feed_consumer_key');
+  variable_del('tweet_feed_consumer_secret');
+  variable_del('tweet_feed_oauth_token');
+  variable_del('tweet_feed_oauth_token_secret');
+  variable_del('tweet_feed_query_type');
+  variable_del('tweet_feed_search_query');
+  variable_del('tweet_feed_user_id');
+  variable_del('tweet_feed_pull_count');
+  variable_del('tweet_feed_new_window');
 }
 
 /**
