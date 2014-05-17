@@ -164,40 +164,41 @@ function tweet_feed_cron() {
   /* clear out the old to make way for the new */
   db_query('TRUNCATE TABLE {tweet_feed}');
 
-  if (!empty($tdata)) {
-  
+  if (!empty($tdata)) {  
     if (!empty($tdata->errors)) {
       foreach($tdata->errors as $error) {
         drupal_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error');
       }
     }
     else {
-    
       if (variable_get('tweet_feed_query_type','search') == 'timeline') {
         foreach($tdata as $tweet) {
           $creation_timestamp = strtotime($tweet->created_at);
           $tweet_html = tweet_feed_format_output($tweet->text);
+          $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
           $data = array(
             'tweet' => utf8_encode($tweet_html),
             'created_at' => $creation_timestamp,
             'user_id' => $tweet->user->id,
             'profile_image_url' => $tweet->user->profile_image_url,
             'screen_name' => $tweet->user->screen_name,
+            'hashtags' => $hashtags,
           );
           drupal_write_record('tweet_feed', $data);
         }
-        
       }
       else {
         foreach($tdata->statuses as $key=>$tweet) {
           $creation_timestamp = strtotime($tweet->created_at);
           $tweet_html = tweet_feed_format_output($tweet->text);
+          $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
           $data = array(
             'tweet' => utf8_encode($tweet_html),
             'created_at' => $creation_timestamp,
             'user_id' => $tweet->user->id,
             'profile_image_url' => $tweet->user->profile_image_url,
             'screen_name' => $tweet->user->screen_name,
+            'hashtags' => $hashtags,
           );
           drupal_write_record('tweet_feed', $data);
         }
@@ -206,6 +207,14 @@ function tweet_feed_cron() {
       drupal_set_message('Tweets imported', 'status');
     }
   }
+}
+
+function tweet_feed_get_hashtags($hashtag_entities) {
+  $hashtags = array();
+  foreach($hashtag_entities as $entity) {
+    $hashtags[] = $entity->text;
+  }
+  return join(',', $hashtags);
 }
 
 /**

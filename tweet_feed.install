@@ -37,6 +37,11 @@ function tweet_feed_schema() {
         'type' => 'varchar',
         'length' => 24,
         'not null' => TRUE),
+      'hashtags' => array(
+        'description' => 'A comma separated list of hashtags without the hash.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE),
     ),
     'primary key' => array('tid'),
   );
@@ -93,4 +98,12 @@ function tweet_feed_update_7105() {
   variable_del('twitter_consumer_secret');
   variable_del('twitter_consumer_key');
   variable_del('twitter_new_window');
+}
+
+/**
+ * Add a field to hold our comma delimited list of hashtags.
+ */
+function tweet_feed_update_7108() {
+  $schema = tweet_feed_schema();
+  db_add_field('tweet_feed','hashtags',$schema['tweet_feed']['fields']['hashtags']);
 }

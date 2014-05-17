@@ -7,4 +7,4 @@ dependencies[] = views
 dependencies[] = oauth_common
 dependencies[] = ctools
 
-configure = admin/configure/tweet_feed
+configure = admin/config/services/tweet_feed
