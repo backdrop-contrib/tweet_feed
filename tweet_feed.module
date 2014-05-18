@@ -134,17 +134,22 @@ function tweet_feed_settings_form($form,&$form_state) {
  * implementation of hook_cron()
  */
 function tweet_feed_cron() {
+  
+  $tweet_feed_consumer_key = variable_get('tweet_feed_consumer_key', NULL);
+  $tweet_feed_consumer_secret = variable_get('tweet_feed_consumer_secret', NULL);
+  $tweet_feed_oauth_token = variable_get('tweet_feed_oauth_token', NULL);
+  $tweet_feed_oauth_token_secret = variable_get('tweet_feed_oauth_token_secret', NULL);
+  
+  /* check to see if our api tokens are set up, if not then skip cron */
+  if (empty($tweet_feed_consumer_key) || empty($tweet_feed_consumer_secret) || empty($tweet_feed_oauth_token) || empty($tweet_feed_oauth_token_secret)) { 
+    return FALSE;
+  }
+
   /* load in our oauth class */
   module_load_include('inc','tweet_feed','inc/twitter-oauth');
 
   /* Build TwitterOAuth object with client credentials. */
-  $con = new TwitterOAuth(
-    variable_get('tweet_feed_consumer_key',NULL),
-    variable_get('tweet_feed_consumer_secret',NULL),
-    variable_get('tweet_feed_oauth_token',NULL),
-    variable_get('tweet_feed_oauth_token_secret',NULL)
-  );
-
+  $con = new TwitterOAuth($tweet_feed_consumer_key, $tweet_feed_consumer_secret, $tweet_feed_oauth_token, $tweet_feed_oauth_token_secret);
 
   if (variable_get('tweet_feed_query_type','search') == 'timeline') {
     /* get the tweets */
