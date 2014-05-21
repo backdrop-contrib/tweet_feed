@@ -112,13 +112,15 @@ class views_handler_tweet_field extends views_handler_field {
     /* modified so that slashes in the twitter handle are counted */
     $tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a target="'.$target.'" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
     
-    $tweet = utf8_encode($tweet);
+    $tweet = utf8_decode($tweet);
     return htmlspecialchars_decode($tweet);
   }
-  
 }
 
-
+/**
+ * override the string handler for handling hash tags as we need to change the query 
+ * so we can look through the string with a LIKE instead of an =
+ */
 class views_handler_argument_hashtag extends views_handler_argument_string {
 
   function query($group_by = FALSE) {
