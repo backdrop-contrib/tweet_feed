@@ -14,9 +14,9 @@ function tweet_feed_views_data() {
           'weight' => -10,
         ),
       ),
-      'tid' => array(
-        'title' => t('Tid'),
-        'help' => t('The Drupal ID of the tweet'),
+      'tweet_id' => array(
+        'title' => t('Tweet ID'),
+        'help' => t('The Twitter Tweet ID of the tweet'),
         'field' => array(
           'handler' => 'views_handler_field_numeric',
           'click sortable' => TRUE,
