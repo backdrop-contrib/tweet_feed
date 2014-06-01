@@ -7,11 +7,11 @@ function tweet_feed_schema() {
   $schema['tweet_feed'] = array(
     'description' => 'A cache for twitter feeds.',
     'fields' => array(
-      'tid' => array(
-        'description' => 'The unique key.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE),
+      'tweet_id' => array(
+        'description' => 'The twitter tweet id for this tweet.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => FALSE),
       'tweet' => array(
         'description' => 'The text of the tweet.',
         'type' => 'text',
@@ -43,7 +43,7 @@ function tweet_feed_schema() {
         'length' => 255,
         'not null' => FALSE),
     ),
-    'primary key' => array('tid'),
+    'primary key' => array('tweet_id'),
   );
 
   return $schema;
@@ -83,13 +83,13 @@ function tweet_feed_update_7104() {
  * Convert system variable settings from twitter_ to tweet_feed_ 
  */
 function tweet_feed_update_7105() {
-  variable_set('tweet_feed_consumer_key',variable_get('twitter_consumer_key',NULL));
-  variable_set('tweet_feed_consumer_secret',variable_get('twitter_consumer_secret',NULL));
-  variable_set('tweet_feed_oauth_token',variable_get('twitter_oauth_token',NULL));
-  variable_set('tweet_feed_oauth_token_secret',variable_get('twitter_oauth_token_secret',NULL));
-  variable_set('tweet_feed_search_query',variable_get('twitter_search_query',NULL));
-  variable_set('tweet_feed_pull_count',variable_get('twitter_pull_count',50));
-  variable_set('tweet_feed_new_window',variable_get('twitter_new_window',0));
+  variable_set('tweet_feed_consumer_key', variable_get('twitter_consumer_key', NULL));
+  variable_set('tweet_feed_consumer_secret', variable_get('twitter_consumer_secret', NULL));
+  variable_set('tweet_feed_oauth_token', variable_get('twitter_oauth_token', NULL));
+  variable_set('tweet_feed_oauth_token_secret', variable_get('twitter_oauth_token_secret', NULL));
+  variable_set('tweet_feed_search_query', variable_get('twitter_search_query', NULL));
+  variable_set('tweet_feed_pull_count', variable_get('twitter_pull_count', 50));
+  variable_set('tweet_feed_new_window', variable_get('twitter_new_window', 0));
 
   variable_del('twitter_pull_count');
   variable_del('twitter_search_query');
@@ -105,5 +105,17 @@ function tweet_feed_update_7105() {
  */
 function tweet_feed_update_7108() {
   $schema = tweet_feed_schema();
-  db_add_field('tweet_feed','hashtags',$schema['tweet_feed']['fields']['hashtags']);
+  db_add_field('tweet_feed', 'hashtags', $schema['tweet_feed']['fields']['hashtags']);
+}
+
+/**
+ * Add a field to hold our tweet id's and remove the meaningless tid.
+ */
+function tweet_feed_update_7109() {
+  $schema = tweet_feed_schema();
+  db_add_index('tweet_feed', 'tid', array('tid'));
+  db_drop_primary_key('tweet_feed');
+  db_drop_field('tweet_feed', 'tid');
+  db_add_field('tweet_feed','tweet_id', $schema['tweet_feed']['fields']['tweet_id']);
+  db_add_primary_key('tweet_feed', array('tweet_id'));
 }

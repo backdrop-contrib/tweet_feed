@@ -81,14 +81,26 @@ function tweet_feed_views_data() {
         'title' => t('Hashtags'),
         'help' => t('The Hashtags associated with a tweet.'),
         'field' => array(
-          'handler' => 'views_handler_field',
+          'handler' => 'views_handler_hashtag_field',
         ),
         'argument' => array(
           'handler' => 'views_handler_argument_hashtag',
         ),
+        'filter' => array(
+          'handler' => 'views_handler_filter_hashtag_string',
+        ),
       ),
+
     ),
   );
+}
+
+
+class views_handler_filter_hashtag_string extends views_handler_filter_string {
+
+  function op_contains($field) {
+    $this->query->add_where($this->options['group'], $field, array($this->value), 'IN');
+  }
 }
 
 /**
@@ -123,62 +135,54 @@ class views_handler_tweet_field extends views_handler_field {
  */
 class views_handler_argument_hashtag extends views_handler_argument_string {
 
-  function query($group_by = FALSE) {
-    $argument = '%' . $this->argument . '%';
-    if (!empty($this->options['transform_dash'])) {
-      $argument = strtr($argument, '-', ' ');
-    }
+	function option_definition() {
+		$options = array();
+		$options['match_exact'] = array(
+			'default' => FALSE,
+			'bool' => TRUE,
+		);
+		return $options;
+	}
 
-    if (!empty($this->options['break_phrase'])) {
-      views_break_phrase_string($argument, $this);
+	function options_form(&$form, &$form_state) {
+		$form['match_exact'] = array(
+			'#type' => 'checkbox',
+			'#title' => t('Exact Match Mode'),
+			'#description' => t('Match the argument exactly. Not as a potential substring'),
+			'#default_value' => $this->options['match_exact'],
+			'#fieldset' => 'more',
+		);
+	}
+
+  function query($group_by = FALSE) {  
+  	if (empty($this->options['match_exact'])) {
+  		$argument = '%' . $this->argument . '%';
     }
     else {
-      $this->value = array($argument);
-      $this->operator = 'or';
+    	$argument = ' ' . $this->argument . ' ';
     }
-
-    if (!empty($this->definition['many to one'])) {
-      if (!empty($this->options['glossary'])) {
-        $this->helper->formula = TRUE;
-      }
-      $this->helper->ensure_my_table();
-      $this->helper->add_filter();
-      return;
-    }
-
+    
+    $this->value = array($argument);
+  	$this->operator = 'or';
+  
     $this->ensure_my_table();
     $formula = FALSE;
-    if (empty($this->options['glossary'])) {
-      $field = "$this->table_alias.$this->real_field";
-    }
-    else {
-      $formula = TRUE;
-      $field = $this->get_formula();
-    }
 
+		$field = "$this->table_alias.$this->real_field";
+ 
     if (count($this->value) > 1) {
       $operator = 'IN';
       $argument = $this->value;
     }
     else {
-      $operator = 'LIKE';
-    }
-
-    if ($formula) {
-      $placeholder = $this->placeholder();
-      if ($operator == 'IN') {
-        $field .= " IN($placeholder)";
-      }
+    	if (empty($this->options['match_exact'])) {
+      	$operator = 'LIKE';
+      } 
       else {
-        $field .= ' = ' . $placeholder;
+      	$operator = 'REGEXP';
       }
-      $placeholders = array(
-        $placeholder => $argument,
-      );
-      $this->query->add_where_expression(0, $field, $placeholders);
     }
-    else {
-      $this->query->add_where(0, $field, $argument, $operator);
-    }
+    
+    $this->query->add_where(0, $field, $argument, $operator);
   }
 }
