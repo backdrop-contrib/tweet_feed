@@ -63,6 +63,7 @@ function tweet_feed_uninstall() {
   variable_del('tweet_feed_user_id');
   variable_del('tweet_feed_pull_count');
   variable_del('tweet_feed_new_window');
+  variable_del('tweet_feed_truncate');
 }
 
 /**

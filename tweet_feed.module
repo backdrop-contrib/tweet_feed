@@ -229,15 +229,15 @@ function tweet_feed_cron() {
  * process tweet data from what we have retrieved from the Twitter API 
  */
 function tweet_feed_process_tweets($tdata) {
+  $tweets = array();
   if (!empty($tdata)) {  
     if (!empty($tdata->errors)) {
       foreach($tdata->errors as $error) {
         drupal_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error');
-        return array('data' => FALSE, 'lowest_id' => -1);
+        return array('tweets' => FALSE, 'lowest_id' => -1);
       }
     }
     else {
-      $tweets = array();
       foreach($tdata as $key => $tweet) {
         // find out if we already have this tweet, if we do, add it to the update pk
         $count = db_query("SELECT COUNT(*) FROM {tweet_feed} WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id))->fetchField();
@@ -263,6 +263,9 @@ function tweet_feed_process_tweets($tdata) {
         drupal_write_record('tweet_feed', $data, $pk);
       }
     }
+  }
+  else {
+    return array('tweets' => FALSE, 'lowest_id' => -1);
   }
   return array('tweets' => $tweets, 'lowest_id' => $lowest_id);
 }
