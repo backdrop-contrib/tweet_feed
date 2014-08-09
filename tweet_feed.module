@@ -14,14 +14,6 @@ function tweet_feed_menu() {
     'access arguments' => array('administer tweet feed settings'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/settings/tweet_feed/import'] = array(
-    'title' => 'Tweet Feed Import',
-    'description' => 'The settings for the Tweet Feed module',
-    'page callback' => 'tweet_feed_cron',
-    'access callback' => 'user_access',
-    'access arguments' => array('administer tweet feed settings'),
-    'type' => MENU_NORMAL_ITEM,
-  );
   return $items;
 }
 
