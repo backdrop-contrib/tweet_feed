@@ -1,25 +1,21 @@
 <?php
 
+/**
+ * Implememts hook_views_handlers()
+ */
 function tweet_feed_views_handlers() {
   return array(
     'info' => array(
       'path' => drupal_get_path('module', 'tweet_feed') . '/inc',
     ),
     'handlers' => array(
-      // The name of my handler
       'tweet_feed_handler_filter_hashtag_string' => array(
-        // The name of the handler we are extending.
         'parent' => 'views_handler_filter_string',
       ),
       'tweet_feed_handler_argument_hashtag' => array(
-        // The name of the handler we are extending.
         'parent' => 'views_handler_argument_string',
       ),
       'tweet_feed_handler_tweet_field' => array(
-        // The name of the handler we are extending.
-        'parent' => 'views_handler_field',
-      ),
-      'tweet_feed_handler_profile_image_field' => array(
         'parent' => 'views_handler_field',
       ),
     ),
@@ -94,7 +90,14 @@ function tweet_feed_views_data() {
         'title' => t('Profile Image URL'),
         'help' => t('The url to the profile image of the tweeter.'),
         'field' => array(
-          'handler' => 'tweet_feed_handler_profile_image_field',
+          'handler' => 'views_handler_field',
+        ),
+      ),
+      'profile_image_https_url' => array(
+        'title' => t('Profile Image Secure URL'),
+        'help' => t('The url to the profile image of the tweeter.'),
+        'field' => array(
+          'handler' => 'views_handler_field',
         ),
       ),
       'screen_name' => array(

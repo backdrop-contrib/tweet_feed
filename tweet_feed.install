@@ -32,6 +32,11 @@ function tweet_feed_schema() {
         'type' => 'text',
         'size' => 'normal',
         'not null' => TRUE),
+      'profile_image_https_url' => array(
+        'description' => 'The secure URL of the image for the poster of this tweet',
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => TRUE),
       'screen_name' => array(
         'description' => 'The screen name of the person tweeting',
         'type' => 'varchar',
@@ -72,6 +77,5 @@ function tweet_feed_uninstall() {
   variable_del('tweet_feed_pull_count');
   variable_del('tweet_feed_new_window');
   variable_del('tweet_feed_truncate');
-  variable_del('tweet_feed_profile_https');
 }
 
