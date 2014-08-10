@@ -70,6 +70,13 @@ function tweet_feed_views_data() {
           'handler' => 'views_handler_field',
         ),
       ),
+      'profile_image_https_url' => array(
+        'title' => t('Profile Image Secure URL'),
+        'help' => t('The url to the profile image of the tweeter (secure url).'),
+        'field' => array(
+          'handler' => 'views_handler_field',
+        ),
+      ),
       'screen_name' => array(
         'title' => t('Screen Name'),
         'help' => t('The screen name of the tweeter.'),

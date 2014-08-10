@@ -32,6 +32,11 @@ function tweet_feed_schema() {
         'type' => 'text',
         'size' => 'normal',
         'not null' => TRUE),
+      'profile_image_https_url' => array(
+        'description' => 'The secure URL of the image for the poster of this tweet',
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => TRUE),
       'screen_name' => array(
         'description' => 'The screen name of the person tweeting',
         'type' => 'varchar',
@@ -119,4 +124,12 @@ function tweet_feed_update_7109() {
   db_drop_field('tweet_feed', 'tid');
   db_add_field('tweet_feed','tweet_id', $schema['tweet_feed']['fields']['tweet_id']);
   db_add_primary_key('tweet_feed', array('tweet_id'));
+}
+
+/**
+ * Add the field for holding the secure profile image for SSL enabled web sites
+ */
+function tweet_feed_update_7110() {
+  $schema = tweet_feed_schema();
+  db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
 }

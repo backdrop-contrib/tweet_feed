@@ -200,7 +200,8 @@ function tweet_feed_cron() {
     if (variable_get('tweet_feed_query_type', 'search') == 'timeline') {
       $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
       /* get the tweets */
-      $tdata = json_decode(
+      $tdata = new stdClass();
+      $tdata->statuses = json_decode(
         $con->oAuthRequest($url, 'GET', $params)
       );
     }
@@ -211,7 +212,7 @@ function tweet_feed_cron() {
         $con->oAuthRequest($url, 'GET', $params)
       );    
     }
-
+    
     $data = tweet_feed_process_tweets($tdata->statuses);
     
     // If this is FALSE, then we have hit an error and need to stop processing
@@ -255,6 +256,7 @@ function tweet_feed_process_tweets($tdata) {
           'created_at' => $creation_timestamp,
           'user_id' => $tweet->user->id,
           'profile_image_url' => $tweet->user->profile_image_url,
+          'profile_image_https_url' => $tweet->user->profile_image_url_https,
           'screen_name' => $tweet->user->screen_name,
           'hashtags' => $hashtags,
           'tweet_id' => $tweet->id,
