@@ -11,7 +11,7 @@ function tweet_feed_schema() {
         'description' => 'The twitter tweet id for this tweet.',
         'type' => 'int',
         'size' => 'big',
-        'not null' => TRUE),
+        'not null' => FALSE),
       'tweet' => array(
         'description' => 'The text of the tweet.',
         'type' => 'text',
