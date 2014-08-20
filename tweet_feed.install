@@ -11,7 +11,7 @@ function tweet_feed_schema() {
         'description' => 'The twitter tweet id for this tweet.',
         'type' => 'int',
         'size' => 'big',
-        'not null' => FALSE),
+        'not null' => TRUE),
       'tweet' => array(
         'description' => 'The text of the tweet.',
         'type' => 'text',
@@ -129,7 +129,7 @@ function tweet_feed_update_7109() {
 /**
  * Add the field for holding the secure profile image for SSL enabled web sites
  */
-function tweet_feed_update_7110() {
+function tweet_feed_update_7111() {
   $schema = tweet_feed_schema();
   db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
 }
