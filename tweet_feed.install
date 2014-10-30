@@ -31,12 +31,12 @@ function tweet_feed_schema() {
         'description' => 'The URL of the image for the poster of this tweet',
         'type' => 'text',
         'size' => 'normal',
-        'not null' => TRUE),
+        'not null' => FALSE),
       'profile_image_https_url' => array(
         'description' => 'The secure URL of the image for the poster of this tweet',
         'type' => 'text',
         'size' => 'normal',
-        'not null' => TRUE),
+        'not null' => FALSE),
       'screen_name' => array(
         'description' => 'The screen name of the person tweeting',
         'type' => 'varchar',
@@ -48,10 +48,19 @@ function tweet_feed_schema() {
         'length' => 255,
         'not null' => FALSE),
     ),
-    'primary key' => array('tweet_id'),
   );
 
   return $schema;
+}
+
+/**
+ * implementation of hook_install()
+ * this is necessary because of our update hook 7109. we can't add a primary key to 
+ * a field that is null. so we need to remove it from the schema on install and add 
+ * it later for fresh installs
+ */
+function tweet_feed_install() {
+  db_add_primary_key('tweet_feed', array('tweet_id'));
 }
 
 /**
@@ -119,11 +128,24 @@ function tweet_feed_update_7108() {
  */
 function tweet_feed_update_7109() {
   $schema = tweet_feed_schema();
-  db_add_index('tweet_feed', 'tid', array('tid'));
-  db_drop_primary_key('tweet_feed');
-  db_drop_field('tweet_feed', 'tid');
-  db_add_field('tweet_feed','tweet_id', $schema['tweet_feed']['fields']['tweet_id']);
-  db_add_primary_key('tweet_feed', array('tweet_id'));
+  if (db_field_exists('tweet_feed', 'tid')) {
+    db_add_index('tweet_feed', 'tid', array('tid'));
+    db_drop_primary_key('tweet_feed');
+    db_drop_field('tweet_feed', 'tid');
+  }
+  if (!db_field_exists('tweet_feed', 'tweet_id')) {
+    $id = 1;
+    db_add_field('tweet_feed','tweet_id', $schema['tweet_feed']['fields']['tweet_id']);
+    
+    $result = db_query('SELECT created_at, user_id FROM {tweet_feed}');
+    while ($data = $result->fetchObject()) {
+      db_update('tweet_feed')->fields(array('tweet_id' => $id++))
+                             ->condition('created_at', $data->created_at, '=')
+                             ->condition('user_id', $data->user_id, '=')
+                             ->execute();
+    }
+    db_add_primary_key('tweet_feed', array('tweet_id'));
+  }
 }
 
 /**
@@ -131,5 +153,7 @@ function tweet_feed_update_7109() {
  */
 function tweet_feed_update_7111() {
   $schema = tweet_feed_schema();
-  db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
+  if (!db_field_exists('tweet_feed', 'profile_image_https_url')) {
+    db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
+  }
 }

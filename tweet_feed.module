@@ -213,16 +213,21 @@ function tweet_feed_cron() {
       );    
     }
     
-    $data = tweet_feed_process_tweets($tdata->statuses);
+    if (!empty($tdata) && !empty($tdata->statuses)) {    
+      $data = tweet_feed_process_tweets($tdata->statuses);
     
-    // If this is FALSE, then we have hit an error and need to stop processing
-    if ($data['tweets'] === FALSE) {
+      // If this is FALSE, then we have hit an error and need to stop processing
+      if ($data['tweets'] === FALSE) {
+        break;
+      }
+    
+      // merge the total tweets so we know how many we have
+      $tweets = array_merge($data['tweets'], $tweets);
+      $lowest_id = $data['lowest_id'];
+    }
+    else {
       break;
     }
-    
-    // merge the total tweets so we know how many we have
-    $tweets = array_merge($data['tweets'],$tweets);
-    $lowest_id = $data['lowest_id'];
   }
 }
 
