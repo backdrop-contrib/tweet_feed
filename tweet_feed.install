@@ -1,159 +1,152 @@
 <?php
 
 /**
- * implementation of hook_schema()
+ * Implements hook_schema()
  */
 function tweet_feed_schema() {
-  $schema['tweet_feed'] = array(
-    'description' => 'A cache for twitter feeds.',
-    'fields' => array(
-      'tweet_id' => array(
-        'description' => 'The twitter tweet id for this tweet.',
+  $schema = array();
+  $schema['tweet_feeds'] = array(
+    'fields'=> array(
+      'fid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'aid' => array(
         'type' => 'int',
-        'size' => 'big',
-        'not null' => FALSE),
-      'tweet' => array(
-        'description' => 'The text of the tweet.',
-        'type' => 'text',
-        'size' => 'normal',
+        'size' => 'small',
         'not null' => TRUE),
-      'created_at' => array(
-        'description' => 'The date the tweet was posted (timestamp)',
+      'feed_name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE),
+      'query_type' => array(
         'type' => 'int',
-        'length' => 11,
+        'size' => 'small',
         'not null' => TRUE),
-      'user_id' => array(
-        'description' => 'The user ID of the poster',
+      'timeline_id' => array(
         'type' => 'varchar',
-        'length' => 24,
+        'length' => 64,
         'not null' => TRUE),
-      'profile_image_url' => array(
-        'description' => 'The URL of the image for the poster of this tweet',
-        'type' => 'text',
-        'size' => 'normal',
-        'not null' => FALSE),
-      'profile_image_https_url' => array(
-        'description' => 'The secure URL of the image for the poster of this tweet',
-        'type' => 'text',
-        'size' => 'normal',
-        'not null' => FALSE),
-      'screen_name' => array(
-        'description' => 'The screen name of the person tweeting',
+      'search_term' => array(
         'type' => 'varchar',
-        'length' => 24,
+        'length' => 64,
         'not null' => TRUE),
-      'hashtags' => array(
-        'description' => 'A comma separated list of hashtags without the hash.',
+      'list_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE),
+      'pull_count' => array(
+        'type' => 'int',
+        'size' => 'medium',
+        'not null' => TRUE),
+      'clear_prior' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE),
+      'new_window' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE),
+    ),
+    'primary key' => array('fid'),
+  );
+  
+  $schema['tweet_accounts'] = array(
+    'fields'=> array(
+      'aid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'account_name' => array(
+        'type' => 'varchar',
+        'length' => 96,
+        'not null' => TRUE),
+      'consumer_key' => array(
         'type' => 'varchar',
         'length' => 255,
-        'not null' => FALSE),
+        'not null' => TRUE),
+      'consumer_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+      'oauth_token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+      'oauth_token_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
     ),
+    'primary key' => array('aid'),
   );
-
+  $schema['tweet_hashes'] = array(
+    'fields'=> array(
+      'nid' => array(
+      'type' => 'int',
+      'length' => 11,
+      'not null' => TRUE),
+    'tid' => array(
+      'type' => 'int',
+      'size' => 'big',
+      'not null' => TRUE),
+    'hash' => array(
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE),
+    ),
+    'primary key' => array('nid'),
+  );  
+  $schema['tweet_user_hashes'] = array(
+    'fields'=> array(
+      'nid' => array(
+      'type' => 'int',
+      'length' => 11,
+      'not null' => TRUE),
+    'tuid' => array(
+      'type' => 'int',
+      'size' => 'big',
+      'not null' => TRUE),
+    'hash' => array(
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE),
+    ),
+    'primary key' => array('nid'),
+  );  
   return $schema;
 }
 
 /**
- * implementation of hook_install()
- * this is necessary because of our update hook 7109. we can't add a primary key to 
- * a field that is null. so we need to remove it from the schema on install and add 
- * it later for fresh installs
+ * Implements hook_field_schema
  */
-function tweet_feed_install() {
-  db_add_primary_key('tweet_feed', array('tweet_id'));
-}
-
-/**
- * implementation of hook_uninstall()
- */
-function tweet_feed_uninstall() {
-  variable_del('tweet_feed_consumer_key');
-  variable_del('tweet_feed_consumer_key');
-  variable_del('tweet_feed_consumer_secret');
-  variable_del('tweet_feed_oauth_token');
-  variable_del('tweet_feed_oauth_token_secret');
-  variable_del('tweet_feed_query_type');
-  variable_del('tweet_feed_search_query');
-  variable_del('tweet_feed_user_id');
-  variable_del('tweet_feed_pull_count');
-  variable_del('tweet_feed_new_window');
-  variable_del('tweet_feed_truncate');
-}
-
-/**
- * Alter the user_id field to be a varchar for handling larger user id numbers
- */
-function tweet_feed_update_7104() {
-  db_change_field('tweet_feed','user_id','user_id',
-    array(
-      'description' => 'The user ID of the poster',
+function tweet_feed_field_schema($field) {
+  if($field['type'] == 'tweet_feed_user_mention') {
+    $schema['columns']['tweet_feed_mention_name'] = array(
+      'description' => 'Name of user mentioned in tweet',
       'type' => 'varchar',
-      'length' => 32,
-      'not null' => TRUE,
-    )
-  );
-}
-
-/**
- * Convert system variable settings from twitter_ to tweet_feed_ 
- */
-function tweet_feed_update_7105() {
-  variable_set('tweet_feed_consumer_key', variable_get('twitter_consumer_key', NULL));
-  variable_set('tweet_feed_consumer_secret', variable_get('twitter_consumer_secret', NULL));
-  variable_set('tweet_feed_oauth_token', variable_get('twitter_oauth_token', NULL));
-  variable_set('tweet_feed_oauth_token_secret', variable_get('twitter_oauth_token_secret', NULL));
-  variable_set('tweet_feed_search_query', variable_get('twitter_search_query', NULL));
-  variable_set('tweet_feed_pull_count', variable_get('twitter_pull_count', 50));
-  variable_set('tweet_feed_new_window', variable_get('twitter_new_window', 0));
-
-  variable_del('twitter_pull_count');
-  variable_del('twitter_search_query');
-  variable_del('twitter_oauth_token_secret');
-  variable_del('twitter_oauth_token');
-  variable_del('twitter_consumer_secret');
-  variable_del('twitter_consumer_key');
-  variable_del('twitter_new_window');
-}
-
-/**
- * Add a field to hold our comma delimited list of hashtags.
- */
-function tweet_feed_update_7108() {
-  $schema = tweet_feed_schema();
-  db_add_field('tweet_feed', 'hashtags', $schema['tweet_feed']['fields']['hashtags']);
-}
-
-/**
- * Add a field to hold our tweet id's and remove the meaningless tid.
- */
-function tweet_feed_update_7109() {
-  $schema = tweet_feed_schema();
-  if (db_field_exists('tweet_feed', 'tid')) {
-    db_add_index('tweet_feed', 'tid', array('tid'));
-    db_drop_primary_key('tweet_feed');
-    db_drop_field('tweet_feed', 'tid');
+      'length' => 255,
+      'not null' => FALSE,
+      'sortable' => FALSE,
+      'views' => TRUE,
+    );
+    $schema['columns']['tweet_feed_mention_screen_name'] = array(
+      'description' => 'Screen Name of user mentioned in tweet',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'sortable' => FALSE,
+      'views' => TRUE,
+    );
+    $schema['columns']['tweet_feed_mention_id'] = array(
+      'description' => 'ID of user mentioned in tweet.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'sortable' => FALSE,
+      'views' => TRUE,
+    );
   }
-  if (!db_field_exists('tweet_feed', 'tweet_id')) {
-    $id = 1;
-    db_add_field('tweet_feed','tweet_id', $schema['tweet_feed']['fields']['tweet_id']);
-    
-    $result = db_query('SELECT created_at, user_id FROM {tweet_feed}');
-    while ($data = $result->fetchObject()) {
-      db_update('tweet_feed')->fields(array('tweet_id' => $id++))
-                             ->condition('created_at', $data->created_at, '=')
-                             ->condition('user_id', $data->user_id, '=')
-                             ->execute();
-    }
-    db_add_primary_key('tweet_feed', array('tweet_id'));
-  }
+  return $schema;
 }
 
-/**
- * Add the field for holding the secure profile image for SSL enabled web sites
- */
-function tweet_feed_update_7111() {
-  $schema = tweet_feed_schema();
-  if (!db_field_exists('tweet_feed', 'profile_image_https_url')) {
-    db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
-  }
-}
