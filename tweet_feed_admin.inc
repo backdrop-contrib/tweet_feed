@@ -78,6 +78,7 @@ function tweet_feed_feeds_table() {
     'truncate' => array('data' => t('Truncate'), 'style' => 'text-align: center;'),
     'edit' => array('data' => t('Edit'), 'style' => 'text-align: center;'),
     'delete' => array('data' => t('Delete'), 'style' => 'text-align: center;'),
+    'import' => array('data' => t('Import'), 'style' => 'text-align: center;'),
   );
   
   $result = db_query('SELECT * FROM {tweet_feeds} ORDER BY feed_name ASC');
@@ -110,6 +111,7 @@ function tweet_feed_feeds_table() {
     $row[] = (array('data' => $data->new_window, 'align' => 'center'));
     $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
     $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/feeds/delete/' . $data->fid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
     $rows[] = $row;
   }
   
@@ -477,4 +479,67 @@ function tweet_feed_settings_form($form, &$form_state) {
     '#default_value' => variable_get('tweet_feed_get_tweeter_profiles', 0),
   );
   return system_settings_form($form);
+}
+
+/**
+ * Run the Import
+ *
+ * Handled through the web interface using the batch API
+ */
+function tweet_feed_run_import($fid) {
+  // Get all of the tweets to be imported
+  $tweets = tweet_feed_pull_data_from_feed($fid, TRUE);
+  
+  // Get the feed info for our display
+  $feed = tweet_feed_get_feed_object($fid);
+  switch ($feed->query_type) {
+    case QUERY_SEARCH:
+      $query_type = 'Timeline Search';
+      $feed_criteria = $feed->search_term;
+      break;
+    case QUERY_TIMELINE:
+      $query_type = 'User Timeline';
+      $feed_criteria = $feed->timeline_id;
+      break;
+    case QUERY_LIST:
+      $query_type = 'User List';
+      $feed_criteria = $feed->timeline_id . '/' . $feed->list_name;
+      break;
+    default:
+      $query_type = t('Unknown');
+      $feed_criteria = t('Unknown');
+  }
+
+  // Now that we have the tweets, put them in the queue
+   $batch = array(
+    'title' => t('Tweet Feed Import Batch: Feed: ' . $query_type . ': ' . $feed_criteria),
+    'init_message' => t('Loading tweets...'),
+    'operations' => array(),
+    'finished' => 'tweet_feed_run_import_finish',
+  );
+  
+  foreach($tweets as $key=>$tweet) {
+    // Initialize our update_node_id
+    $update_node_id = 0;
+    $hash = NULL;
+    // find out if we already have this tweet, if we do, add the update primary key (pk)
+    $result = db_query("SELECT nid, tid, hash FROM {tweet_hashes}
+                        WHERE tid = :tweet_id", array(':tweet_id' => $tweet->id));
+    if ($result->rowCount() > 0) {
+      $tdata = $result->fetchObject();
+      $hash = md5(serialize($tweet));
+      // If our hashes are equal, we have nothing to update and can move along
+      if ($hash == $tdata->hash) {
+        continue;
+      }
+      else {
+        $update_node_id = $tdata->nid;
+      }
+    }
+    $batch['operations'][] = array('tweet_feed_save_tweet', array($tweet, $feed, $update_node_id, $hash));
+  }
+  
+  batch_set($batch);
+  batch_process('admin/config/services/tweet_feed/feeds');
+
 }

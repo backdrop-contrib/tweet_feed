@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * tweet_feed.features.field_instance.inc
+ * tweet_feed_types.features.field_instance.inc
  */
 
 /**
  * Implements hook_field_default_field_instances().
  */
-function tweet_feed_field_default_field_instances() {
+function tweet_feed_types_field_default_field_instances() {
   $field_instances = array();
 
   // Exported field_instance: 'node-twitter_tweet_feed-field_geographic_coordinates'
@@ -494,43 +494,6 @@ function tweet_feed_field_default_field_instances() {
       ),
       'type' => 'text_textfield',
       'weight' => 12,
-    ),
-  );
-
-  // Exported field_instance: 'node-twitter_tweet_feed-field_tweet_user_mentions'
-  $field_instances['node-twitter_tweet_feed-field_tweet_user_mentions'] = array(
-    'bundle' => 'twitter_tweet_feed',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => NULL,
-        'settings' => array(),
-        'type' => 'tweet_feed_default',
-        'weight' => 15,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_tweet_user_mentions',
-    'label' => 'User Mentions',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'tweet_feed',
-      'settings' => array(),
-      'type' => 'tweet_feed_textfield',
-      'weight' => 15,
     ),
   );
 
@@ -1614,7 +1577,6 @@ function tweet_feed_field_default_field_instances() {
   t('Tweet ID');
   t('Twitter Screen Name');
   t('Twitter User ID');
-  t('User Mentions');
 
   return $field_instances;
 }

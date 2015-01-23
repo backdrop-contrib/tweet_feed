@@ -150,3 +150,178 @@ function tweet_feed_field_schema($field) {
   return $schema;
 }
 
+/**
+ * Upgrade from version 1.x of Tweet Feed and import previous tweets (could take time)
+ */
+function tweet_feed_update_7200() {
+  // Check to make sure we have our dependencies. If not, then bail. If we have all of them
+  // then enable them and proceed.
+  if (!module_exists('tweet_feed_types')) {
+    module_enable(array('tweet_feed_types'));
+  }
+  else {
+    drupal_set_message('Required module "Tweet Feed Types" could not be enabled.', 'error');
+    return FALSE;
+  }
+  
+  // Make sure our new tables are created
+  $tables = tweet_feed_schema();
+  db_create_table('tweet_feeds', $tables['tweet_feeds']);
+  db_create_table('tweet_accounts', $tables['tweet_accounts']);
+  db_create_table('tweet_hashes', $tables['tweet_hashes']);
+  db_create_table('tweet_user_hashes', $tables['tweet_user_hashes']);
+  
+  // We're going to be using this schema right away, so reload and cache it the
+  // Drupal way.
+  drupal_get_schema(NULL, TRUE);
+  
+  // Sanity check to make sure we have data to convert. If we don't have a consumer key,
+  // then we really can't do anything else.
+  $consumer_key = (variable_get('tweet_feed_consumer_key', NULL) == NULL) ? NULL : variable_get('tweet_feed_consumer_key', NULL);
+  if (!empty($consumer_key)) {
+    // We need to create a feed to organize these tweets otherwise they will be orphaned
+    // The first step is to create the account in our accounts table
+    $data = array(
+      'account_name' => t('Converted Account'),
+      'consumer_key' => variable_get('tweet_feed_consumer_key', NULL),
+      'consumer_secret' => variable_get('tweet_feed_consumer_secret', NULL),
+      'oauth_token' => variable_get('tweet_feed_oauth_token', NULL),
+      'oauth_token_secret' => variable_get('tweet_feed_oauth_token_secret', NULL),
+    );
+    $status = drupal_write_record('tweet_accounts', $data);
+    $account_id = $data['aid'];
+  
+    // Get our query type and convert to the new format
+    $query_type = variable_get('tweet_feed_query_type');
+    $query_type = ($query_type == 'search') ? 1 : 2;
+  
+    // Now we create the feed
+    $feed = array(
+      'aid' => $account_id,
+      'feed_name' => t('Converted Feed'),
+      'query_type' => $query_type,
+      'search_term' => variable_get('tweet_feed_search_query', NULL),
+      'pull_count' => variable_get('tweet_feed_pull_count', 100),
+      'clear_prior' => variable_get('tweet_feed_truncate', FALSE),
+      'new_window' => variable_get('tweet_feed_new_window', TRUE),
+      'timeline_id' => variable_get('tweet_feed_user_id', FALSE),
+      'list_name' => NULL,
+    );
+    $status = drupal_write_record('tweet_feeds', $feed);
+      
+    // Load in all the data from the previous schema of Tweet Feed
+    $result = db_query('SELECT * FROM {tweet_feed} ORDER BY tweet_id');
+    while ($tdata = $result->fetchObject()) {    
+      $node = new stdClass();
+      $node->type = 'twitter_tweet_feed';
+      $node->uid = 1;
+      $node->status = 1;
+      $node->comment = 0;
+      $node->promote = 0;
+      $node->moderate = 0;
+      $node->sticky = 0;
+      $node->language = 'und';
+      $node->title = $tdata->screen_name . ': ' . strip_tags(substr($tdata->tweet, 0, 90));
+
+      // The tweet itself goes into the tweet contents field
+      $node->field_tweet_contents['und'][0] = array(
+        'value' => $tdata->tweet,
+        'format' => 'full_html',
+      );
+
+      // Save the feed ID for this tweet
+      $node->field_tweet_feed_id['und'][0]['value'] = $feed['fid'];
+  
+      // Handle the author name
+      $node->field_tweet_author['und'][0] = array(
+        'value' => $tdata->screen_name,
+        'safe_value' => $tdata->screen_name,
+      );
+
+      // Handle the author id
+      $node->field_tweet_author_id['und'][0] = array(
+        'value' => $tdata->user_id,
+        'safe_value' => $tdata->user_id,
+      );
+
+      // Handle the tweet creation date
+      $node->field_tweet_creation_date['und'][0] = array(
+        'value' => date('Y-m-d H:i:s', $tdata->created_at),
+        'timezone' => 'UTC/GMT',
+        'timezone_db' => 'UTC/GMT',
+        'datatype' => 'datetime',
+      );
+
+      // Handle the tweet id 
+      $node->field_tweet_id['und'][0] = array(
+        'value' => $tdata->tweet_id,
+        'safe_value' => (int)$tdata->tweet_id,
+      );
+
+      // Because we may not be fully bootstrapped here, we need to make sure our 
+      // tweet_feed_process_hashtags function exists before we are able to start on this
+      // task. If it is not, we need to include_once the tweet_feed.module file and begin
+      if (!function_exists('tweet_feed_process_hashtags')) {
+        include_once(drupal_get_path('module', 'tweet_feed') . '/tweet_feed.module');
+      }
+
+      // Handle hashtags
+      $hashtags = explode(',', $tdata->hashtags);
+      $hashtag_entities = array();
+      foreach ($hashtags as $hashtag) {
+        $hashtag = trim($hashtag);
+        $hashtag_entity = new stdClass();
+        $hashtag_entity->text = $hashtag;
+        $hashtag_entities[] = $hashtag;
+      }
+      if (count($hashtag_entities) > 0) {
+        $hashtags = tweet_feed_process_hashtags($hashtag_entities);
+        // Handle the hashtags 
+        foreach ($hashtags as $hashtag) {
+          $node->field_twitter_hashtags['und'][] = array(
+            'target_id' => $hashtag,
+          );
+        }
+      }
+      
+      // Not sure about this method of getting the big twitter profile image, but we're 
+      // going to roll with it for now.
+      $profile_image_url = str_replace('_normal', '', $tdata->profile_image_url);
+
+      // This may be redundant, but we are going to put this in here for the sake of our
+      // own sanity.
+      if (!function_exists('tweet_feed_process_twitter_image')) {
+        include_once(drupal_get_path('module', 'tweet_feed') . '/tweet_feed.module');
+      }
+      
+      // Handle the profile image obtained from twitter.com
+      $file = tweet_feed_process_twitter_image($profile_image_url, 'tweet-feed-profile-image', $tdata->tweet_id);
+      if ($file !== NULL) {
+        $node->field_profile_image['und'][0] = (array)$file;
+      }
+    
+      // Save the node
+      node_save($node);
+      $nid = $node->nid;
+  
+      // Make sure the hash in our tweet_hashes table is right by deleting what is there
+      // for this node and updating
+      db_delete('tweet_hashes')->condition('nid', $node->nid)->execute();
+      $hash_insert = array(
+        'tid' => $tweet->id,
+        'nid' => $node->nid,
+        'hash' => $tweet_hash,
+      );
+      drupal_write_record('tweet_hashes', $hash_insert);
+    
+      if (function_exists('drush_log')) {
+        drush_log('Converted: ' . strip_tags(substr($tdata->tweet, 0, 90)), 'ok');
+      }
+          
+      // After all of this is done, we want to remove our old tables.
+      db_drop_table('tweet_feed');
+       
+    }
+  }
+}
+

@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * tweet_feed.views_default.inc
+ * tweet_feed_types.views_default.inc
  */
 
 /**
  * Implements hook_views_default_views().
  */
-function tweet_feed_views_default_views() {
+function tweet_feed_types_views_default_views() {
   $export = array();
 
   $view = new view();
@@ -18,7 +18,7 @@ function tweet_feed_views_default_views() {
   $view->human_name = 'Sample Tweet Feed';
   $view->core = 7;
   $view->api_version = '3.0';
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  $view->disabled = TRUE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');

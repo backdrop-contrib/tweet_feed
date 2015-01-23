@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * tweet_feed.strongarm.inc
+ * tweet_feed_types.strongarm.inc
  */
 
 /**
  * Implements hook_strongarm().
  */
-function tweet_feed_strongarm() {
+function tweet_feed_types_strongarm() {
   $export = array();
 
   $strongarm = new stdClass();

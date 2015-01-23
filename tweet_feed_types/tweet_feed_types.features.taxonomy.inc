@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * tweet_feed.features.taxonomy.inc
+ * tweet_feed_types.features.taxonomy.inc
  */
 
 /**
  * Implements hook_taxonomy_default_vocabularies().
  */
-function tweet_feed_taxonomy_default_vocabularies() {
+function tweet_feed_types_taxonomy_default_vocabularies() {
   return array(
     'hashtag_terms' => array(
       'name' => 'Hashtag Terms',

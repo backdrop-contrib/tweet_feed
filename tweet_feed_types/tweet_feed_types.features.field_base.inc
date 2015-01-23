@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * tweet_feed.features.field_base.inc
+ * tweet_feed_types.features.field_base.inc
  */
 
 /**
  * Implements hook_field_default_field_bases().
  */
-function tweet_feed_field_default_field_bases() {
+function tweet_feed_types_field_default_field_bases() {
   $field_bases = array();
 
   // Exported field_base: 'body'
@@ -551,22 +551,6 @@ function tweet_feed_field_default_field_bases() {
     ),
     'translatable' => 0,
     'type' => 'text',
-  );
-
-  // Exported field_base: 'field_tweet_user_mentions'
-  $field_bases['field_tweet_user_mentions'] = array(
-    'active' => 1,
-    'cardinality' => -1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'field_tweet_user_mentions',
-    'foreign keys' => array(),
-    'indexes' => array(),
-    'locked' => 0,
-    'module' => 'tweet_feed',
-    'settings' => array(),
-    'translatable' => 0,
-    'type' => 'tweet_feed_user_mention',
   );
 
   // Exported field_base: 'field_twitter_a_profile_url'
