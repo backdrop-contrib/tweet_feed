@@ -178,6 +178,11 @@ function tweet_feed_cron() {
   // Get all of the tweets to be imported
   $tweets = tweet_feed_pull_data_from_feed($feed[$current_fid], TRUE);
   
+  // If we have no tweets, we can stop here
+  if (!is_array($tweets) || count($tweets) < 1) {
+    return FALSE;
+  }
+  
   // Get our current tweet_feed_queue
   $queue = drupalQueue::get('tweet_feed_queue');
   

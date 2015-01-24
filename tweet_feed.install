@@ -159,10 +159,6 @@ function tweet_feed_update_7200() {
   if (!module_exists('tweet_feed_types')) {
     module_enable(array('tweet_feed_types'));
   }
-  else {
-    drupal_set_message('Required module "Tweet Feed Types" could not be enabled.', 'error');
-    return FALSE;
-  }
   
   // Make sure our new tables are created
   $tables = tweet_feed_schema();
