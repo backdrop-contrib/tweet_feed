@@ -1,7 +1,7 @@
 name = Tweet Feed Types
 description = The content types and sample views for the Tweet Feed module.
 core = 7.x
-package = Tweet Feed
+package = Other
 version = 7.x-2.0
 project = tweet_feed_types
 dependencies[] = ctools

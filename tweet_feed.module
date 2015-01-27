@@ -218,7 +218,8 @@ function tweet_feed_cron() {
   // Run through items in the queue
   for ($i = 0; $i < $queue_size; $i++) {
     $item = $queue->claimItem($i);
-    tweet_feed_save_tweet($item->data['tweet'], $item->data['feed'], $item->data['update_node_id'], $item->data['hash']);
+    $feed_object = tweet_feed_get_feed_object($item->data['feed'][0]);
+    tweet_feed_save_tweet($item->data['tweet'], $feed_object, $item->data['update_node_id'], $item->data['hash']);
     $queue->releaseItem($item);
     $queue->deleteItem($item);
   }

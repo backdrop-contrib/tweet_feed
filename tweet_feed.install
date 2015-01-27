@@ -151,6 +151,28 @@ function tweet_feed_field_schema($field) {
 }
 
 /**
+ * Implements hook_uninstall
+ * http://drupal.stackexchange.com/questions/88207/how-to-delete-content-type-created-through-features
+ */
+function tweet_feed_uninstall() {
+  // The schema tables will be deleted by Drupal. We need to disable the feature and
+  // remove the node contents and content types here.
+  if (module_exists('tweet_feed_types')) {
+    module_disable(array('tweet_feed_types'), FALSE);
+  }
+  drupal_uninstall_modules(array('tweet_feed_types'), FALSE);
+  
+  $content_types = array('twitter_tweet_feed', 'twitter_user_profile');
+  // Loop through each and unlock the content type.
+  foreach ($content_types as $ctype) {
+    db_query("UPDATE {node_type} SET `custom` = 1, `locked` = 0 WHERE `type` = :ctype", array(':ctype' => $ctype));
+  }
+  // Clean Drupal cache; this is necessary for the "Delete" link to appear
+  // next to the content type created by the feature.
+  drupal_flush_all_caches();
+}
+
+/**
  * Upgrade from version 1.x of Tweet Feed and import previous tweets (could take time)
  */
 function tweet_feed_update_7200() {
