@@ -230,18 +230,16 @@ function tweet_feed_cron() {
  *
  * Used by our drush command to get all of the feed data and import the feeds accordingly
  */
-function tweet_feed_process_feed($fid) {
+function tweet_feed_process_feed($fid = NULL) {
   if ($fid == NULL) {
     // If we're not being passed any argument, then process all the feeds.
     // Load in the fid's for active feeds and then run them through 
     // tweet_feed_pull_data_from_feed
-    $result = db_query('SELECT feed_name, fid FROM tweet_feeds WHERE 1 ORDER BY feed_name');
-    die('dontgo');
-    
+    $result = db_query('SELECT feed_name, fid FROM {tweet_feeds} WHERE 1 ORDER BY feed_name');    
   }
   else {
     // Otherwise, just load in the one specified
-    $result = db_query('SELECT feed_name, fid FROM tweet_feeds WHERE fid = :fid ORDER BY feed_name', array(':fid' => $fid));
+    $result = db_query('SELECT feed_name, fid FROM {tweet_feeds} WHERE fid = :fid ORDER BY feed_name', array(':fid' => $fid));
   }
   while ($fdata = $result->fetchObject()) {
     tweet_feed_set_message('Processing Feed: ' . $fdata->feed_name, 'ok', $web_interface);
@@ -645,12 +643,20 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   // The tweet author goes into the title field
   // Filter it cleanly since it is going into the title field. If we cannot use iconv,
   // then use something more primitive, but effective
-  if (function_exists('iconv')) {
-    $title_tweet_text = iconv('UTF-8', 'ASCII//TRANSLIT', $tweet->text);
-  }
-  else {
-    $title_tweet_text = preg_replace("/^[a-zA-Z0-9]+$/", "", $tweet->text);
-  }
+  // @see https://www.drupal.org/node/1910376
+  // @see http://webcollab.sourceforge.net/unicode.html
+  // Reject overly long 2 byte sequences, as well as characters above U+10000
+  // and replace with --.
+  $title_tweet_text = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]' .
+   '|[\x00-\x7F][\x80-\xBF]+' .
+   '|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*' .
+   '|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})' .
+   '|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+   '--', $tweet->text);
+  // Reject overly long 3 byte sequences and UTF-16 surrogates and replace
+  // with --.
+  $title_tweet_text = preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]' . '|\xED[\xA0-\xBF][\x80-\xBF]/S', '--', $title_tweet_text);
+
   $node->title = substr($tweet->user->screen_name . ': ' . $title_tweet_text, 0, 255);
     
   // The tweet itself goes into the tweet contents field
