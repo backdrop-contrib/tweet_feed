@@ -15,7 +15,7 @@ function tweet_feed_field_info() {
 }
 
 /**
- * Implements hook_field_is_empty
+ * Implements hook_field_is_empty().
  */
 function tweet_feed_field_is_empty($item, $field) {
   if ($field['type'] == 'tweet_feed_user_mention') {
@@ -28,6 +28,7 @@ function tweet_feed_field_is_empty($item, $field) {
 
 /**
  * Implements hook_field_presave().
+ *
  * PDO throws an error when attempting to insert an empty string into a float
  * field. Go through all values and convert empty strings to NULL.
  */
@@ -46,11 +47,11 @@ function tweet_feed_field_presave($entity_type, $entity, $field, $instance, $lan
   }
 }
 
-
 /**
- * Implements hook_field_widget_info
+ * Implements hook_field_widget_info().
  */
 function tweet_feed_field_widget_info() {
+  $widget = array();
   $widget['tweet_feed_textfield'] = array(
     'label' => t('Text field'),
     'description' => t('Widget for Tweet Feed file field'),
@@ -74,6 +75,7 @@ function tweet_feed_field_formatter_info() {
     ),
   );
 }
+
 /**
  * Implements hook_field_formatter_view().
  */
@@ -102,9 +104,8 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
   return $element;
 }
 
-
 /**
- * Implements hook_field_widget_form
+ * Implements hook_field_widget_form().
  */
 function tweet_feed_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   if ($field['type'] == 'tweet_feed_user_mention') {
@@ -132,4 +133,3 @@ function tweet_feed_field_widget_form(&$form, &$form_state, $field, $instance, $
   }
   return $element;
 }
-

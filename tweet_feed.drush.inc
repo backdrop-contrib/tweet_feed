@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implements hook_drush_command
+ * Implements hook_drush_command().
  */
 function tweet_feed_drush_command() {
   $items = array();
@@ -30,7 +30,7 @@ function tweet_feed_drush_command() {
  * Drush command to import all tweets from all feeds or just the one specified. 
  * TODO: Allow specifying import by machine name
  *
- * Implements drush_HOOK_COMMAND
+ * Implements drush_HOOK_COMMAND().
  */
 function drush_tweet_feed_tf_import_tweets() {
   $fid = drush_get_option('fid');

@@ -25,12 +25,17 @@ function tweet_feed_accounts_table() {
     'edit' => array('data' => t('Edit'), 'style' => 'text-align: center;'),
     'delete' => array('data' => t('Delete'), 'style' => 'text-align: center;'),
   );
-  
-  $result = db_query('SELECT * FROM {tweet_accounts} ORDER BY account_name ASC');
+  $result = db_select('tweet_accounts', 'a')
+              ->fields('a')
+              ->orderBy('account_name', 'ASC')
+              ->execute();
   while ($data = $result->fetchObject()) {
     // Determine how many queries this feed is responsible for
-    $count = db_query("SELECT COUNT(*) AS number FROM {tweet_feeds} WHERE aid = :aid", array(':aid' => $data->aid))->fetchField();
-    
+    $cresult = db_select('tweet_feeds', 'f')
+                 ->fields('f')
+                 ->condition('f.aid', $data->aid)
+                 ->execute();
+    $count = $cresult->rowCount();
     $row = array();
     $row[] = $data->account_name;
     $row[] = (array('data' => $count, 'align' => 'center'));
@@ -48,7 +53,7 @@ function tweet_feed_accounts_table() {
       ),
     );
   }
-  $output = theme('table', array('header'=>$header, 'rows' => $rows));
+  $output = theme('table', array('header' => $header, 'rows' => $rows));
   return $output;
 }
 
@@ -81,7 +86,10 @@ function tweet_feed_feeds_table() {
     'import' => array('data' => t('Import'), 'style' => 'text-align: center;'),
   );
   
-  $result = db_query('SELECT * FROM {tweet_feeds} ORDER BY feed_name ASC');
+  $result = db_select('tweet_feeds', 'f')
+              ->fields('f')
+              ->orderBy('feed_name', 'ASC')
+              ->execute();
   while ($data = $result->fetchObject()) {
   
     switch ($data->query_type) {
@@ -107,8 +115,8 @@ function tweet_feed_feeds_table() {
     $row[] = (array('data' => $query_type, 'align' => 'center'));
     $row[] = (array('data' => $feed_criteria, 'align' => 'center'));
     $row[] = (array('data' => $data->pull_count, 'align' => 'center'));
-    $row[] = (array('data' => $data->clear_prior, 'align' => 'center'));
     $row[] = (array('data' => $data->new_window, 'align' => 'center'));
+    $row[] = (array('data' => $data->clear_prior, 'align' => 'center'));
     $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
     $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/feeds/delete/' . $data->fid), 'align' => 'center'));
     $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
@@ -122,7 +130,7 @@ function tweet_feed_feeds_table() {
       ),
     );
   }
-  $output = theme('table', array('header'=>$header, 'rows' => $rows));
+  $output = theme('table', array('header' => $header, 'rows' => $rows));
   return $output;
 }
 
@@ -145,8 +153,11 @@ function tweet_feed_account_form($form, &$form_state, $aid = 0) {
   // If we are being passed an aid, then we are updating the form and need to repopulate
   // the values and tell the processor that we are updating and not creating new.
   if (!empty($aid)) {
-    $result = db_query('SELECT * FROM {tweet_accounts}
-                        WHERE aid=:aid', array(':aid' => $aid))->fetchObject();
+    $result = db_select('tweet_accounts', 'a')
+                ->fields('a')
+                ->condition('a.aid', $aid)
+                ->execute()
+                ->fetchObject();
     $account_name = $result->account_name;
     $consumer_key = $result->consumer_key;
     $consumer_secret = $result->consumer_secret;
@@ -273,8 +284,11 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   // If we are being passed an aid, then we are updating the form and need to repopulate
   // the values and tell the processor that we are updating and not creating new.
   if (!empty($fid)) {
-    $result = db_query('SELECT * FROM {tweet_feeds}
-                        WHERE fid=:fid', array(':fid' => $fid))->fetchObject();
+    $result = db_select('tweet_feeds', 'f')
+                ->fields('f')
+                ->condition('f.fid', $fid)
+                ->execute()
+                ->fetchObject();
     $fid = $result->fid;
     $aid = $result->aid;
     $feed_name = $result->feed_name;
@@ -316,7 +330,10 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   
   // Get a list of the configured accounts so we can assign this feed to a particular
   // API account for pulling and allow user to select which one to use
-  $result = db_query('SELECT aid, account_name FROM {tweet_accounts} ORDER BY account_name');
+  $result = db_select('tweet_accounts', 'a')
+              ->fields('a', array('aid', 'account_name'))
+              ->orderBy('account_name', 'ASC')
+              ->execute();
   while($adata = $result->fetchObject()) {
     $accounts[$adata->aid] = $adata->account_name;
   }
@@ -342,7 +359,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   $form['tweet_feed_query_settings']['search_term'] = array(
     '#type' => 'textfield',
     '#title' => t('Twitter Search Term'),
-    '#max_length' => 255,
+    '#max_length' => 64,
     '#default_value' => $search_term,
     '#states' => array(
       'visible' => array(
@@ -354,7 +371,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#type' => 'textfield',
     '#title' => t('Exact Twitter User ID For Timline Query'),
     '#description' => t('You can get this by going to mytwitterid.com'),
-    '#max_length' => 255,
+    '#max_length' => 64,
     '#default_value' => $timeline_id,
     '#states' => array(
       'visible' => array(
@@ -369,7 +386,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#type' => 'textfield',
     '#title' => t('List name'),
     '#description' => t('Enter the list name exactly as it appears on twitter.com'),
-    '#max_length' => 255,
+    '#max_length' => 64,
     '#default_value' => $list_name,
     '#states' => array(
       'visible' => array(
@@ -523,8 +540,10 @@ function tweet_feed_run_import($fid) {
     $update_node_id = 0;
     $hash = NULL;
     // find out if we already have this tweet, if we do, add the update primary key (pk)
-    $result = db_query("SELECT nid, tid, hash FROM {tweet_hashes}
-                        WHERE tid = :tweet_id", array(':tweet_id' => $tweet->id));
+    $result = db_select('tweet_hashes', 't')
+                ->fields('t', array('nid', 'tid', 'hash'))
+                ->condition('t.tid', $tweet->id)
+                ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
       $hash = md5(serialize($tweet));

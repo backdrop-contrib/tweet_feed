@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implements hook_schema()
+ * Implements hook_schema().
  */
 function tweet_feed_schema() {
   $schema = array();
@@ -118,7 +118,7 @@ function tweet_feed_schema() {
 }
 
 /**
- * Implements hook_field_schema
+ * Implements hook_field_schema().
  */
 function tweet_feed_field_schema($field) {
   if($field['type'] == 'tweet_feed_user_mention') {
@@ -151,7 +151,7 @@ function tweet_feed_field_schema($field) {
 }
 
 /**
- * Implements hook_uninstall
+ * Implements hook_uninstall().
  * http://drupal.stackexchange.com/questions/88207/how-to-delete-content-type-created-through-features
  */
 function tweet_feed_uninstall() {
@@ -163,13 +163,10 @@ function tweet_feed_uninstall() {
   drupal_uninstall_modules(array('tweet_feed_types'), FALSE);
   
   $content_types = array('twitter_tweet_feed', 'twitter_user_profile');
-  // Loop through each and unlock the content type.
+  // Loop through each and delete the content type.
   foreach ($content_types as $ctype) {
-    db_query("UPDATE {node_type} SET `custom` = 1, `locked` = 0 WHERE `type` = :ctype", array(':ctype' => $ctype));
+    node_type_delete($ctype);
   }
-  // Clean Drupal cache; this is necessary for the "Delete" link to appear
-  // next to the content type created by the feature.
-  drupal_flush_all_caches();
 }
 
 /**
@@ -181,6 +178,9 @@ function tweet_feed_update_7200() {
   if (!module_exists('tweet_feed_types')) {
     module_enable(array('tweet_feed_types'));
   }
+  
+  // Add in our module file during the update process as we may need some functions in it
+  include_once(drupal_get_path('module', 'tweet_feed') . '/tweet_feed.module');
   
   // Make sure our new tables are created
   $tables = tweet_feed_schema();
@@ -195,13 +195,13 @@ function tweet_feed_update_7200() {
   
   // Sanity check to make sure we have data to convert. If we don't have a consumer key,
   // then we really can't do anything else.
-  $consumer_key = (variable_get('tweet_feed_consumer_key', NULL) == NULL) ? NULL : variable_get('tweet_feed_consumer_key', NULL);
+  $consumer_key = variable_get('tweet_feed_consumer_key', NULL);
   if (!empty($consumer_key)) {
     // We need to create a feed to organize these tweets otherwise they will be orphaned
     // The first step is to create the account in our accounts table
     $data = array(
       'account_name' => t('Converted Account'),
-      'consumer_key' => variable_get('tweet_feed_consumer_key', NULL),
+      'consumer_key' => $consumer_key,
       'consumer_secret' => variable_get('tweet_feed_consumer_secret', NULL),
       'oauth_token' => variable_get('tweet_feed_oauth_token', NULL),
       'oauth_token_secret' => variable_get('tweet_feed_oauth_token_secret', NULL),
@@ -210,7 +210,7 @@ function tweet_feed_update_7200() {
     $account_id = $data['aid'];
   
     // Get our query type and convert to the new format
-    $query_type = variable_get('tweet_feed_query_type');
+    $query_type = variable_get('tweet_feed_query_type', 'search');
     $query_type = ($query_type == 'search') ? 1 : 2;
   
     // Now we create the feed
@@ -238,32 +238,32 @@ function tweet_feed_update_7200() {
       $node->promote = 0;
       $node->moderate = 0;
       $node->sticky = 0;
-      $node->language = 'und';
+      $node->language = LANGUAGE_NONE;
       $node->title = $tdata->screen_name . ': ' . strip_tags(substr($tdata->tweet, 0, 90));
 
       // The tweet itself goes into the tweet contents field
-      $node->field_tweet_contents['und'][0] = array(
+      $node->field_tweet_contents[LANGUAGE_NONE][0] = array(
         'value' => $tdata->tweet,
         'format' => 'full_html',
       );
 
       // Save the feed ID for this tweet
-      $node->field_tweet_feed_id['und'][0]['value'] = $feed['fid'];
+      $node->field_tweet_feed_id[LANGUAGE_NONE][0]['value'] = $feed['fid'];
   
       // Handle the author name
-      $node->field_tweet_author['und'][0] = array(
+      $node->field_tweet_author[LANGUAGE_NONE][0] = array(
         'value' => $tdata->screen_name,
         'safe_value' => $tdata->screen_name,
       );
 
       // Handle the author id
-      $node->field_tweet_author_id['und'][0] = array(
+      $node->field_tweet_author_id[LANGUAGE_NONE][0] = array(
         'value' => $tdata->user_id,
         'safe_value' => $tdata->user_id,
       );
 
       // Handle the tweet creation date
-      $node->field_tweet_creation_date['und'][0] = array(
+      $node->field_tweet_creation_date[LANGUAGE_NONE][0] = array(
         'value' => date('Y-m-d H:i:s', $tdata->created_at),
         'timezone' => 'UTC/GMT',
         'timezone_db' => 'UTC/GMT',
@@ -271,7 +271,7 @@ function tweet_feed_update_7200() {
       );
 
       // Handle the tweet id 
-      $node->field_tweet_id['und'][0] = array(
+      $node->field_tweet_id[LANGUAGE_NONE][0] = array(
         'value' => $tdata->tweet_id,
         'safe_value' => (int)$tdata->tweet_id,
       );
@@ -296,7 +296,7 @@ function tweet_feed_update_7200() {
         $hashtags = tweet_feed_process_hashtags($hashtag_entities);
         // Handle the hashtags 
         foreach ($hashtags as $hashtag) {
-          $node->field_twitter_hashtags['und'][] = array(
+          $node->field_twitter_hashtags[LANGUAGE_NONE][] = array(
             'target_id' => $hashtag,
           );
         }
@@ -305,17 +305,11 @@ function tweet_feed_update_7200() {
       // Not sure about this method of getting the big twitter profile image, but we're 
       // going to roll with it for now.
       $profile_image_url = str_replace('_normal', '', $tdata->profile_image_url);
-
-      // This may be redundant, but we are going to put this in here for the sake of our
-      // own sanity.
-      if (!function_exists('tweet_feed_process_twitter_image')) {
-        include_once(drupal_get_path('module', 'tweet_feed') . '/tweet_feed.module');
-      }
-      
+     
       // Handle the profile image obtained from twitter.com
       $file = tweet_feed_process_twitter_image($profile_image_url, 'tweet-feed-profile-image', $tdata->tweet_id);
       if ($file !== NULL) {
-        $node->field_profile_image['und'][0] = (array)$file;
+        $node->field_profile_image[LANGUAGE_NONE][0] = (array)$file;
       }
     
       // Save the node

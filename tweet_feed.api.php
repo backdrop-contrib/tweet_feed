@@ -20,5 +20,5 @@
 function hook_tweet_feed_tweet_save_alter(&$node, &$tweet) {
   // This example populates a custom field with the name of the original tweet
   // user:
-  $node->retweeted_from[LANGUAGE_NONE][] = $tweet->retweeted_status->user->name;
+  $node->retweeted_from[$node->language][] = $tweet->retweeted_status->user->name;
 }
