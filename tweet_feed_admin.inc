@@ -126,7 +126,7 @@ function tweet_feed_feeds_table() {
   if (count($rows) == 0) {
     $rows = array(
       array(
-        'data' => array(array('align' => 'center', 'colspan' => 8, 'data' => t('THERE ARE CURRENTLY NO CONFIGURED TWITTER FEEDS.')))
+        'data' => array(array('align' => 'center', 'colspan' => 9, 'data' => t('THERE ARE CURRENTLY NO CONFIGURED TWITTER FEEDS.')))
       ),
     );
   }
@@ -329,7 +329,8 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   );
   
   // Get a list of the configured accounts so we can assign this feed to a particular
-  // API account for pulling and allow user to select which one to use
+  // API account for pulling and allow user to select which one to use.
+  $accounts = array();
   $result = db_select('tweet_accounts', 'a')
               ->fields('a', array('aid', 'account_name'))
               ->orderBy('account_name', 'ASC')
@@ -337,6 +338,14 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   while($adata = $result->fetchObject()) {
     $accounts[$adata->aid] = $adata->account_name;
   }
+  
+  // You must have an account to add a feed. If you don't then everything falls apart.
+  // Warn the user here if they are trying to add a feed without an account.
+  if (count($accounts) < 1) {
+    drupal_set_message('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.', 'error');
+    drupal_goto('admin/config/services/tweet_feed/accounts');
+  }
+  
   $form['tweet_feed_query_settings']['aid'] = array(
     '#type' => 'select',
     '#title' => t('API Account To Use For Pulling This Feed'),
@@ -499,6 +508,92 @@ function tweet_feed_settings_form($form, &$form_state) {
 }
 
 /**
+ * The confirm dialog for deleting a feed
+ */
+function tweet_feed_delete_feed_form($form, &$form_state, $fid) {
+  $form['fid'] = array(
+    '#type' => 'hidden',
+    '#value' => $fid,
+  );
+  
+  return confirm_form(
+    $form,
+    t('Are you sure that you wish to delete this feed?'),
+    'admin/config/services/tweet_feed/feeds',
+    t('There is no way to undo this action once it has been taken. Consider that carefully before proceeding.'),
+    t('Delete Feed'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Delete feed callback form
+ */
+function tweet_feed_delete_feed_form_submit($form, &$form_state) {
+  $fid = $form_state['values']['fid'];
+  if (!empty($fid)) {
+    $number_deleted = db_delete('tweet_feeds')
+      ->condition('fid', $fid)
+      ->execute();
+    if ($number_deleted > 0) {
+      drupal_set_message('You have successfully deleted the selected feed.', 'status');
+      $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+    }
+    else {
+      drupal_set_message('The selected feed could not be deleted.', 'error');
+      $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+    }
+  }
+  else {
+    drupal_set_message('There was an internal error and the request could not be processed.', 'error');
+    $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+  }
+}
+
+/**
+ * The confirm dialog for deleting a users api account credentials
+ */
+function tweet_feed_delete_account_form($form, &$form_state, $aid) {
+  $form['aid'] = array(
+    '#type' => 'hidden',
+    '#value' => $aid,
+  );
+  
+  return confirm_form(
+    $form,
+    t('Are you sure that you wish to delete this account?'),
+    'admin/config/services/tweet_feed/accounts',
+    t('There is no way to undo this action once it has been taken. Consider that carefully before proceeding.'),
+    t('Delete Account'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Delete account callback form
+ */
+function tweet_feed_delete_account_form_submit($form, &$form_state) {
+  $aid = $form_state['values']['aid'];
+  if (!empty($aid)) {
+    $number_deleted = db_delete('tweet_accounts')
+      ->condition('aid', $aid)
+      ->execute();
+    if ($number_deleted > 0) {
+      drupal_set_message('You have successfully deleted the selected account.', 'status');
+      $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+    }
+    else {
+      drupal_set_message('The selected account could not be deleted.', 'error');
+      $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+    }
+  }
+  else {
+    drupal_set_message('There was an internal error and the request could not be processed.', 'error');
+    $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+  }
+}
+
+/**
  * Run the Import
  *
  * Handled through the web interface using the batch API
@@ -560,5 +655,4 @@ function tweet_feed_run_import($fid) {
   
   batch_set($batch);
   batch_process('admin/config/services/tweet_feed/feeds');
-
 }

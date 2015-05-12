@@ -18,7 +18,7 @@ function tweet_feed_menu() {
   $items = array();
   $items['admin/config/services/tweet_feed'] = array(
     'title' => t('Tweet Feed'),
-    'description' => t('The settings for the Tweet Feed module'),
+    'description' => t('The settings for the Tweet Feed module.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tweet_feed_settings_form'),
     'access callback' => 'user_access',
@@ -28,7 +28,7 @@ function tweet_feed_menu() {
   );
   $items['admin/config/services/tweet_feed/settings'] = array(
     'title' => t('Settings'),
-    'description' => t('The settings for the Tweet Feed module'),
+    'description' => t('The settings for the Tweet Feed module.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tweet_feed_settings_form'),
     'access callback' => 'user_access',
@@ -56,7 +56,7 @@ function tweet_feed_menu() {
   );
   $items['admin/config/services/tweet_feed/feeds/run/%tweet_feed_id'] = array(
     'title' => t('Import Feed'),
-    'description' => t('Import tweets from a specific feed'),
+    'description' => t('Import tweets from a specific feed.'),
     'page callback' => 'tweet_feed_run_import',
     'page arguments' => array(6),
     'access callback' => 'user_access',
@@ -76,7 +76,7 @@ function tweet_feed_menu() {
   );
   $items['admin/config/services/tweet_feed/accounts/edit/%tweet_feed_id'] = array(
     'title' => t('Add Account'),
-    'description' => t('Add a new Twitter API account..'),
+    'description' => t('Add a new Twitter API account.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tweet_feed_account_form', 6),
     'access callback' => 'user_access',
@@ -86,9 +86,9 @@ function tweet_feed_menu() {
   );
   $items['admin/config/services/tweet_feed/accounts/delete/%tweet_feed_id'] = array(
     'title' => t('Add Account'),
-    'description' => t('Add a new Twitter API account..'),
+    'description' => t('Delete Twitter API account.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_account_form', 6),
+    'page arguments' => array('tweet_feed_delete_account_form', 6),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
@@ -116,9 +116,9 @@ function tweet_feed_menu() {
   );
   $items['admin/config/services/tweet_feed/feeds/delete/%tweet_feed_id'] = array(
     'title' => t('Delete Feed'),
-    'description' => t('Add a new feed to the list of aggregated feeds.'),
+    'description' => t('Delete a feed from the list of aggregated feeds.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_feeds_form', 6),
+    'page arguments' => array('tweet_feed_delete_feed_form', 6),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
