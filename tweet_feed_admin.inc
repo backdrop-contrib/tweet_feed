@@ -45,7 +45,7 @@ function tweet_feed_accounts_table() {
     $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/accounts/delete/' . $data->aid), 'align' => 'center'));
     $rows[] = $row;
   }
-  
+
   if (count($rows) == 0) {
     $rows = array(
       array(
@@ -85,13 +85,13 @@ function tweet_feed_feeds_table() {
     'delete' => array('data' => t('Delete'), 'style' => 'text-align: center;'),
     'import' => array('data' => t('Import'), 'style' => 'text-align: center;'),
   );
-  
+
   $result = db_select('tweet_feeds', 'f')
               ->fields('f')
               ->orderBy('feed_name', 'ASC')
               ->execute();
   while ($data = $result->fetchObject()) {
-  
+
     switch ($data->query_type) {
       case QUERY_SEARCH:
         $query_type = 'Timeline Search';
@@ -109,12 +109,12 @@ function tweet_feed_feeds_table() {
         $query_type = t('Unknown');
         $feed_criteria = t('Unknown');
     }
-  
+
     $row = array();
     $row[] = $data->feed_name;
     $row[] = (array('data' => $query_type, 'align' => 'center'));
     $row[] = (array('data' => $feed_criteria, 'align' => 'center'));
-    $row[] = (array('data' => $data->pull_count, 'align' => 'center'));
+    $row[] = (array('data' => number_format($data->pull_count * 100), 'align' => 'center'));
     $row[] = (array('data' => $data->new_window, 'align' => 'center'));
     $row[] = (array('data' => $data->clear_prior, 'align' => 'center'));
     $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
@@ -122,7 +122,7 @@ function tweet_feed_feeds_table() {
     $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
     $rows[] = $row;
   }
-  
+
   if (count($rows) == 0) {
     $rows = array(
       array(
@@ -136,7 +136,7 @@ function tweet_feed_feeds_table() {
 
 
 /**
- * Settings form 
+ * Settings form
  * our settings for for oauth tokens and search queries
  */
 function tweet_feed_account_form($form, &$form_state, $aid = 0) {
@@ -165,11 +165,11 @@ function tweet_feed_account_form($form, &$form_state, $aid = 0) {
     $oauth_token_secret = $result->oauth_token_secret;
   }
   else {
-    // Otherwise just initialize the form so we do not have a swath of errors 
+    // Otherwise just initialize the form so we do not have a swath of errors
     $aid = $account_name = $consumer_key = $consumer_secret = NULL;
     $oauth_token = $oauth_token_secret = NULL;
   }
-  
+
   // Set up our settings form for this particular account (new or update)
   if (!empty($aid)) {
     $form['aid'] = array(
@@ -233,7 +233,7 @@ function tweet_feed_account_form($form, &$form_state, $aid = 0) {
 function tweet_feed_account_form_submit($form, &$form_state) {
   // Get a shortcut for our $form_state['values'] array
   $values = $form_state['values'];
-  
+
   // Define our array of data provided by the form
   $data = array(
     'account_name' => $values['account_name'],
@@ -242,20 +242,20 @@ function tweet_feed_account_form_submit($form, &$form_state) {
     'oauth_token' => $values['oauth_token'],
     'oauth_token_secret' => $values['oauth_token_secret'],
   );
-  
+
   // If aid is empty then we're creating a new record. Otherwise we are updating an
   // existing one and need to call the proper drupal_write_record function accordingly.
   if (!empty($values['aid'])) {
     $data['aid'] = $values['aid'];
     $status = drupal_write_record('tweet_accounts', $data, array('aid'));
-  } 
-  else {
-    $status = drupal_write_record('tweet_accounts', $data); 
   }
-  
+  else {
+    $status = drupal_write_record('tweet_accounts', $data);
+  }
+
   // Go back to the list of accounts when we are done.
   $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
-  
+
   // Set the status message based on the result we get from writing our record.
   switch ($status) {
     case SAVED_NEW:
@@ -299,13 +299,15 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     $pull_count = $result->pull_count;
     $clear_prior = $result->clear_prior;
     $new_window = $result->new_window;
+    $hash_taxonomy = $result->hash_taxonomy;
   }
   else {
-    // Otherwise just initialize the form so we do not have a swath of errors 
+    // Otherwise just initialize the form so we do not have a swath of errors
     $fid = $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
     $twitter_user_id = $pull_count = $new_window = $clear_prior = $timeline_id = NULL;
+    $hash_taxonomy = NULL;
   }
-  
+
   // Set up our settings for this particular feed (or update if it already exists)
   if (!empty($fid)) {
     $form['fid'] = array(
@@ -327,7 +329,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#default_value' => $feed_name,
     '#required' => TRUE,
   );
-  
+
   // Get a list of the configured accounts so we can assign this feed to a particular
   // API account for pulling and allow user to select which one to use.
   $accounts = array();
@@ -338,14 +340,14 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   while($adata = $result->fetchObject()) {
     $accounts[$adata->aid] = $adata->account_name;
   }
-  
+
   // You must have an account to add a feed. If you don't then everything falls apart.
   // Warn the user here if they are trying to add a feed without an account.
   if (count($accounts) < 1) {
     drupal_set_message('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.', 'error');
     drupal_goto('admin/config/services/tweet_feed/accounts');
   }
-  
+
   $form['tweet_feed_query_settings']['aid'] = array(
     '#type' => 'select',
     '#title' => t('API Account To Use For Pulling This Feed'),
@@ -353,7 +355,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#default_value' => $aid,
     '#required' => TRUE,
   );
-  
+
   $form['tweet_feed_query_settings']['query_type'] = array(
     '#type' => 'radios',
     '#title' => t('Type of Twitter Query'),
@@ -402,24 +404,13 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
         ':input[name="query_type"]' => array('value' => QUERY_LIST),
       ),
     ),
-  );  
+  );
   $form['tweet_feed_query_settings']['pull_count'] = array(
-    '#type' => 'select',
-    '#title' => t('Number of Items to Pull'),
-    '#max_length' => 2,
-    '#options' => array(
-      '100' => '100',
-      '200' => '200',
-      '300' => '300',
-      '400' => '400',
-      '500' => '500',
-      '600' => '600',
-      '700' => '700',
-      '800' => '800',
-      '900' => '900',
-      '1000' => '1000'
-    ),
-    '#description' => t('Twitter limits tweet pulling to 1500 every 15 minutes. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs.'),
+    '#type' => 'textfield',
+    '#title' => t('Number of Items to Pull x 100'),
+    '#maxlength' => 3,
+    '#size' => 3,
+    '#description' => t('Twitter limits tweet pulling to 1500 every 15 minutes for Timeline and List queries and 18,000 for searches. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs. To say nothing of PHP memory :)'),
     '#required' => TRUE,
     '#default_value' => $pull_count,
   );
@@ -428,6 +419,13 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#title' => t('Open tweeted links, hashtags and mentions in a new window.'),
     '#default_value' => $new_window,
   );
+  /*
+  $form['tweet_feed_query_settings']['hash_taxonomy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Link hashtags to taxonomy terms instead of Twitter.'),
+    '#default_value' => $hash_taxonomy,
+  );
+  */
   $form['tweet_feed_query_settings']['clear_prior'] = array(
     '#type' => 'checkbox',
     '#title' => t('Remove all tweets in this feed prior to import.'),
@@ -442,6 +440,29 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
 }
 
 /**
+ * Validation callback for the Tweet Feeds feed form
+ *
+ * So far all we really need to do is make sure the number of pull requests x 100 to
+ * not exceed the amount Twitter will give us for the type of query being done. This is
+ * 18,000 for searches and 1,500 for Timeline and List queries.
+ */
+function tweet_feed_feeds_form_validate($form, &$form_state) {
+  $pull_count = $form_state['values']['pull_count'];
+  $query_type = $form_state['values']['query_type'];
+
+  if ($query_type == QUERY_SEARCH) {
+    if ($pull_count > 180) {
+      form_set_error('pull_count', t('The pull count for search queries cannot exceed 180 per update interval.'));
+    }
+  }
+  else {
+    if ($pull_count > 15) {
+      form_set_error('pull_count', t('The pull count for timeline/list queries cannot exceed 15 per update interval.'));
+    }
+  }
+}
+
+/**
  * Submit handler for accounts form
  *
  * Take the account information and either save it to a new record or update
@@ -450,7 +471,7 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
 function tweet_feed_feeds_form_submit($form, &$form_state) {
   // Get a shortcut for our $form_state['values'] array
   $values = $form_state['values'];
-  
+
   // Define our array of data provided by the form
   $data = array(
     'aid' => $values['aid'],
@@ -462,21 +483,22 @@ function tweet_feed_feeds_form_submit($form, &$form_state) {
     'pull_count' => $values['pull_count'],
     'clear_prior' => $values['clear_prior'],
     'new_window' => $values['new_window'],
+    'hash_taxonomy' => 0,
   );
-  
+
   // If aid is empty then we're creating a new record. Otherwise we are updating an
   // existing one and need to call the proper drupal_write_record function accordingly.
   if (!empty($values['fid'])) {
     $data['fid'] = $values['fid'];
     $status = drupal_write_record('tweet_feeds', $data, array('fid'));
-  } 
-  else {
-    $status = drupal_write_record('tweet_feeds', $data); 
   }
-  
+  else {
+    $status = drupal_write_record('tweet_feeds', $data);
+  }
+
   // Go back to the list of accounts when we are done.
   $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
-  
+
   // Set the status message based on the result we get from writing our record.
   switch ($status) {
     case SAVED_NEW:
@@ -515,7 +537,7 @@ function tweet_feed_delete_feed_form($form, &$form_state, $fid) {
     '#type' => 'hidden',
     '#value' => $fid,
   );
-  
+
   return confirm_form(
     $form,
     t('Are you sure that you wish to delete this feed?'),
@@ -558,7 +580,7 @@ function tweet_feed_delete_account_form($form, &$form_state, $aid) {
     '#type' => 'hidden',
     '#value' => $aid,
   );
-  
+
   return confirm_form(
     $form,
     t('Are you sure that you wish to delete this account?'),
@@ -601,7 +623,6 @@ function tweet_feed_delete_account_form_submit($form, &$form_state) {
 function tweet_feed_run_import($fid) {
   // Get all of the tweets to be imported
   $tweets = tweet_feed_pull_data_from_feed($fid, TRUE);
-  
   // Get the feed info for our display
   $feed = tweet_feed_get_feed_object($fid);
   switch ($feed->query_type) {
@@ -629,8 +650,8 @@ function tweet_feed_run_import($fid) {
     'operations' => array(),
     'finished' => 'tweet_feed_run_import_finish',
   );
-  
-  foreach($tweets as $key=>$tweet) {
+
+  foreach($tweets as $key => $tweet) {
     // Initialize our update_node_id
     $update_node_id = 0;
     $hash = NULL;
@@ -652,7 +673,7 @@ function tweet_feed_run_import($fid) {
     }
     $batch['operations'][] = array('tweet_feed_save_tweet', array($tweet, $feed, $update_node_id, $hash));
   }
-  
+
   batch_set($batch);
   batch_process('admin/config/services/tweet_feed/feeds');
 }

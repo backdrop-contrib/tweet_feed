@@ -1,8 +1,7 @@
 name = Tweet Feed
-description = A Twitter integration module that pulls profiles of people and tweets who tweet according to search  or user timeline.
+description = A Twitter integration module that pulls profiles of people and tweets who tweet according to search, list or user timeline.
 core = 7.x
 package = Other
 project = tweet_feed
 
 dependencies[] = oauth_common
-dependencies[] = tweet_feed_types

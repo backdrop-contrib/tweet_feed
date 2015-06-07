@@ -1,18 +1,9 @@
 <?php
-/**
- * @file
- * tweet_feed_types.views_default.inc
- */
 
-/**
- * Implements hook_views_default_views().
- */
-function tweet_feed_types_views_default_views() {
-  $export = array();
-
+function tweet_feed_views_default_views() {
   $view = new view();
   $view->name = 'sample_tweet_feed';
-  $view->description = '';
+  $view->description = 'Sample views utilizing the functionality of the Tweet Feed module.';
   $view->tag = 'default';
   $view->base_table = 'node';
   $view->human_name = 'Sample Tweet Feed';
@@ -136,7 +127,7 @@ function tweet_feed_types_views_default_views() {
   $handler->display->display_options['arguments']['field_tweet_author_value']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['arguments']['field_tweet_author_value']['limit'] = '0';
   $handler->display->display_options['path'] = 'tweet-feed-by-user/%/%';
-  $export['sample_tweet_feed'] = $view;
-
-  return $export;
+  
+  $views[$view->name] = $view;
+  return $views;
 }

@@ -35,9 +35,8 @@ class TwitterOAuth {
   public $useragent = 'TwitterOAuth v0.2.0-beta2';
   /* Immediately retry the API call if the response was not successful. */
   //public $retry = TRUE;
-
-
-
+  // Get the HTML headers of the response from Twitter.
+  public $http_headers;
 
   /**
    * Set API URLS
@@ -201,7 +200,7 @@ class TwitterOAuth {
     curl_setopt($ci, CURLOPT_HTTPHEADER, array('Expect:'));
     curl_setopt($ci, CURLOPT_SSL_VERIFYPEER, $this->ssl_verifypeer);
     curl_setopt($ci, CURLOPT_HEADERFUNCTION, array($this, 'getHeader'));
-    curl_setopt($ci, CURLOPT_HEADER, FALSE);
+    curl_setopt($ci, CURLOPT_HEADER, TRUE);
 
     switch ($method) {
       case 'POST':
@@ -219,11 +218,32 @@ class TwitterOAuth {
 
     curl_setopt($ci, CURLOPT_URL, $url);
     $response = curl_exec($ci);
+
+    // Get the response headers and parse them out. Then adjust the body accordingly
+    $header_size = curl_getinfo($ci, CURLINFO_HEADER_SIZE);
+    $body = substr($response, $header_size);
+    $this->http_headers = $this->get_headers_from_curl_response($response);
     $this->http_code = curl_getinfo($ci, CURLINFO_HTTP_CODE);
     $this->http_info = array_merge($this->http_info, curl_getinfo($ci));
     $this->url = $url;
     curl_close ($ci);
-    return $response;
+    return $body;
+  }
+
+  public function get_headers_from_curl_response($response) {
+    $headers = array();
+    $header_text = substr($response, 0, strpos($response, "\r\n\r\n"));
+
+    foreach (explode("\r\n", $header_text) as $i => $line) {
+      if ($i === 0) {
+        $headers['http_code'] = $line;
+      }
+      else {
+        list ($key, $value) = explode(': ', $line);
+        $headers[$key] = $value;
+      }
+    }
+    return $headers;
   }
 
   /**

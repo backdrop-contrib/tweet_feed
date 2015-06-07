@@ -47,10 +47,16 @@ function tweet_feed_schema() {
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE),
+      'hash_taxonomy' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('fid'),
   );
-  
+
   $schema['tweet_accounts'] = array(
     'fields'=> array(
       'aid' => array(
@@ -96,7 +102,7 @@ function tweet_feed_schema() {
       'not null' => TRUE),
     ),
     'primary key' => array('nid'),
-  );  
+  );
   $schema['tweet_user_hashes'] = array(
     'fields'=> array(
       'nid' => array(
@@ -113,7 +119,7 @@ function tweet_feed_schema() {
       'not null' => TRUE),
     ),
     'primary key' => array('nid'),
-  );  
+  );
   return $schema;
 }
 
@@ -151,21 +157,30 @@ function tweet_feed_field_schema($field) {
 }
 
 /**
+ * Implements hook_install().
+ */
+function tweet_feed_install() {
+  module_load_include('inc', 'tweet_feed', 'tweet_feed_create_entities_and_bundles');
+  tweet_feed_create_entities_and_bundles();
+}
+
+/**
  * Implements hook_uninstall().
- * http://drupal.stackexchange.com/questions/88207/how-to-delete-content-type-created-through-features
  */
 function tweet_feed_uninstall() {
-  // The schema tables will be deleted by Drupal. We need to disable the feature and
-  // remove the node contents and content types here.
-  if (module_exists('tweet_feed_types')) {
-    module_disable(array('tweet_feed_types'), FALSE);
-  }
-  drupal_uninstall_modules(array('tweet_feed_types'), FALSE);
-  
-  $content_types = array('twitter_tweet_feed', 'twitter_user_profile');
-  // Loop through each and delete the content type.
-  foreach ($content_types as $ctype) {
-    db_query("UPDATE {node_type} SET `custom` = 1, `locked` = 0 
-              WHERE `type` = :ctype", array(':ctype' => $ctype));
-  }
+  variable_del('tweet_feed_pull_data_from_feed');
+  variable_del('tweet_feed_cron_last_feed');
+}
+
+/**
+ * Add the hash_taxonomy option to our per feed settings.
+ */
+function tweet_feed_update_7103() {
+  $field = array(
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('tweet_feeds', 'hash_taxonomy', $field);
 }

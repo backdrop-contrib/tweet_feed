@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the Tweet Feed Types feature.
- */
-
-include_once 'tweet_feed_types.features.inc';

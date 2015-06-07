@@ -84,13 +84,15 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
   switch ($display['type']) {
     // Override check plain
     case 'tweet_feed_user_mentions':
-      foreach ($items as $delta=>$item) {
+      foreach ($items as $delta => $item) {
         $mentions[] = $item['tweet_feed_mention_name'] . ' (' . $item['tweet_feed_mention_screen_name'] . '): ' . $item['tweet_feed_mention_id'];
       }
-      $mentions = implode('<br />', $mentions);
-      $element[$delta] = array(
-        '#markup' => $mentions,
-      );
+      if (!empty($delta)) {
+        $mentions = implode('<br />', $mentions);
+        $element[$delta] = array(
+          '#markup' => $mentions,
+        );
+      }
       break;
     // Give us a way to display emoji.
     case 'emoji_formatter':
