@@ -5,3 +5,4 @@ package = Other
 project = tweet_feed
 
 dependencies[] = oauth_common
+dependencies[] = entityreference
