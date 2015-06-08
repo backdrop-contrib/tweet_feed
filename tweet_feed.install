@@ -162,6 +162,12 @@ function tweet_feed_field_schema($field) {
 function tweet_feed_install() {
   module_load_include('inc', 'tweet_feed', 'tweet_feed_create_entities_and_bundles');
   tweet_feed_create_entities_and_bundles();
+  // Make sure our directories are created
+  drupal_mkdir('public://tweet-profile-user-profile-image', FALSE);
+  drupal_mkdir('public://tweet-feed-tweet-images', FALSE);
+  drupal_mkdir('public://tweet-feed-profile-image', FALSE);
+  drupal_mkdir('public://tweet-feed-profile-banner-image', FALSE);
+  drupal_mkdir('public://tweet-feed-profile-background-image', FALSE);
 }
 
 /**
@@ -170,17 +176,4 @@ function tweet_feed_install() {
 function tweet_feed_uninstall() {
   variable_del('tweet_feed_pull_data_from_feed');
   variable_del('tweet_feed_cron_last_feed');
-}
-
-/**
- * Add the hash_taxonomy option to our per feed settings.
- */
-function tweet_feed_update_7103() {
-  $field = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-  );
-  db_add_field('tweet_feeds', 'hash_taxonomy', $field);
 }
