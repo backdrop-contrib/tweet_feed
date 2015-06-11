@@ -782,17 +782,20 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
       if (is_object($media)) {
         $image = file_get_contents($media->media_url . ':large');
         if (!empty($image)) {
+          tweet_feed_check_path('public://tweet-feed-tweet-images');
           $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/ ' . $tweet->id . '.jpg', FILE_EXISTS_REPLACE);
-          $file = array();
-          $file[$node->language][0] = array(
-            'fid' => $file_temp->fid,
-            'filename' => $file_temp->filename,
-            'filemime' => $file_temp->filemime,
-            'uid' => 1,
-            'uri' => $file_temp->uri,
-            'status' => 1,
-          );
-          $node->field_tweet_linked_images = $file;
+          if (is_object($file_temp)) {
+            $file = array();
+            $file[$node->language][0] = array(
+              'fid' => $file_temp->fid,
+              'filename' => $file_temp->filename,
+              'filemime' => $file_temp->filemime,
+              'uid' => 1,
+              'uri' => $file_temp->uri,
+              'status' => 1,
+            );
+            $node->field_tweet_linked_images = $file;
+          }
           unset($file);
           unset($file_temp);
           unset($image);
@@ -1084,6 +1087,9 @@ function tweet_feed_process_twitter_image($url, $type, $tid = NULL) {
     return NULL;
   }
 
+  // Check the path and create the directory if it does not exist.
+  tweet_feed_check_path('public://' . $type );
+
   // Save the contents of the file to the file system and create the filename and uri
   $file = file_save_data($contents, 'public://' . $type . '/' . md5($url) . '.jpg', FILE_EXISTS_REPLACE);
 
@@ -1131,3 +1137,19 @@ function tweet_feed_bail($admin = FALSE) {
     }
   }
 }
+
+/**
+ * Make sure the directory exists. If not, create it
+ *
+ * @param string $uri
+ *   The URI location of the path to be created.
+ */
+function tweet_feed_check_path($uri) {
+  $instance = file_stream_wrapper_get_instance_by_uri($uri);
+  $real_path = $instance->realpath();
+  if (!file_exists($real_path)) {
+    @mkdir($real_path, 0777, TRUE);
+  }
+}
+
+
