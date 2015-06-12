@@ -26,8 +26,7 @@ function tweet_feed_menu() {
   $items['admin/config/services/tweet_feed'] = array(
     'title' => t('Tweet Feed'),
     'description' => t('The settings for the Tweet Feed module.'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_settings_form'),
+    'page callback' => 'tweet_feed_menu_page',
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
@@ -41,7 +40,7 @@ function tweet_feed_menu() {
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/config/services/tweet_feed/accounts'] = array(
     'title' => t('Twitter API Accounts'),
@@ -50,7 +49,7 @@ function tweet_feed_menu() {
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/config/services/tweet_feed/feeds'] = array(
     'title' => t('Twitter Feeds'),
@@ -59,7 +58,7 @@ function tweet_feed_menu() {
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/config/services/tweet_feed/feeds/run/%tweet_feed_id'] = array(
     'title' => t('Import Feed'),
@@ -161,6 +160,12 @@ function tweet_feed_permission() {
  * they were created (in ascending order by ID).
  */
 function tweet_feed_cron() {
+  // If we are not doing this as per administrative configuration, then we can skup
+  $tweet_feed_disable_cron = variable_get('tweet_feed_disable_cron', 0);
+  if (!empty($tweet_feed_disable_cron)) {
+    return TRUE;
+  }
+
   // Get a list of all the available feeds
   $feed = array();
   $result = db_select('tweet_feeds', 'f')
@@ -1152,4 +1157,34 @@ function tweet_feed_check_path($uri) {
   }
 }
 
-
+/**
+ * Implements hook_help().
+ */
+function tweet_feed_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#tweet_feed':
+      module_load_include('inc', 'pathauto');
+      $output  = '<h4>' . t('Overview') . '</h4>';
+      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://dev.twitter.com/rest/public/rate-limiting">' . t('Twitter\'s REST API') . '.</a></p>';
+      $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
+      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';      
+      $output .= '<hr />';
+      $output .= '<h4>' . t('Twitter Settings') . '</h4>';
+      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Twitter-Settings">' . t('Configuring account and feed settings.') . '</a></p>';
+      $output .= '<hr />';      
+      $output .= '<h4>' . t('Views Integration') . '</h4>';
+      $output .= '<p>'  . t('Tweet Feed has full views integration. A basic view of tweets can be created at Administer -> Structure -> Views -> Add New View by selecting Twitter Tweet Feed as the content type to show in the view.') . '</p>';
+      $output .= '<p>'  . t('Further filtering can be accomplished using either the standard filters or the contextual filters available in the collapsed advanced fieldset. An example use case of when contextual features would be helpful is to add a block of dynamically filtered tweets based on matching a hashtag entered in a given field on any node.') . '</p>';
+      $output .= '<p>'  . t('Look on the Advanced Use Cases page for information on using the Tweet Feed module in powerful ways to display node specific Tweets, Tweets related to node content and some other more simplistic use cases.') . '</p>';
+      $output .= '<hr />';  
+      $output .= '<h4>' . t('Ways to Run the Import.') . '</h4>';
+      $output .= '<ol><li>' . t('They can be periodically imported using Drupal\'s build in cron system. This requires the run cron option on the Tweet Feed Settings page be enabled. Also make sure PHP has enough memory allocated to it in order to run the process along with all of the other tasks it needs to run.') . '</li>';
+      $output .= '<li>' . t('They can be manually imported by clicking the **Import** link on the right hand side of each feed in the feed information table.') . '</li>';
+      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol><br />';
+      $output .= '<hr />';
+      $output .= '<h4>' . t('Drush Commands') . '</h4>';
+      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a></p>';
+      $output .= '<hr />';
+      return $output;
+  }
+}

@@ -1,21 +1,36 @@
 <?php
 
 /**
+ * Administrative Portal
+ *
+ * When the root Tweet Feed option is selected, it presents a list of the tools available
+ * to be configured.
+ */
+function tweet_feed_menu_page() {
+  $all_blocks = array();
+  $blocks = system_admin_menu_block(
+    array('tab_root' => 'admin/config/services/tweet_feed',
+          'path' => 'admin/config/services/tweet_feed')
+  );
+  foreach($blocks as $key=>$block) {
+    $new_block = $block;
+    $new_block['show'] = TRUE;
+    $all_blocks[] = $new_block;
+  }
+  $block_out['content'] = theme('admin_block_content', array('content' => $all_blocks));
+  $block_out['title'] = t('Tweet Feed Configuration');
+  $block_out['show'] = TRUE;
+
+  return theme('admin_page', array('blocks' => array($block_out)));
+}
+
+/**
  * Accounts Table
  *
  * A table to list the Twitter accounts associated with this install that can be used
  * to bring in feeds to the database.
  */
 function tweet_feed_accounts_table() {
-  // Set up the right breadcrumbs
-  $breadcrumbs = array();
-  $breadcrumbs[] = l('Home', '<front>');
-  $breadcrumbs[] = l('Administration', 'admin');
-  $breadcrumbs[] = l('Configuration', 'admin/config');
-  $breadcrumbs[] = l('Web Services', 'admin/config/services');
-  $breadcrumbs[] = l('Tweet Feed Accounts', 'admin/config/services/tweet_feed/accounts');
-  drupal_set_breadcrumb($breadcrumbs);
-
   $rows = array();
   $header = array(
     'account_name' => array('data' => t('Account name'), 'style' => 'text-align: center;'),
@@ -64,15 +79,6 @@ function tweet_feed_accounts_table() {
  * can be tied to a specific feed account above.
  */
 function tweet_feed_feeds_table() {
-  // Set up the right breadcrumbs
-  $breadcrumbs = array();
-  $breadcrumbs[] = l('Home', '<front>');
-  $breadcrumbs[] = l('Administration', 'admin');
-  $breadcrumbs[] = l('Configuration', 'admin/config');
-  $breadcrumbs[] = l('Web Services', 'admin/config/services');
-  $breadcrumbs[] = l('Tweet Feed Feeds', 'admin/config/services/tweet_feed/feeds');
-  drupal_set_breadcrumb($breadcrumbs);
-
   $rows = array();
   $header = array(
     'feed_name' => array('data' => t('Feed name'), 'style' => 'text-align: center;'),
@@ -134,22 +140,16 @@ function tweet_feed_feeds_table() {
   return $output;
 }
 
-
 /**
- * Settings form
- * our settings for for oauth tokens and search queries
+ * Twitter Feed Accounts form callback.
+ * 
+ * Our settings for for oauth tokens and search queries.
+ *
+ * @param int $aid
+ *   The tweet feed account id (from the configured twitter accounts). Only provided
+ *   if we are updating an existing account.
  */
 function tweet_feed_account_form($form, &$form_state, $aid = 0) {
-  // Set up the right breadcrumbs
-  $breadcrumbs = array();
-  $breadcrumbs[] = l('Home', '<front>');
-  $breadcrumbs[] = l('Administration', 'admin');
-  $breadcrumbs[] = l('Configuration', 'admin/config');
-  $breadcrumbs[] = l('Web Services', 'admin/config/services');
-  $breadcrumbs[] = l('Tweet Feed Accounts', 'admin/config/services/tweet_feed/accounts');
-  $breadcrumbs[] = l('Tweet Feed Account Form', substr(request_uri(),1));
-  drupal_set_breadcrumb($breadcrumbs);
-
   // If we are being passed an aid, then we are updating the form and need to repopulate
   // the values and tell the processor that we are updating and not creating new.
   if (!empty($aid)) {
@@ -271,16 +271,15 @@ function tweet_feed_account_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Twitter Feed Form Callback
+ *
+ * This is where we configure our feed and the type of feed that it is.
+ *
+ * @param int $fid
+ *   The feed id of the feed being updated (only provided on feed update).
+ */
 function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
-  $breadcrumbs = array();
-  $breadcrumbs[] = l('Home', '<front>');
-  $breadcrumbs[] = l('Administration', 'admin');
-  $breadcrumbs[] = l('Configuration', 'admin/config');
-  $breadcrumbs[] = l('Web Services', 'admin/config/services');
-  $breadcrumbs[] = l('Tweet Feed Feeds', 'admin/config/services/tweet_feed/feeds');
-  $breadcrumbs[] = l('Tweet Feed Feeds Form', substr(request_uri(),1));
-  drupal_set_breadcrumb($breadcrumbs);
-
   // If we are being passed an aid, then we are updating the form and need to repopulate
   // the values and tell the processor that we are updating and not creating new.
   if (!empty($fid)) {
@@ -526,6 +525,13 @@ function tweet_feed_settings_form($form, &$form_state) {
     '#description' => t('This will create a node record for every person who tweets in your feed.'),
     '#default_value' => variable_get('tweet_feed_get_tweeter_profiles', 0),
   );
+  $form['tweet_feed_disable_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable running Tweet Feed cron jobs when the general cron is run.'),
+    '#description' => t('Doing this will disable Drupal from doing imports during cron runs. You can still import tweets on a cron using Tweet Feed\'s drush commands.'),
+    '#default_value' => variable_get('tweet_feed_disable_cron', 0),
+  );
+ 
   return system_settings_form($form);
 }
 

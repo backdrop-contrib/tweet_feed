@@ -3,6 +3,7 @@ description = A Twitter integration module that pulls profiles of people and twe
 core = 7.x
 package = Other
 project = tweet_feed
+configure = admin/config/services/tweet_feed
 
 dependencies[] = oauth_common
 dependencies[] = entityreference
