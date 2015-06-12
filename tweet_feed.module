@@ -1155,6 +1155,7 @@ function tweet_feed_check_path($uri) {
   if (!file_exists($real_path)) {
     @mkdir($real_path, 0777, TRUE);
   }
+  return file_exists($real_path);
 }
 
 /**

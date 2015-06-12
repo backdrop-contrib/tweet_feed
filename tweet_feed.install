@@ -163,11 +163,15 @@ function tweet_feed_install() {
   module_load_include('inc', 'tweet_feed', 'tweet_feed_create_entities_and_bundles');
   tweet_feed_create_entities_and_bundles();
   // Make sure our directories are created
-  drupal_mkdir('public://tweet-profile-user-profile-image', FALSE);
-  drupal_mkdir('public://tweet-feed-tweet-images', FALSE);
-  drupal_mkdir('public://tweet-feed-profile-image', FALSE);
-  drupal_mkdir('public://tweet-feed-profile-banner-image', FALSE);
-  drupal_mkdir('public://tweet-feed-profile-background-image', FALSE);
+  module_load_include('module', 'tweet_feed');
+  $a = tweet_feed_check_path('public://tweet-profile-user-profile-image');
+  $b = tweet_feed_check_path('public://tweet-feed-tweet-images');
+  $c = tweet_feed_check_path('public://tweet-feed-profile-image');
+  $d = tweet_feed_check_path('public://tweet-feed-profile-banner-image');
+  $e = tweet_feed_check_path('public://tweet-feed-profile-background-image');
+  if (empty($a) || empty($b) || empty($c) || empty($d) || empty($e)) {
+    drupal_set_message(t('Failed to create one or more file directories that Tweet Feed needs. It will attempt to create these as needed, but you need to fix the directory permissions issues on your "files" directory.'), 'error');
+  }
 }
 
 /**
