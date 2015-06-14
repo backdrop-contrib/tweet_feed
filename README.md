@@ -23,6 +23,13 @@ Contextual views inspiration and refinement compliments of Ashley Hall in conjun
 ** Dependencies **
 * entityreference
 * oauth
+* date
+
+There are other dependencies based on these.
+
+* ctools
+* date_api
+* entity_api
 
 ** Highly Recommended **
 * views

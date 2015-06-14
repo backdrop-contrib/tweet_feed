@@ -7,3 +7,4 @@ configure = admin/config/services/tweet_feed
 
 dependencies[] = oauth_common
 dependencies[] = entityreference
+dependencies[] = date
