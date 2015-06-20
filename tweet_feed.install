@@ -1,7 +1,7 @@
 <?php
 
 /**
- * implementation of hook_schema()
+ * Implements hook_schema().
  */
 function tweet_feed_schema() {
   $schema['tweet_feed'] = array(
@@ -11,42 +11,50 @@ function tweet_feed_schema() {
         'description' => 'The twitter tweet id for this tweet.',
         'type' => 'int',
         'size' => 'big',
-        'not null' => FALSE),
+        'not null' => FALSE,
+      ),
       'tweet' => array(
         'description' => 'The text of the tweet.',
         'type' => 'text',
         'size' => 'normal',
-        'not null' => TRUE),
+        'not null' => TRUE,
+      ),
       'created_at' => array(
         'description' => 'The date the tweet was posted (timestamp)',
         'type' => 'int',
         'length' => 11,
-        'not null' => TRUE),
+        'not null' => TRUE,
+      ),
       'user_id' => array(
         'description' => 'The user ID of the poster',
         'type' => 'varchar',
         'length' => 24,
-        'not null' => TRUE),
+        'not null' => TRUE,
+      ),
       'profile_image_url' => array(
         'description' => 'The URL of the image for the poster of this tweet',
         'type' => 'text',
         'size' => 'normal',
-        'not null' => FALSE),
+        'not null' => FALSE,
+      ),
       'profile_image_https_url' => array(
         'description' => 'The secure URL of the image for the poster of this tweet',
         'type' => 'text',
         'size' => 'normal',
-        'not null' => FALSE),
+        'not null' => FALSE,
+      ),
       'screen_name' => array(
         'description' => 'The screen name of the person tweeting',
         'type' => 'varchar',
         'length' => 24,
-        'not null' => TRUE),
+        'not null' => TRUE,
+      ),
       'hashtags' => array(
         'description' => 'A comma separated list of hashtags without the hash.',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => FALSE),
+        'not null' => FALSE,
+      ),
     ),
   );
 
@@ -54,8 +62,9 @@ function tweet_feed_schema() {
 }
 
 /**
- * implementation of hook_install()
- * this is necessary because of our update hook 7109. we can't add a primary key to 
+ * Implements hook_install().
+ *
+ * This is necessary because of our update hook 7109. we can't add a primary key to 
  * a field that is null. so we need to remove it from the schema on install and add 
  * it later for fresh installs
  */
@@ -64,7 +73,7 @@ function tweet_feed_install() {
 }
 
 /**
- * implementation of hook_uninstall()
+ * Implements hook_uninstall().
  */
 function tweet_feed_uninstall() {
   variable_del('tweet_feed_consumer_key');
@@ -81,7 +90,7 @@ function tweet_feed_uninstall() {
 }
 
 /**
- * Alter the user_id field to be a varchar for handling larger user id numbers
+ * Alter the user_id field to be a varchar for handling larger user id numbers.
  */
 function tweet_feed_update_7104() {
   db_change_field('tweet_feed','user_id','user_id',
@@ -149,7 +158,7 @@ function tweet_feed_update_7109() {
 }
 
 /**
- * Add the field for holding the secure profile image for SSL enabled web sites
+ * Add the field for holding the secure profile image for SSL enabled web sites.
  */
 function tweet_feed_update_7111() {
   $schema = tweet_feed_schema();

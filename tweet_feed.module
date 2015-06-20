@@ -1,7 +1,7 @@
 <?php
 
 /**
- * implementation of hook_menu()
+ * Implements hook_menu().
  */
 function tweet_feed_menu() {
   $items = array();
@@ -18,7 +18,7 @@ function tweet_feed_menu() {
 }
 
 /**
- * implementation of hook_permission()
+ * Implements hook_permission().
  */
 function tweet_feed_permission() {
   return array(
@@ -30,14 +30,10 @@ function tweet_feed_permission() {
 }
 
 /**
- * tweet_feed_settings_form($form,&$form_state)
- * our settings for for oauth tokens and search queries
+ * Administrative settings form.
  */
-function tweet_feed_settings_form($form,&$form_state) {
-  $form = array();
-
+function tweet_feed_settings_form($form, &$form_state) {
   $form_state['redirect'] = 'admin/configure/tweet_feed';
-  
   $form['tweet_feed_api_keys'] = array(
     '#type' => 'fieldset',
     '#title' => t('Twitter API Tokens'),
@@ -80,13 +76,13 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#required' => TRUE,
     '#default_value' => variable_get('tweet_feed_oauth_token_secret', NULL),
   );
-  
   $form['tweet_feed_query_settings']['tweet_feed_query_type'] = array(
     '#type' => 'radios',
     '#title' => t('Type of Twitter Query'),
     '#options' => array(
       'search' => t('Twitter Search'),
       'timeline' => t('User Timeline Display'),
+      'list' => t('User List'),
     ),
     '#default_value' => variable_get('tweet_feed_query_type', 'search'),
   );
@@ -96,8 +92,8 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#max_length' => 255,
     '#default_value' => variable_get('tweet_feed_search_query', NULL),
     '#states' => array(
-      'invisible' => array(
-        ':input[name="tweet_feed_query_type"]' => array('value' => 'timeline'),
+      'visible' => array(
+        ':input[name="tweet_feed_query_type"]' => array('value' => 'search'),
       ),
     ),
   );
@@ -108,8 +104,22 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#max_length' => 255,
     '#default_value' => variable_get('tweet_feed_user_id', NULL),
     '#states' => array(
-      'invisible' => array(
-        ':input[name="tweet_feed_query_type"]' => array('value' => 'search'),
+      'visible' => array(
+        array(
+          array(':input[name="tweet_feed_query_type"]' => array('value' => 'timeline')),
+          array(':input[name="tweet_feed_query_type"]' => array('value' => 'list')),
+        ),
+      ),
+    ),
+  );
+  $form['tweet_feed_query_settings']['tweet_feed_timeline_list'] = array(
+    '#type' => 'textfield',
+    '#title' => t('The user list to pull from.'),
+    '#max_length' => 255,
+    '#default_value' => variable_get('tweet_feed_timeline_list', NULL),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="tweet_feed_query_type"]' => array('value' => 'list'),
       ),
     ),
   );
@@ -138,7 +148,6 @@ function tweet_feed_settings_form($form,&$form_state) {
     '#title' => t('Open Links In New Window'),
     '#default_value' => variable_get('tweet_feed_new_window', 0),
   );
-
   $form['tweet_feed_query_settings']['tweet_feed_truncate'] = array(
     '#type' => 'checkbox',
     '#title' => t('Truncate Tweets Table on Every Import'),
@@ -149,7 +158,7 @@ function tweet_feed_settings_form($form,&$form_state) {
 }
 
 /**
- * implementation of hook_cron()
+ * Implements hook_cron().
  */
 function tweet_feed_cron() {
   
@@ -180,50 +189,103 @@ function tweet_feed_cron() {
 
   $current_count = 0;
   $tweets = array();
-  $params = (variable_get('tweet_feed_query_type','search') == 'timeline') ?
-    array('user_id' => variable_get('tweet_feed_user_id', NULL), 'count' => 100) :
-    array('q' => variable_get('tweet_feed_search_query', NULL), 'count' => 100);
-        
-  while(count($tweets) <= $number_to_get) {
+  
+  // Initialize our parameters
+  $query_type = variable_get('tweet_feed_query_type', 'search');
+  switch ($query_type) {
+  case 'timeline':
+    $params = array('user_id' => variable_get('tweet_feed_user_id', NULL), 'count' => 100);
+    break;
+  case 'list':
+    $list_name = variable_get('tweet_feed_timeline_list', NULL);
+    $params = array(
+      'owner_id' => variable_get('tweet_feed_user_id', NULL), 
+      'count' => 100,
+      'slug' => $list_name,
+    );
+    break;
+  default:
+    $params = array('q' => variable_get('tweet_feed_search_query', NULL), 'count' => 100);
+    break;
+}
+
+  $lowest_id = -1;  
+  while (count($tweets) < $number_to_get && $lowest_id != 0) {
     if (!empty($tdata->search_metadata->next_results)) {
       $next = substr($tdata->search_metadata->next_results, 1);
       $parts = explode('&', $next);
-      foreach($parts as $part) {
+      foreach ($parts as $part) {
         list($key, $value) = explode('=', $part);
         if ($key == 'max_id') {
-          $value = $lowest_id;
+          $value = $lowest_id - 1;
         }
         $params[$key] = $value;
       }
     }
-
-    if (variable_get('tweet_feed_query_type', 'search') == 'timeline') {
-      $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
-      /* get the tweets */
-      $tdata = new stdClass();
-      $tdata->statuses = json_decode(
-        $con->oAuthRequest($url, 'GET', $params)
-      );
-    }
-    else {
-      $url = 'https://api.twitter.com/1.1/search/tweets.json';
-      /* get the tweets */
-      $tdata = json_decode(
-        $con->oAuthRequest($url, 'GET', $params)
-      );    
-    }
     
-    if (!empty($tdata) && !empty($tdata->statuses)) {    
-      $data = tweet_feed_process_tweets($tdata->statuses);
-    
-      // If this is FALSE, then we have hit an error and need to stop processing
-      if ($data['tweets'] === FALSE) {
+    switch ($query_type) {
+      case 'timeline':
+        $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+        $tdata = new stdClass();
+        $tdata->statuses = json_decode(
+          $con->oAuthRequest($url, 'GET', $params)
+        );
         break;
+      
+      case 'search':
+        $url = 'https://api.twitter.com/1.1/search/tweets.json';
+        $tdata = json_decode(
+          $con->oAuthRequest($url, 'GET', $params)
+        );
+        break;
+      
+      case 'list':
+        $list_name = variable_get('tweet_feed_timeline_list', NULL);
+        $params = array(
+          'owner_id' => variable_get('tweet_feed_user_id', NULL), 
+          'count' => 100,
+          'slug' => $list_name,
+        );
+        if ($lowest_id > 0) {
+          $params['max_id'] = $lowest_id - 1;
+        }
+        $tdata = json_decode(
+          $con->oAuthRequest(
+            'https://api.twitter.com/1.1/lists/statuses.json',
+            'GET', $params
+          )
+        );
+      
+      default:
+        break;
+    }
+        
+    if (!empty($tdata)) {
+      if (is_array($tdata)) {
+        // Get the lowest ID from the last element in the timeline
+        $end_of_the_line = array_pop($tdata);
+        array_push($tdata, $end_of_the_line);
+        $lowest_id = $end_of_the_line->id;
+        
+        $tweet_data = $tdata;
       }
-    
-      // merge the total tweets so we know how many we have
-      $tweets = array_merge($data['tweets'], $tweets);
-      $lowest_id = $data['lowest_id'];
+      else {
+        $tweet_data = $tdata->statuses;
+      }
+      
+      $tweet_data = tweet_feed_process_tweets($tweet_data);
+      if (count($tweet_data) == 0) {
+        $lowest_id = 0;
+      }
+      else {
+        if (count($tweet_data) < 100 && count($tweet_data) > 0) {
+          $lowest_id = 0;
+          $tweets = array_merge($tweets, $tweet_data);
+        }
+        else {
+          $tweets = array_merge($tweets, $tweet_data);
+        }
+      }
     }
     else {
       break;
@@ -232,27 +294,34 @@ function tweet_feed_cron() {
 }
 
 /**
- * process tweet data from what we have retrieved from the Twitter API 
+ * Process tweet data from what we have retrieved from the Twitter API 
+ *
+ * @param mixed $tdata
+ *   If an object, it is likely errors. Otherwise an array of tweets returned by the api.
+ * @return array $tweets
+ *   The processed tweets
  */
 function tweet_feed_process_tweets($tdata) {
   $tweets = array();
   if (!empty($tdata)) {  
     if (!empty($tdata->errors)) {
-      foreach($tdata->errors as $error) {
+      foreach ($tdata->errors as $error) {
         drupal_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error');
-        return array('tweets' => FALSE, 'lowest_id' => -1);
+        return array();
       }
     }
     else {
       foreach($tdata as $key => $tweet) {
         // find out if we already have this tweet, if we do, add it to the update pk
-        $count = db_query("SELECT COUNT(*) FROM {tweet_feed} WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id))->fetchField();
+        $count = db_query("SELECT COUNT(*) 
+                           FROM {tweet_feed} 
+                           WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id))->fetchField();
         $pk = ($count > 0) ? array('tweet_id') : array();
         
         $creation_timestamp = strtotime($tweet->created_at);
         
         $lowest_id = ($key == 0) ? $tweet->id : $lowest_id;
-        $lowest_id = ($tweet->id < $lowest_id) ? $tweet->id : $lowest_id;
+        $lowest_id = ($tweet->id <= $lowest_id) ? $tweet->id : $lowest_id;
         
         $tweet_html = tweet_feed_format_output($tweet->text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
@@ -272,32 +341,40 @@ function tweet_feed_process_tweets($tdata) {
     }
   }
   else {
-    return array('tweets' => FALSE, 'lowest_id' => -1);
+    return array();
   }
-  return array('tweets' => $tweets, 'lowest_id' => $lowest_id);
+  return $tweets;
 }
 
 /**
- * get the hashtags for our hasgtag field. surround by spaces for the purposes of
- * exact matching in our view options
+ * Get the hashtags for our hasgtag field. Surround by spaces for the purposes of
+ * exact matching in our view options.
+ *
+ * @param array $hashtag_entities
+ *   An array of hashtags to be added to the database.
+ * @return string $hashtags
+ *   A string of hashtags (minus the hash) to be returned for entrance to the database.
  */
 function tweet_feed_get_hashtags($hashtag_entities) {
   $hashtags = array();
-  foreach($hashtag_entities as $entity) {
+  foreach ($hashtag_entities as $entity) {
     $hashtags[] = ' ' . $entity->text . ' ';
   }
   return join(',', $hashtags);
 }
 
 /**
- * tweet_feed_format_output($tweet)
- * makes links, hash tags, and usernames clickable.
+ * Make links, hash tags, and usernames clickable.
+ * 
+ * @param string $tweet
+ *   A string representing the tweet text.
+ * @return string $tweet
+ *   The same tweet with hashtags, tags and user mentions linked.
  */
 function tweet_feed_format_output($tweet) {
-  /* based on our preference, assign all links to new windows or to the same window */
+  // Based on our preference, assign all links to new windows or to the same window.
   $target = (variable_get('tweet_feed_new_window',0) == 1) ? '_blank' : '_self';
-
-  /* look for links and make them clickable */
+  // Look for links and make them clickable.
   $tweet = preg_replace('/(((f|ht){1}tp:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
     '<a target="'.$target.'" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/(((f|ht){1}tps:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
@@ -310,7 +387,7 @@ function tweet_feed_format_output($tweet) {
 }
 
 /**
- * implementation of hook_views_api()
+ * Implements hook_views_api().
  */
 function tweet_feed_views_api() {
   return array(

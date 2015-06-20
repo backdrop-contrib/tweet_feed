@@ -1,7 +1,7 @@
 <?php
 
 /**
- * implementation of hook_views_default_views()
+ * Implements hook_views_default_views().
  */
 function tweet_feed_views_default_views() {
   $export = array();

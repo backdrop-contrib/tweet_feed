@@ -1,7 +1,7 @@
 <?php
 
 /**
- * implementation of views_data()
+ * Implements hook_views_data().
  */
 function tweet_feed_views_data() {
   return array(
@@ -97,14 +97,12 @@ function tweet_feed_views_data() {
           'handler' => 'views_handler_filter_hashtag_string',
         ),
       ),
-
     ),
   );
 }
 
 
 class views_handler_filter_hashtag_string extends views_handler_filter_string {
-
   function op_contains($field) {
     $this->query->add_where($this->options['group'], $field, array($this->value), 'IN');
   }
@@ -155,7 +153,7 @@ class views_handler_argument_hashtag extends views_handler_argument_string {
 		$form['match_exact'] = array(
 			'#type' => 'checkbox',
 			'#title' => t('Exact Match Mode'),
-			'#description' => t('Match the argument exactly. Not as a potential substring'),
+			'#description' => t('Match the argument exactly. Not as a potential substring.'),
 			'#default_value' => $this->options['match_exact'],
 			'#fieldset' => 'more',
 		);
