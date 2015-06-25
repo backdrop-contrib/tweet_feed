@@ -20,31 +20,31 @@ function tweet_feed_schema() {
         'not null' => TRUE,
       ),
       'created_at' => array(
-        'description' => 'The date the tweet was posted (timestamp)',
+        'description' => 'The date the tweet was posted (timestamp).',
         'type' => 'int',
         'length' => 11,
         'not null' => TRUE,
       ),
       'user_id' => array(
-        'description' => 'The user ID of the poster',
+        'description' => 'The user ID of the poster.',
         'type' => 'varchar',
         'length' => 24,
         'not null' => TRUE,
       ),
       'profile_image_url' => array(
-        'description' => 'The URL of the image for the poster of this tweet',
+        'description' => 'The URL of the image for the poster of this tweet.',
         'type' => 'text',
         'size' => 'normal',
         'not null' => FALSE,
       ),
       'profile_image_https_url' => array(
-        'description' => 'The secure URL of the image for the poster of this tweet',
+        'description' => 'The secure URL of the image for the poster of this tweet.',
         'type' => 'text',
         'size' => 'normal',
         'not null' => FALSE,
       ),
       'screen_name' => array(
-        'description' => 'The screen name of the person tweeting',
+        'description' => 'The screen name of the person tweeting.',
         'type' => 'varchar',
         'length' => 24,
         'not null' => TRUE,
@@ -53,6 +53,25 @@ function tweet_feed_schema() {
         'description' => 'A comma separated list of hashtags without the hash.',
         'type' => 'varchar',
         'length' => 255,
+        'not null' => FALSE,
+      ),
+      'is_reply' => array(
+        'description' => 'Is this tweet a reply to another?',
+        'type' => 'int',
+        'size' => 1,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'media_url' => array(
+        'description' => 'The URL of the image for the poster of this tweet.',
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => FALSE,
+      ),
+      'media_url_https' => array(
+        'description' => 'The secure URL of the image for the poster of this tweet.',
+        'type' => 'text',
+        'size' => 'normal',
         'not null' => FALSE,
       ),
     ),
@@ -166,3 +185,19 @@ function tweet_feed_update_7111() {
     db_add_field('tweet_feed', 'profile_image_https_url', $schema['tweet_feed']['fields']['profile_image_https_url']);
   }
 }
+/**
+ * Add our flag to tweets that are replies and fields for media urls.
+ */
+function tweet_feed_update_7113() {
+  $schema = tweet_feed_schema();
+  if (!db_field_exists('tweet_feed', 'is_reply')) {
+    db_add_field('tweet_feed', 'is_reply', $schema['tweet_feed']['fields']['is_reply']);
+  }
+  if (!db_field_exists('tweet_feed', 'media_url')) {
+    db_add_field('tweet_feed', 'media_url', $schema['tweet_feed']['fields']['media_url']);
+  }
+  if (!db_field_exists('tweet_feed', 'media_url_https')) {
+    db_add_field('tweet_feed', 'media_url_https', $schema['tweet_feed']['fields']['media_url_https']);
+  }
+}
+

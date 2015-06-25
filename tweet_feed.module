@@ -249,7 +249,8 @@ function tweet_feed_cron() {
         if ($lowest_id > 0) {
           $params['max_id'] = $lowest_id - 1;
         }
-        $tdata = json_decode(
+        $tdata = new stdClass();
+        $tdata->statuses = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/lists/statuses.json',
             'GET', $params
@@ -259,21 +260,14 @@ function tweet_feed_cron() {
       default:
         break;
     }
-        
+    
     if (!empty($tdata)) {
-      if (is_array($tdata)) {
-        // Get the lowest ID from the last element in the timeline
-        $end_of_the_line = array_pop($tdata);
-        array_push($tdata, $end_of_the_line);
-        $lowest_id = $end_of_the_line->id;
-        
-        $tweet_data = $tdata;
-      }
-      else {
-        $tweet_data = $tdata->statuses;
-      }
-      
-      $tweet_data = tweet_feed_process_tweets($tweet_data);
+      // Get the lowest ID from the last element in the timeline
+      $end_of_the_line = array_pop($tdata->statuses);
+      array_push($tdata->statuses, $end_of_the_line);
+      $lowest_id = $end_of_the_line->id;
+
+      $tweet_data = tweet_feed_process_tweets($tdata->statuses);
       if (count($tweet_data) == 0) {
         $lowest_id = 0;
       }
@@ -325,6 +319,22 @@ function tweet_feed_process_tweets($tdata) {
         
         $tweet_html = tweet_feed_format_output($tweet->text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
+        
+        if (!empty($tweet->entities->media)) {
+          $media_url = $tweet->entities->media[0]->media_url;
+          $media_url_https = $tweet->entities->media[0]->media_url_https;
+        }
+        else {
+          $media_url = NULL;
+          $media_url_https = NULL;
+        }
+        
+        // If we are configured to exclude replies, then do that here. We need to increase
+        // the size of the tweets array so that we still have a proper count of all
+        // tweets processed.
+        $exclude_replies = variable_get('tweet_feed_exclude_replies', 0);
+        $is_reply = (!empty($tweet->in_reply_to_status_id)) ? 1 : 0;
+        
         $data = array(
           'tweet' => utf8_encode($tweet_html),
           'created_at' => $creation_timestamp,
@@ -334,6 +344,9 @@ function tweet_feed_process_tweets($tdata) {
           'screen_name' => $tweet->user->screen_name,
           'hashtags' => $hashtags,
           'tweet_id' => $tweet->id,
+          'is_reply' => $is_reply,
+          'media_url' => $media_url,
+          'media_url_https' => $media_url_https,
         );
         $tweets[] = $data;
         drupal_write_record('tweet_feed', $data, $pk);

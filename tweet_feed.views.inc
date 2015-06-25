@@ -16,7 +16,7 @@ function tweet_feed_views_data() {
       ),
       'tweet_id' => array(
         'title' => t('Tweet ID'),
-        'help' => t('The Twitter Tweet ID of the tweet'),
+        'help' => t('The Twitter Tweet ID of the tweet.'),
         'field' => array(
           'handler' => 'views_handler_field_numeric',
           'click sortable' => TRUE,
@@ -51,7 +51,21 @@ function tweet_feed_views_data() {
       ),
       'user_id' => array(
         'title' => t('User ID'),
-        'help' => t('The user_id of the person making the tweet'),
+        'help' => t('The user_id of the person making the tweet.'),
+        'field' => array(
+          'handler' => 'views_handler_field_numeric',
+          'click sortable' => TRUE,
+        ),
+        'filter' => array(
+          'handler' => 'views_handler_filter_numeric',
+        ),
+        'sort' => array(
+          'handler' => 'views_handler_sort',
+        ),
+      ),
+      'is_reply' => array(
+        'title' => t('Is Reply'),
+        'help' => t('Is this tweet a reply to another tweet?'),
         'field' => array(
           'handler' => 'views_handler_field_numeric',
           'click sortable' => TRUE,
@@ -73,6 +87,20 @@ function tweet_feed_views_data() {
       'profile_image_https_url' => array(
         'title' => t('Profile Image Secure URL'),
         'help' => t('The url to the profile image of the tweeter (secure url).'),
+        'field' => array(
+          'handler' => 'views_handler_field',
+        ),
+      ),
+      'media_url' => array(
+        'title' => t('Media Image URL'),
+        'help' => t('The url to the media image for a tweet.'),
+        'field' => array(
+          'handler' => 'views_handler_field',
+        ),
+      ),
+      'media_url_https' => array(
+        'title' => t('Media Image Secure URL'),
+        'help' => t('The url to the media image for a tweet (secure url).'),
         'field' => array(
           'handler' => 'views_handler_field',
         ),
