@@ -178,6 +178,18 @@ function tweet_feed_install() {
  * Implements hook_uninstall().
  */
 function tweet_feed_uninstall() {
+  $content_types = array('twitter_tweet_feed', 'twitter_user_profile');
+  foreach ($content_types as $content_type) {
+    // Clear out the content type
+    $nids = array();
+    $result = db_select('node', 'n')
+      ->fields('n')
+      ->condition('type', $content_type, '=')
+      ->execute();
+    if ($result->rowCount() > 0) {
+      node_type_delete($content_type);
+    }
+  }
   variable_del('tweet_feed_pull_data_from_feed');
   variable_del('tweet_feed_cron_last_feed');
 }
