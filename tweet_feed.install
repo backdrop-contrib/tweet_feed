@@ -58,7 +58,7 @@ function tweet_feed_schema() {
       'is_reply' => array(
         'description' => 'Is this tweet a reply to another?',
         'type' => 'int',
-        'size' => 1,
+        'length' => 1,
         'not null' => TRUE,
         'default' => 0,
       ),
