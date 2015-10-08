@@ -30,10 +30,8 @@ function tweet_feed_views_default_views() {
   $handler->display->display_options['fields']['field_profile_image']['label'] = '';
   $handler->display->display_options['fields']['field_profile_image']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_profile_image']['click_sort_column'] = 'fid';
-  $handler->display->display_options['fields']['field_profile_image']['settings'] = array(
-    'image_style' => 'tweet_feed_thumbnail',
-    'image_link' => '',
-  );
+
+
   /* Field: Content: Tweet Author */
   $handler->display->display_options['fields']['field_tweet_author']['id'] = 'field_tweet_author';
   $handler->display->display_options['fields']['field_tweet_author']['table'] = 'field_data_field_tweet_author';

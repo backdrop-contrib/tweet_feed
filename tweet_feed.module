@@ -228,7 +228,7 @@ function tweet_feed_cron() {
       // find out if we already have this tweet, if we do, add the update primary key (pk).
       $result = db_select('tweet_hashes', 'h')
                   ->fields('h', array('nid', 'tid', 'hash'))
-                  ->condition('h.tid', $tweet->id)
+                  ->condition('h.tid', $tweet->id_str)
                   ->execute();
       if ($result->rowCount() > 0) {
         $tdata = $result->fetchObject();
@@ -533,7 +533,7 @@ function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_
     // find out if we already have this tweet, if we do, add the update primary key (pk)
     $result = db_select('tweet_hashes', 'h')
                 ->fields('h', array('nid', 'tid', 'hash'))
-                ->condition('h.tid', $tweet->id)
+                ->condition('h.tid', $tweet->id_str)
                 ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
@@ -788,7 +788,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
         $image = file_get_contents($media->media_url . ':large');
         if (!empty($image)) {
           tweet_feed_check_path('public://tweet-feed-tweet-images');
-          $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/ ' . $tweet->id . '.jpg', FILE_EXISTS_REPLACE);
+          $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/ ' . $tweet->id_str . '.jpg', FILE_EXISTS_REPLACE);
           if (is_object($file_temp)) {
             $file = array();
             $file[$node->language][0] = array(
@@ -844,8 +844,8 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Handle the tweet id
   $node->field_tweet_id[$node->language][0] = array(
-    'value' => $tweet->id,
-    'safe_value' => (int)$tweet->id,
+    'value' => $tweet->id_str,
+    'safe_value' => $tweet->id_str,
   );
 
   // Handle the favorite count for this tweet
@@ -868,7 +868,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   );
 
   // Create a direct link to this tweet
-  $node->field_link_to_tweet[$node->language][0]['value'] = 'https://twitter.com/' . $tweet->user->screen_name . '/status/' . (int)$tweet->id;
+  $node->field_link_to_tweet[$node->language][0]['value'] = 'https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str;
 
   // Handle user mentions (our custom field defined by the module). Also places them in
   // the user mentions taxonomy.
@@ -892,7 +892,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
 
   // Handle the profile image obtained from twitter.com
-  $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-image', $tweet->id);
+  $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-image', $tweet->id_str);
   if ($file !== NULL) {
     $node->field_profile_image[$node->language][0] = (array)$file;
   }
@@ -914,7 +914,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     ->condition('nid', $node->nid)
     ->execute();
   $hash_insert = array(
-    'tid' => $tweet->id,
+    'tid' => $tweet->id_str,
     'nid' => $node->nid,
     'hash' => $tweet_hash,
   );
