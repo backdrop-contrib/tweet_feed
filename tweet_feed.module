@@ -265,7 +265,7 @@ function tweet_feed_cron() {
       // Get the lowest ID from the last element in the timeline
       $end_of_the_line = array_pop($tdata->statuses);
       array_push($tdata->statuses, $end_of_the_line);
-      $lowest_id = $end_of_the_line->id;
+      $lowest_id = $end_of_the_line->id_str;
 
       $tweet_data = tweet_feed_process_tweets($tdata->statuses);
       if (count($tweet_data) == 0) {
@@ -309,13 +309,13 @@ function tweet_feed_process_tweets($tdata) {
         // find out if we already have this tweet, if we do, add it to the update pk
         $count = db_query("SELECT COUNT(*) 
                            FROM {tweet_feed} 
-                           WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id))->fetchField();
+                           WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id_str))->fetchField();
         $pk = ($count > 0) ? array('tweet_id') : array();
         
         $creation_timestamp = strtotime($tweet->created_at);
         
-        $lowest_id = ($key == 0) ? $tweet->id : $lowest_id;
-        $lowest_id = ($tweet->id <= $lowest_id) ? $tweet->id : $lowest_id;
+        $lowest_id = ($key == 0) ? $tweet->id_str : $lowest_id;
+        $lowest_id = ($tweet->id_str <= $lowest_id) ? $tweet->id_str : $lowest_id;
         
         $tweet_html = tweet_feed_format_output($tweet->text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
@@ -338,12 +338,12 @@ function tweet_feed_process_tweets($tdata) {
         $data = array(
           'tweet' => utf8_encode($tweet_html),
           'created_at' => $creation_timestamp,
-          'user_id' => $tweet->user->id,
+          'user_id' => $tweet->user->id_str,
           'profile_image_url' => $tweet->user->profile_image_url,
           'profile_image_https_url' => $tweet->user->profile_image_url_https,
           'screen_name' => $tweet->user->screen_name,
           'hashtags' => $hashtags,
-          'tweet_id' => $tweet->id,
+          'tweet_id' => $tweet->id_str,
           'is_reply' => $is_reply,
           'media_url' => $media_url,
           'media_url_https' => $media_url_https,
