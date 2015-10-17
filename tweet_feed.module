@@ -763,7 +763,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   // with --.
   $title_tweet_text = preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]' . '|\xED[\xA0-\xBF][\x80-\xBF]/S', '--', $title_tweet_text);
 
-  $node->title = substr($tweet->user->screen_name . ': ' . $title_tweet_text, 0, 255);
+  $node->title = check_plain(substr($tweet->user->screen_name . ': ' . $title_tweet_text, 0, 255));
 
   // The tweet itself goes into the tweet contents field
   $node->field_tweet_contents[$node->language][0] = array(
@@ -921,7 +921,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     'nid' => $node->nid,
     'hash' => $tweet_hash,
   );
-  drupal_write_record('tweet_hashes', $hash_insert);
+  db_insert('tweet_hashes')->fields($hash_insert)->execute();
 
   // Unset the node variable so we can re-use it
   unset($node);
@@ -930,6 +930,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   // to either create it or update it here. To determine create/update we need to check
   // the hash of the profile id and see if it matches our data.
   if (variable_get('tweet_feed_get_tweeter_profiles', FALSE) == TRUE) {
+    $user_hash = md5(serialize($tweet->user));
     // See if we have a profile for the author if this tweet. If we do not then we do not
     // need to do the rest of the checks
     $query = new EntityFieldQuery();
@@ -941,7 +942,6 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     // of the profile is the same as the hash of the user data. If so, then update. If not,
     // then skip and on to the next
     if (isset($result['node'])) {
-      $user_hash = md5(serialize($tweet->user));
       $result = db_select('tweet_user_hashes', 'h')
                 ->fields('h', array('nid', 'tuid', 'hash'))
                 ->condition('h.tuid', $tweet->user->id)
@@ -1026,7 +1026,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
       'nid' => $node->nid,
       'hash' => $user_hash,
     );
-    drupal_write_record('tweet_user_hashes', $hash_insert);
+    db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
   }
 }
 
