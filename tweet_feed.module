@@ -775,10 +775,13 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   $node->field_tweet_feed_id[$node->language][0]['value'] = $feed->fid;
 
   // Geographic Information if it exist
-  //$node->field_geographic_coordinates[$node->language][0] = array(
-  //  'value' => $tweet->place->full_name . ', ' . $tweet->place->country,
-  //  'safe_value' => $tweet->place->full_name . ', ' . $tweet->place->country,
-  //);
+  if (!empty($tweet->place) && is_object($tweet->place)) {
+    $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
+    $node->field_geographic_coordinates[$node->language][0] = array(
+      'value' => $bb,
+      'safe_value' => $bb,
+    );
+  }
 
   // Handle user mentions (our custom field defined by the module). Also places them in
   // the user mentions taxonomy.
@@ -849,7 +852,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   );
 
   // Handle the favorite count for this tweet
-  $node->field_twitter_favorite_count['unc'][0]['value'] = $tweet->favorite_count;
+  $node->field_twitter_favorite_count[$node->language][0]['value'] = $tweet->favorite_count;
 
   // Handle the hashtags
   foreach ($hashtags as $hashtag) {
