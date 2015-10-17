@@ -193,20 +193,20 @@ function tweet_feed_cron() {
   // Initialize our parameters
   $query_type = variable_get('tweet_feed_query_type', 'search');
   switch ($query_type) {
-  case 'timeline':
-    $params = array('user_id' => variable_get('tweet_feed_user_id', NULL), 'count' => $number_to_get);
-    break;
-  case 'list':
-    $list_name = variable_get('tweet_feed_timeline_list', NULL);
-    $params = array(
-      'owner_id' => variable_get('tweet_feed_user_id', NULL), 
-      'count' => 100,
-      'slug' => $list_name,
-    );
-    break;
-  default:
-    $params = array('q' => variable_get('tweet_feed_search_query', NULL), 'count' => 100);
-    break;
+    case 'timeline':
+      $params = array('user_id' => variable_get('tweet_feed_user_id', NULL), 'count' => $number_to_get);
+      break;
+    case 'list':
+      $list_name = variable_get('tweet_feed_timeline_list', NULL);
+      $params = array(
+        'owner_id' => variable_get('tweet_feed_user_id', NULL), 
+        'count' => 100,
+        'slug' => $list_name,
+      );
+      break;
+    default:
+      $params = array('q' => variable_get('tweet_feed_search_query', NULL), 'count' => 100);
+      break;
   }
   $lowest_id = -1;  
   while (count($tweets) < $number_to_get && $lowest_id != 0) {
@@ -216,7 +216,10 @@ function tweet_feed_cron() {
       foreach ($parts as $part) {
         list($key, $value) = explode('=', $part);
         if ($key == 'max_id') {
-          $value = $lowest_id - 1;
+          // We have to do it this way because PHP on Windows can't handle 64 bit integers.
+          $orig = $value;
+          $last = abs(substr($orig,-1) - 1); // Not perfect :/
+          $value = substr($orig,0,-1) . $last;
         }
         $params[$key] = $value;
       }
@@ -241,7 +244,7 @@ function tweet_feed_cron() {
       case 'list':
         $list_name = variable_get('tweet_feed_timeline_list', NULL);
         $params = array(
-          'owner_id' => variable_get('tweet_feed_user_id', NULL), 
+          'owner_id' => variable_get('tweet_feed_user_id', NULL),
           'count' => 100,
           'slug' => $list_name,
         );
