@@ -216,10 +216,15 @@ function tweet_feed_cron() {
       foreach ($parts as $part) {
         list($key, $value) = explode('=', $part);
         if ($key == 'max_id') {
-          // We have to do it this way because PHP on Windows can't handle 64 bit integers.
-          $orig = $value;
-          $last = abs(substr($orig,-1) - 1); // Not perfect :/
-          $value = substr($orig,0,-1) . $last;
+          if (PHP_INT_MAX > 2147483647) {
+            $value = $lowest_id - 1;
+          }
+          else {
+            // We have to do it this way because PHP on Windows can't handle 64 bit integers.
+            $orig = $lowest_id;
+            $last = abs(substr($orig,-1) - 1); // Not perfect :/
+            $value = substr($orig,0,-1) . $last;
+          }
         }
         $params[$key] = $value;
       }
