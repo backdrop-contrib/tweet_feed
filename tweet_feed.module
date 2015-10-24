@@ -410,6 +410,13 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         if (count($tweets) < 1) {
           tweet_feed_set_message('Retrieving Timeline Status Messages For ID: ' . $feed->timeline_id, 'ok', $web_interface);
         }
+        
+        // Set the max id to one lower than the lowest tweet we've imported so we do not
+        // get duplicates
+        if ($lowest_id > 0) {
+          $params['max_id'] = $lowest_id - 1;
+        }
+        
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/statuses/user_timeline.json',
