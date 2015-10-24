@@ -431,15 +431,22 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         if (count($tweets) < 1) {
           tweet_feed_set_message('Retrieving List Status Messages For List Name: ' . $feed->list_name, 'ok', $web_interface);
         }
+        
+        $params = array(
+          'slug' => $feed->list_name,
+          'owner_id' => $feed->timeline_id,
+          'count' => 100,
+        );
+
+        if ($lowest_id > 0) {
+          $params['max_id'] = $lowest_id - 1;
+        }
+                
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/lists/statuses.json',
             'GET',
-            array(
-              'slug' => $feed->list_name,
-              'owner_id' => $feed->timeline_id,
-              'count' => $feed->pull_count * 100,
-            )
+            $params
           )
         );
         break;
