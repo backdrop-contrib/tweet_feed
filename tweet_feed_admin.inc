@@ -525,6 +525,12 @@ function tweet_feed_settings_form($form, &$form_state) {
     '#description' => t('This will create a node record for every person who tweets in your feed.'),
     '#default_value' => variable_get('tweet_feed_get_tweeter_profiles', 0),
   );
+  $form['tweet_feed_fetch_images'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Download images that are used in tweets to the local file system.'),
+    '#description' => t('This will fetch images so you can re-use them in other content.'),
+    '#default_value' => variable_get('tweet_feed_fetch_images', 1),
+  );
   $form['tweet_feed_disable_cron'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable running Tweet Feed cron jobs when the general cron is run.'),

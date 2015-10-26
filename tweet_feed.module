@@ -798,7 +798,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Handle user mentions (our custom field defined by the module). Also places them in
   // the user mentions taxonomy.
-  if (!empty($tweet->entities->media) && is_array($tweet->entities->media)) {
+  if (!empty($tweet->entities->media) && is_array($tweet->entities->media) && variable_get('tweet_feed_fetch_images', 1)) {
     foreach ($tweet->entities->media as $key => $media) {
       if (is_object($media)) {
         $image = file_get_contents($media->media_url . ':large');
@@ -1094,8 +1094,13 @@ function tweet_feed_node_presave($node) {
  *   The file object for the retrieved image or NULL if unable to retrieve
  */
 function tweet_feed_process_twitter_image($url, $type, $tid = NULL) {
-  // If there is no URL, then there is no image and we must skip
+  // If there is no URL, then there is no image and we must skip.
   if (!isset($url)) {
+    return NULL;
+  }
+
+  // Exit if the user doesn't need images.
+  if (variable_get('tweet_feed_fetch_images', 1) == 0) {
     return NULL;
   }
 
