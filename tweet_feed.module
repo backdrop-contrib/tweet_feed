@@ -410,13 +410,13 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         if (count($tweets) < 1) {
           tweet_feed_set_message('Retrieving Timeline Status Messages For ID: ' . $feed->timeline_id, 'ok', $web_interface);
         }
-        
+
         // Set the max id to one lower than the lowest tweet we've imported so we do not
         // get duplicates
         if ($lowest_id > 0) {
-          $params['max_id'] = $lowest_id - 1;
+          $params['max_id'] = $lowest_id;
         }
-        
+
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/statuses/user_timeline.json',
@@ -431,7 +431,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         if (count($tweets) < 1) {
           tweet_feed_set_message('Retrieving List Status Messages For List Name: ' . $feed->list_name, 'ok', $web_interface);
         }
-        
+
         $params = array(
           'slug' => $feed->list_name,
           'owner_id' => $feed->timeline_id,
@@ -439,9 +439,9 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         );
 
         if ($lowest_id > 0) {
-          $params['max_id'] = $lowest_id - 1;
+          $params['max_id'] = $lowest_id;
         }
-                
+
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/lists/statuses.json',
@@ -486,7 +486,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
           // Get the lowest ID from the last element in the timeline
           $end_of_the_line = array_pop($tdata);
           array_push($tdata, $end_of_the_line);
-          $lowest_id = $end_of_the_line->id;
+          $lowest_id = $end_of_the_line->id_str;
 
           // Proceed with our processing
           $tweet_data = $tdata;
@@ -654,7 +654,6 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   // Look for twitter hash tags and make them clickable
   // Modified so that slashes in the twitter handle are counted
   // Modified to link to taxonomy term if that checkbox is selected for this feed.
-  //$tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
   $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
   return $tweet;
 }
