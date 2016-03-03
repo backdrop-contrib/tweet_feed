@@ -193,3 +193,32 @@ function tweet_feed_uninstall() {
   variable_del('tweet_feed_pull_data_from_feed');
   variable_del('tweet_feed_cron_last_feed');
 }
+
+/**
+ * Add the author name and verified status to the profile and tweet content types.
+ */
+function tweet_feed_update_7301() {
+  // Add the verified flag.
+  if (field_info_field('field_tweet_author_verified') == FALSE) {
+    $field = array('translatable' => '0','entity_types' => array(),'settings' => array('allowed_values' => array('0' => '','1' => '',),'allowed_values_function' => '',),'field_name' => 'field_tweet_author_verified','type' => 'list_boolean','module' => 'list','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_tweet_feed','1' => 'twitter_user_profile',),),);
+    $field = field_create_field($field);
+  }
+  if (field_info_instance('node', 'field_tweet_author_verified', 'twitter_tweet_feed') == NULL) {
+    $instance = array('label' => 'Tweet Author Verified','widget' => array('weight' => '5','type' => 'options_onoff','module' => 'options','active' => '1','settings' => array('display_label' => '1',),),'settings' => array('user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'list_default','settings' => array(),'module' => 'list','weight' => '18',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => array('0' => array('value' => '0',),),'field_name' => 'field_tweet_author_verified','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    field_create_instance($instance);
+  }
+  if (field_info_instance('node', 'field_tweet_author_verified', 'twitter_user_profile') == NULL) {
+    $instance = array('label' => 'Tweet Author Verified','widget' => array('weight' => '3','type' => 'options_onoff','module' => 'options','active' => '1','settings' => array('display_label' => '1',),),'settings' => array('user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'list_default','settings' => array(),'module' => 'list','weight' => '18',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => array('0' => array('value' => '0',),),'field_name' => 'field_tweet_author_verified','entity_type' => 'node','bundle' => 'twitter_user_profile','deleted' => '0',);
+    field_create_instance($instance);
+  }
+
+  // Add the author name field.
+  if (field_info_field('field_tweet_author_name') == FALSE) {
+    $field = array('translatable' => '0','entity_types' => array(),'settings' => array('max_length' => '255',),'field_name' => 'field_tweet_author_name','type' => 'text','module' => 'text','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_tweet_feed',),),);
+    $field = field_create_field($field);
+  }
+  if (field_info_instance('node', 'field_tweet_author_name', 'twitter_tweet_feed') == NULL) {
+    $instance = array('label' => 'Tweet Author Name','widget' => array('weight' => '4','type' => 'text_textfield','module' => 'text','active' => '1','settings' => array('size' => '60',),),'settings' => array('text_processing' => '0','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'text_default','settings' => array(),'module' => 'text','weight' => '17',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','field_name' => 'field_tweet_author_name','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    field_create_instance($instance);
+  }
+}
