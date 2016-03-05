@@ -112,6 +112,13 @@ function tweet_feed_views_data() {
           'handler' => 'views_handler_field',
         ),
       ),
+      'name' => array(
+        'title' => t('Name'),
+        'help' => t('The full name of the tweeter.'),
+        'field' => array(
+          'handler' => 'views_handler_field',
+        ),
+      ),
       'hashtags' => array(
         'title' => t('Hashtags'),
         'help' => t('The Hashtags associated with a tweet.'),

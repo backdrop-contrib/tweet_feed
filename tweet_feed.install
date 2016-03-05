@@ -49,6 +49,12 @@ function tweet_feed_schema() {
         'length' => 24,
         'not null' => TRUE,
       ),
+      'name' => array(
+        'description' => 'The name of the person tweeting',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
       'hashtags' => array(
         'description' => 'A comma separated list of hashtags without the hash.',
         'type' => 'varchar',
@@ -201,3 +207,10 @@ function tweet_feed_update_7113() {
   }
 }
 
+/**
+ * Add the field for holding the real name of the person tweeting.
+ */
+function tweet_feed_update_7115() {
+  $schema = tweet_feed_schema();
+  db_add_field('tweet_feed', 'name', $schema['tweet_feed']['fields']['name']);
+}

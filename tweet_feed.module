@@ -320,13 +320,13 @@ function tweet_feed_process_tweets($tdata) {
         $exists = ($count > 0) ? TRUE : FALSE;
         
         $creation_timestamp = strtotime($tweet->created_at);
-        
+
         $lowest_id = ($key == 0) ? $tweet->id_str : $lowest_id;
         $lowest_id = ($tweet->id_str <= $lowest_id) ? $tweet->id_str : $lowest_id;
-        
+
         $tweet_html = tweet_feed_format_output($tweet->text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
-        
+
         if (!empty($tweet->entities->media)) {
           $media_url = $tweet->entities->media[0]->media_url;
           $media_url_https = $tweet->entities->media[0]->media_url_https;
@@ -335,7 +335,7 @@ function tweet_feed_process_tweets($tdata) {
           $media_url = NULL;
           $media_url_https = NULL;
         }
-        
+
         // If we are configured to exclude replies, then do that here. We need to increase
         // the size of the tweets array so that we still have a proper count of all
         // tweets processed.
@@ -349,6 +349,7 @@ function tweet_feed_process_tweets($tdata) {
           'profile_image_url' => $tweet->user->profile_image_url,
           'profile_image_https_url' => $tweet->user->profile_image_url_https,
           'screen_name' => $tweet->user->screen_name,
+          'name' => $tweet->user->name,
           'hashtags' => $hashtags,
           'tweet_id' => $tweet->id_str,
           'is_reply' => $is_reply,
