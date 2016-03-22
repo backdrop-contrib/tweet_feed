@@ -242,7 +242,7 @@ function tweet_feed_cron() {
         }
       }
       $queue->createItem(array('tweet' => $tweet, 'feed' => $feed, 'update_node_id' => $update_node_id, 'hash' => $hash));
-    }v
+    }
     // Get the total number of items we have addedd to our queue
     $queue_size = $queue->numberOfItems();
   }
