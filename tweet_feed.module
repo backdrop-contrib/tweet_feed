@@ -369,9 +369,12 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
                     ->execute();
     if (isset($result['node'])) {
       foreach ($result['node'] as $nid => $node) {
-        $n = node_load($nid);
+        // Removing the message that tells us the node is deleted. Loading the node just to
+        // get the title is like using a nuclear weapon to light your cigarette. Will work on
+        // a better way in a future version.
+        // $n = node_load($nid);
         node_delete($nid);
-        tweet_feed_set_message($n->title . ': DELETED', 'ok', $web_interface);
+        // tweet_feed_set_message($n->title . ': DELETED', 'ok', $web_interface);
       }
     }
     tweet_feed_set_message('All previous tweets for this feed are deleted.', 'ok', $web_interface);
