@@ -813,7 +813,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
         $image = file_get_contents($media->media_url . ':large');
         if (!empty($image)) {
           tweet_feed_check_path('public://tweet-feed-tweet-images');
-          $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/ ' . $tweet->id_str . '.jpg', FILE_EXISTS_REPLACE);
+          $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . $tweet->id_str . '.jpg', FILE_EXISTS_REPLACE);
           if (is_object($file_temp)) {
             $file = array();
             $file[$node->language][0] = array(
@@ -1203,24 +1203,27 @@ function tweet_feed_help($path, $arg) {
       $output  = '<h4>' . t('Overview') . '</h4>';
       $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://dev.twitter.com/rest/public/rate-limiting">' . t('Twitter\'s REST API') . '.</a></p>';
       $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
-      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';      
-      $output .= '<hr />';
+      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';
+      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
       $output .= '<h4>' . t('Twitter Settings') . '</h4>';
       $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Twitter-Settings">' . t('Configuring account and feed settings.') . '</a></p>';
-      $output .= '<hr />';      
+      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
       $output .= '<h4>' . t('Views Integration') . '</h4>';
       $output .= '<p>'  . t('Tweet Feed has full views integration. A basic view of tweets can be created at Administer -> Structure -> Views -> Add New View by selecting Twitter Tweet Feed as the content type to show in the view.') . '</p>';
       $output .= '<p>'  . t('Further filtering can be accomplished using either the standard filters or the contextual filters available in the collapsed advanced fieldset. An example use case of when contextual features would be helpful is to add a block of dynamically filtered tweets based on matching a hashtag entered in a given field on any node.') . '</p>';
       $output .= '<p>'  . t('Look on the Advanced Use Cases page for information on using the Tweet Feed module in powerful ways to display node specific Tweets, Tweets related to node content and some other more simplistic use cases.') . '</p>';
-      $output .= '<hr />';  
+      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
       $output .= '<h4>' . t('Ways to Run the Import.') . '</h4>';
       $output .= '<ol><li>' . t('They can be periodically imported using Drupal\'s build in cron system. This requires the run cron option on the Tweet Feed Settings page be enabled. Also make sure PHP has enough memory allocated to it in order to run the process along with all of the other tasks it needs to run.') . '</li>';
       $output .= '<li>' . t('They can be manually imported by clicking the **Import** link on the right hand side of each feed in the feed information table.') . '</li>';
-      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol><br />';
-      $output .= '<hr />';
+      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol>';
+      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
       $output .= '<h4>' . t('Drush Commands') . '</h4>';
-      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a></p>';
-      $output .= '<hr />';
+      $output .= '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a>';
+      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; padding-top: 15px; width: 100%; font-size: 8pt; line-height: 1.3em;">';
+      $output .= '<img src="/' . drupal_get_path('module', 'tweet_feed') . '/images/flyingflip-logo.png" width="151" height="50" alt="FlyingFlip Studios" align="right" /><br />';
+      $output .= 'Released 2016 - v7.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbagnall17<br clear="right">';
+      $output .= '<style>.item-list, hr { display: none; }</style></div>';
       return $output;
   }
 }
