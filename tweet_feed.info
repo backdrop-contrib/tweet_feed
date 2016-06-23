@@ -1,6 +1,7 @@
 name = Tweet Feed
 description = A Twitter integration module that pulls profiles of people and tweets who tweet according to search, list or user timeline.
 core = 7.x
+php = 5.3
 package = Other
 project = tweet_feed
 configure = admin/config/services/tweet_feed

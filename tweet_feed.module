@@ -175,34 +175,37 @@ function tweet_feed_cron() {
   while ($fdata = $result->fetchObject()) {
     $feed[] = $fdata->fid;
   }
-  
   // If there are no feeds created, then we cannot continue.
   if (empty($feed)) {
     return FALSE;
   }
-    
+
   // Determine the id of the last feed run
-  $last_fid = variable_get('tweet_feed_cron_last_fpos', NULL);
+  $last_fid = variable_get('tweet_feed_cron_last_feed', NULL);
   // If it is zero, or this is the first time being run, then start with the first one
   if ($last_fid === NULL) {
-    $current_fid = 0;
+    $current_fid = $feed[0];
   }
   else {
-    $current_fid = $last_fid + 1;
-    if ($current_fid > (count($feed)-1)) {
-      $current_fid = 0;
+    $key = array_search($last_fid, $feed) + 1;
+    if (!isset($feed[$key])) {
+      $current_fid = $feed[0];
+    }
+    else {
+      $current_fid = $feed[$key];
     }
   }
+
   // Set the last fid used in our variable for future use
   variable_set('tweet_feed_pull_data_from_feed', $current_fid);
-  variable_set('tweet_feed_cron_last_feed', $feed[$current_fid]);
+  variable_set('tweet_feed_cron_last_feed', $current_fid);
 
   // Get all of the tweets to be imported
-  $tweets = tweet_feed_pull_data_from_feed($feed[$current_fid], TRUE);
+  $tweets = tweet_feed_pull_data_from_feed($current_fid, TRUE);
 
   // If this returns false, we have a problem. Reset the counter by deleting the variable.
   // And then not running this particular cron.
-  if ($tweets == FALSE) {
+  if (!in_array($current_fid, $feed)) {
     variable_del('tweet_feed_pull_data_from_feed');
     variable_del('tweet_feed_cron_last_feed');
     return FALSE;
@@ -860,8 +863,9 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   );
 
   // Handle the tweet creation date
+  $created_dt = DateTime::createFromFormat('D M d H:i:s O Y', $tweet->created_at);
   $node->field_tweet_creation_date[$node->language][0] = array(
-    'value' => date('Y-m-d H:i:s', strtotime($tweet->created_at)),
+    'value' => $created_dt->format('Y-m-d H:i:s'),
     'timezone' => 'UTC/GMT',
     'timezone_db' => 'UTC/GMT',
     'datatype' => 'datetime',
