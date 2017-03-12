@@ -252,6 +252,13 @@ function tweet_feed_cron() {
 
   // Run through items in the queue
   for ($i = 0; $i < $queue_size; $i++) {
+    // If the queue item is empty, it means a previous operation errored
+    // and left a queue with unfinished items. Since there is no way to 
+    // fetch these unfinished items, just break and hope it expires by the
+    // next cron run.
+    if (empty($item)) {
+      continue;
+    }
     $item = $queue->claimItem($i);
     $feed_object = tweet_feed_get_feed_object($item->data['feed'][0]);
     if (!empty($feed_object)) {
