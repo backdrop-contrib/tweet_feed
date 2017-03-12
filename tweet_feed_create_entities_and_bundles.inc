@@ -77,15 +77,6 @@ function tweet_feed_create_entities_and_bundles() {
     field_create_instance($instance);
   }
 
-  if (field_info_field('field_geographic_coordinates') == FALSE) {
-    $field = array('translatable' => '0','entity_types' => array(),'settings' => array('max_length' => '255',),'field_name' => 'field_geographic_coordinates','type' => 'text','module' => 'text','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_tweet_feed',),),);
-    $field = field_create_field($field);
-  }
-  if (field_info_instance('node', 'field_geographic_coordinates', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Geographic Coordinates','required' => '0','widget' => array('active' => '1','module' => 'text','type' => 'text_textfield','weight' => '16','settings' => array('size' => '60',),),'settings' => array('text_processing' => '0','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'text_default','weight' => '1','settings' => array(),'module' => 'text',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','field_name' => 'field_geographic_coordinates','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
-    field_create_instance($instance);
-  }
-
   if (field_info_field('field_geographic_place') == FALSE) {
     $field = array('translatable' => '0','entity_types' => array(),'settings' => array('max_length' => '255',),'field_name' => 'field_geographic_place','type' => 'text','module' => 'text','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_tweet_feed',),),);
     $field = field_create_field($field);
@@ -136,7 +127,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_tweet_creation_date', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Creation Date','required' => '0','widget' => array('active' => '1','module' => 'date','type' => 'date_text','weight' => '15','settings' => array('increment' => '15','input_format' => 'm/d/Y - H:i:s','input_format_custom' => '','label_position' => 'above','text_parts' => array(),'year_range' => '-3:+3',),),'settings' => array('default_value' => 'now','default_value_code' => '','default_value2' => 'same','default_value_code2' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'date_default','weight' => '7','settings' => array('format_type' => 'long','multiple_number' => '','multiple_from' => '','multiple_to' => '','fromto' => 'both',),'module' => 'date',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','field_name' => 'field_tweet_creation_date','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Creation Date','required' => '0','widget' => array('active' => '1','module' => 'date','type' => 'date_text','weight' => '16','settings' => array('increment' => '15','input_format' => 'm/d/Y - H:i:s','input_format_custom' => '','label_position' => 'above','text_parts' => array(),'year_range' => '-3:+3',),),'settings' => array('default_value' => 'now','default_value_code' => '','default_value2' => 'same','default_value_code2' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'date_default','weight' => '7','settings' => array('format_type' => 'long','multiple_number' => '','multiple_from' => '','multiple_to' => '','fromto' => 'both','show_remaining_days' => '',),'module' => 'date',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','field_name' => 'field_tweet_creation_date','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -172,7 +163,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_favorite_count', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Favorite Count','required' => '0','widget' => array('active' => '0','module' => 'number','type' => 'number','weight' => '14','settings' => array(),),'settings' => array('min' => '','max' => '','prefix' => '','suffix' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'number_integer','weight' => '11','settings' => array('thousand_separator' => ' ','decimal_separator' => '.','scale' => '0','prefix_suffix' => '1',),'module' => 'number',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','field_name' => 'field_twitter_favorite_count','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Favorite Count','required' => '0','widget' => array('active' => '0','module' => 'number','type' => 'number','weight' => '15','settings' => array(),),'settings' => array('min' => '','max' => '','prefix' => '','suffix' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'number_integer','weight' => '11','settings' => array('thousand_separator' => ' ','decimal_separator' => '.','scale' => '0','prefix_suffix' => '1',),'module' => 'number',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','field_name' => 'field_twitter_favorite_count','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -181,7 +172,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_hashtags', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Hashtags Used','required' => '0','widget' => array('weight' => '11','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','weight' => '12','settings' => array('link' => '',),'module' => 'entityreference',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_hashtags','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Hashtags Used','required' => '0','widget' => array('weight' => '12','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','weight' => '12','settings' => array('link' => '',),'module' => 'entityreference',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_hashtags','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -190,7 +181,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_retweet_count', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Retweet Count','required' => '0','widget' => array('active' => '0','module' => 'number','type' => 'number','weight' => '13','settings' => array(),),'settings' => array('min' => '','max' => '','prefix' => '','suffix' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'number_integer','weight' => '13','settings' => array('thousand_separator' => ' ','decimal_separator' => '.','scale' => '0','prefix_suffix' => '1',),'module' => 'number',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','field_name' => 'field_twitter_retweet_count','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Retweet Count','required' => '0','widget' => array('active' => '0','module' => 'number','type' => 'number','weight' => '14','settings' => array(),),'settings' => array('min' => '','max' => '','prefix' => '','suffix' => '','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'number_integer','weight' => '13','settings' => array('thousand_separator' => ' ','decimal_separator' => '.','scale' => '0','prefix_suffix' => '1',),'module' => 'number',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','field_name' => 'field_twitter_retweet_count','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -217,7 +208,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_mentions_in_tweet', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Mentions In Tweet','widget' => array('weight' => '12','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','settings' => array('link' => '',),'module' => 'entityreference','weight' => '16',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_mentions_in_tweet','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Mentions In Tweet','widget' => array('weight' => '13','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','settings' => array('link' => '',),'module' => 'entityreference','weight' => '16',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_mentions_in_tweet','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -244,7 +235,7 @@ function tweet_feed_create_entities_and_bundles() {
   }
 
   if (field_info_field('field_banner_image') == FALSE) {
-    $field = array('entity_types' => array(),'settings' => array('default_image' => '0','uri_scheme' => 'public',),'translatable' => '0','field_name' => 'field_banner_image','type' => 'image','module' => 'image','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'basic_page','1' => 'twitter_user_profile',),),);
+    $field = array('entity_types' => array(),'settings' => array('default_image' => '0','uri_scheme' => 'public',),'translatable' => '0','field_name' => 'field_banner_image','type' => 'image','module' => 'image','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_user_profile',),),);
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_banner_image', 'twitter_user_profile') == NULL) {
@@ -387,10 +378,14 @@ function tweet_feed_create_entities_and_bundles() {
     field_create_instance($instance);
   }
 
-  // Field groupings for the fields we are exporting.
-  // Prepare storage with ctools.
-  ctools_include('export');
-
+  if (field_info_field('field_geographic_coordinates') == FALSE) {
+    $field = array('translatable' => '0','entity_types' => array(),'settings' => array(),'field_name' => 'field_geographic_coordinates','type' => 'text_long','module' => 'text','active' => '1','locked' => '0','cardinality' => '1','deleted' => '0','bundles' => array('node' => array('0' => 'twitter_tweet_feed',),),);
+    $field = field_create_field($field);
+  }
+  if (field_info_instance('node', 'field_geographic_coordinates', 'twitter_tweet_feed') == NULL) {
+    $instance = array('label' => 'Geographic Coordinates','widget' => array('weight' => '11','type' => 'text_textarea','module' => 'text','active' => '1','settings' => array('rows' => '5',),),'settings' => array('text_processing' => '0','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'text_default','settings' => array(),'module' => 'text','weight' => '19',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','field_name' => 'field_geographic_coordinates','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    field_create_instance($instance);
+  }
 
   cache_clear_all();
 }

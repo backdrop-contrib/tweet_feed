@@ -2,7 +2,7 @@
 
 /**
  * @file tweet_feed.module
- * Code for the Tweet Feed feature.
+ * Code for the Tweet Feed module.
  */
 
 include_once 'tweet_feed.field_info.inc';
@@ -786,7 +786,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // The tweet itself goes into the tweet contents field
   $node->field_tweet_contents[$node->language][0] = array(
-    'value' => utf8_encode(htmlspecialchars_decode($tweet_html)),
+    'value' => $tweet_html,
     'format' => 'full_html',
   );
 

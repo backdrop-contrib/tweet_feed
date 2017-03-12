@@ -80,7 +80,7 @@ function drush_tweet_feed_tf_import_tweets() {
 
   // If we're processing all, then pass null to the feeds processor  
   if (!empty($all) && $run == FALSE) {
-    tweet_feed_process_feeds(NULL);
+    tweet_feed_process_feed(NULL);
     $run = TRUE;
   }
    

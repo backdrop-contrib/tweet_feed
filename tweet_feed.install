@@ -195,6 +195,36 @@ function tweet_feed_uninstall() {
 }
 
 /**
+ * Implements hook_requirements().
+ */
+function tweet_feed_requirements($phase) {
+  $t = get_t();
+  $req = _system_check_db_utf8mb4_requirements('install');
+  $requirements = array();
+  $requirements['tweet_feed']['title'] = $t('Tweet Feed Database UTF-8 Support');
+  if ($phase == 'runtime') {
+    if ($req['value'] == $t('Enabled')) {
+      $requirements['tweet_feed']['value'] = 'UTF-8 Supported, enabled and ready.';
+      $requirements['tweet_feed']['description'] = NULL;
+      $requirements['tweet_feed']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      $requirements['tweet_feed']['value'] = 'Not Supported.';
+      $requirements['tweet_feed']['description'] = $t('In order to properly support emoji and special character content, Tweet Feed now required UTF-8 database support. To learn how to configure this in Drupal, go to: https://www.drupal.org/node/2754539');
+      $requirements['tweet_feed']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  elseif ($phase == 'install' || $phase == 'update') {
+    if ($req['value'] == $t('Enabled')) {
+      $requirements['tweet_feed']['value'] = 'Not Supported.';
+      $requirements['tweet_feed']['description'] = $t('In order to properly support emoji and special character content, Tweet Feed now required UTF-8 database support. To learn how to configure this in Drupal, go to: https://www.drupal.org/node/2754539');
+      $requirements['tweet_feed']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  return $requirements;
+}
+
+/**
  * Add the author name and verified status to the profile and tweet content types.
  */
 function tweet_feed_update_7301() {
@@ -221,4 +251,23 @@ function tweet_feed_update_7301() {
     $instance = array('label' => 'Tweet Author Name','widget' => array('weight' => '4','type' => 'text_textfield','module' => 'text','active' => '1','settings' => array('size' => '60',),),'settings' => array('text_processing' => '0','user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'text_default','settings' => array(),'module' => 'text','weight' => '17',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','field_name' => 'field_tweet_author_name','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
+}
+
+/**
+ * Change the greographic_coordinates field to a textarea to accommodate larger data.
+ */
+function tweet_feed_update_7302() {
+  // Manual database changes.
+  db_query("UPDATE {field_config} SET type = 'text_long' WHERE field_name = 'field_geographic_coordinates_place'");
+  db_change_field('field_data_field_geographic_coordinates', 'field_geographic_coordinates_value', 'field_geographic_coordinates_value', array(
+    'type' => 'text',
+    'size' => 'big',
+  ));
+  db_change_field('field_data_field_geographic_coordinates', 'field_geographic_coordinates_value', 'field_geographic_coordinates_value', array(
+    'type' => 'text',
+    'size' => 'big',
+  ));
+
+  // Clear caches.
+  field_cache_clear(TRUE);
 }

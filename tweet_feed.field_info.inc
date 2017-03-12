@@ -98,7 +98,7 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
     case 'emoji_formatter':
       foreach ($items as $delta=>$item) {
         $element[$delta] = array(
-          '#markup' => utf8_decode($item['value']),
+          '#markup' => $item['value'],
         );
       }
       break;
