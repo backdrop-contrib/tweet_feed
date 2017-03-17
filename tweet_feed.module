@@ -252,13 +252,6 @@ function tweet_feed_cron() {
 
   // Run through items in the queue
   for ($i = 0; $i < $queue_size; $i++) {
-    // If the queue item is empty, it means a previous operation errored
-    // and left a queue with unfinished items. Since there is no way to 
-    // fetch these unfinished items, just break and hope it expires by the
-    // next cron run.
-    if (empty($item)) {
-      continue;
-    }
     $item = $queue->claimItem($i);
     $feed_object = tweet_feed_get_feed_object($item->data['feed'][0]);
     if (!empty($feed_object)) {
@@ -400,8 +393,8 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
   $lowest_id = -1;
   $tweets = array();
   $params = ($feed->query_type == QUERY_TIMELINE) ?
-    array('user_id' => $feed->timeline_id, 'count' => 100) :
-    array('q' => $feed->search_term, 'count' => 100);
+    array('user_id' => $feed->timeline_id, 'count' => 100, 'tweet_mode' => 'extended') :
+    array('q' => $feed->search_term, 'count' => 100, 'tweet_mode' => 'extended');
 
   while (count($tweets) < $number_to_get && $lowest_id != 0) {
     tweet_feed_set_message('Tweets Imported: ' . count($tweets) . ', Total To Import: ' . $number_to_get, 'ok', $web_interface);
@@ -437,6 +430,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
             $params
           )
         );
+        dsm($tdata);
         break;
 
       case QUERY_LIST:
@@ -520,13 +514,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
           $lowest_id = 0;
         }
         else {
-          if (count($tweet_data) < 100 && count($tweet_data) > 0) {
-            $lowest_id = 0;
-            $tweets = array_merge($tweets, $tweet_data);
-          }
-          else {
-            $tweets = array_merge($tweets, $tweet_data);
-          }
+          $tweets = array_merge($tweets, $tweet_data);
         }
       }
       $run_count++;
@@ -564,7 +552,7 @@ function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_
                 ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
-      $hash = md5(serialize($tweet->text));
+      $hash = md5(serialize($tweet->full_text));
       // If our hashes are equal, we have nothing to update and can move along
       $update = ($hash == $tdata->hash);
       continue;
@@ -739,7 +727,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Process the tweet. This linkes our twitter names, hash tags and converts any
   // URL's into HTML.
-  $tweet_html = tweet_feed_format_output($tweet->text, $feed->new_window, $feed->hash_taxonomy, $hashtags); 
+  $tweet_html = tweet_feed_format_output($tweet->full_text, $feed->new_window, $feed->hash_taxonomy, $hashtags); 
           
   // Populate our node object with the data we will need to save
   $node = new stdClass();
@@ -754,7 +742,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Because we modify the tweet to get source images, we need to get the hash before
   // we do any of our processing
-  $tweet_hash = md5(serialize($tweet->text));
+  $tweet_hash = md5(serialize($tweet->full_text));
 
   // If we are being provided a hash, we compare against this hash and if they are equal
   // then there is nothing to do
@@ -771,25 +759,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   $node->moderate = 0;
   $node->sticky = 0;
   $node->language = LANGUAGE_NONE;
-
-  // The tweet author goes into the title field
-  // Filter it cleanly since it is going into the title field. If we cannot use iconv,
-  // then use something more primitive, but effective
-  // @see https://www.drupal.org/node/1910376
-  // @see http://webcollab.sourceforge.net/unicode.html
-  // Reject overly long 2 byte sequences, as well as characters above U+10000
-  // and replace with --.
-  $title_tweet_text = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]' .
-   '|[\x00-\x7F][\x80-\xBF]+' .
-   '|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*' .
-   '|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})' .
-   '|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
-   '--', $tweet->text);
-  // Reject overly long 3 byte sequences and UTF-16 surrogates and replace
-  // with --.
-  $title_tweet_text = preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]' . '|\xED[\xA0-\xBF][\x80-\xBF]/S', '--', $title_tweet_text);
-
-  $node->title = check_plain(substr($tweet->user->screen_name . ': ' . $title_tweet_text, 0, 255));
+  $node->title = substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet->full_text), 0, 255);
 
   // The tweet itself goes into the tweet contents field
   $node->field_tweet_contents[$node->language][0] = array(
