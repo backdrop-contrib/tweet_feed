@@ -430,7 +430,6 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
             $params
           )
         );
-        dsm($tdata);
         break;
 
       case QUERY_LIST:
@@ -759,16 +758,41 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   $node->moderate = 0;
   $node->sticky = 0;
   $node->language = LANGUAGE_NONE;
-  $node->title = substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet->full_text), 0, 255);
 
-  // The tweet itself goes into the tweet contents field
-  $node->field_tweet_contents[$node->language][0] = array(
-    'value' => $tweet_html,
-    'format' => 'full_html',
-  );
+  // Check to see if utf8mb4 is available and configured.
+  $connection = Database::getConnection();
+  $utf8mb4_configurable = $connection->utf8mb4IsConfigurable();
+  $utf8mb4_active = $connection->utf8mb4IsActive();
+  $utf8mb4_supported = $connection->utf8mb4IsSupported();
+  $utf8 = ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) ? TRUE : FALSE;
 
-  // Save the name of the user to the tweet.
-  $node->field_tweet_author_name[$node->language][0]['value'] = $tweet->user->name;
+  // NOTE: Support for non Multibyte-extended UTF-8 tables is deprecated. Support for them is likely to go away
+  // sooner rather than later.
+  if ($utf8 === TRUE) {
+    $node->title = substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet->full_text), 0, 255);
+
+    // The tweet itself goes into the tweet contents field
+    $node->field_tweet_contents[$node->language][0] = array(
+      'value' => $tweet_html,
+      'format' => 'full_html',
+    );
+
+    // Save the name of the user to the tweet.
+    $node->field_tweet_author_name[$node->language][0]['value'] = $tweet->user->name;
+  }
+  else {
+    // Filter it cleanly since it is going into the title field and remove iconv.
+    $node->title = check_plain(substr(tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)) . ': ' . tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->full_text)), 0, 255));
+  
+    // The tweet itself goes into the tweet contents field
+    $node->field_tweet_contents[$node->language][0] = array(
+      'value' => htmlspecialchars_decode(utf8_encode(tweet_feed_filter_smart_quotes($tweet_html))),
+      'format' => 'full_html',
+    );
+ 
+    // Save the name of the user to the tweet.
+    $node->field_tweet_author_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->name));
+  }
 
   // Set our verified field
   $node->field_tweet_author_verified[$node->language][0]['value'] = (int) $tweet->user->verified;
@@ -827,11 +851,19 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     }
   }
 
-  // Handle the author name
-  $node->field_tweet_author[$node->language][0] = array(
-    'value' => $tweet->user->screen_name,
-    'safe_value' => $tweet->user->screen_name,
-  );
+  if ($utf8 === TRUE) {
+    // Handle the author name
+    $node->field_tweet_author[$node->language][0] = array(
+      'value' => $tweet->user->screen_name,
+      'safe_value' => $tweet->user->screen_name,
+    );
+  }
+  else {
+    $node->field_tweet_author[$node->language][0] = array(
+      'value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
+      'safe_value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
+    );
+  }
 
   // Handle the author id
   $node->field_tweet_author_id[$node->language][0] = array(
@@ -880,12 +912,22 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   // the user mentions taxonomy.
   if (!empty($tweet->entities->user_mentions) && is_array($tweet->entities->user_mentions)) {
     foreach ($tweet->entities->user_mentions as $key => $mention) {
-      $node->field_tweet_user_mentions[$node->language][$key] = array(
-        'tweet_feed_mention_name' => $mention->name,
-        'tweet_feed_mention_screen_name' => $mention->screen_name,
-        'tweet_feed_mention_id' => $mention->id,
-      ); 
+      if ($utf8 == TRUE) {
+        $node->field_tweet_user_mentions[$node->language][$key] = array(
+          'tweet_feed_mention_name' => $mention->name,
+          'tweet_feed_mention_screen_name' => $mention->screen_name,
+          'tweet_feed_mention_id' => $mention->id,
+        ); 
+      }
+      else {
+        $node->field_tweet_user_mentions[$node->language][$key] = array(
+          'tweet_feed_mention_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->name)),
+          'tweet_feed_mention_screen_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->screen_name)),
+          'tweet_feed_mention_id' => $mention->id,
+        );
+      }
     }
+
     foreach ($user_mentions as $mention) {
       $node->field_twitter_mentions_in_tweet[$node->language][] = array(
         'target_id' => $mention,
@@ -983,8 +1025,16 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
     $node->field_twitter_user_id[$node->language][0]['value'] = $tweet->user->id_str;
     $node->title = $tweet->user->name;
-    $node->body[$node->language][0]['value'] = $tweet->user->description;
-    $node->field_twitter_a_screen_name[$node->language][0]['value'] = $tweet->user->screen_name;
+
+    if ($utf8 == TRUE) {
+      $node->body[$node->language][0]['value'] = $tweet->user->description;
+      $node->field_twitter_a_screen_name[$node->language][0]['value'] = $tweet->user->screen_name;
+    }
+    else {
+      $node->body[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->description));
+      $node->field_twitter_a_screen_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name));     
+    }
+
     $node->field_twitter_location[$node->language][0]['value'] = $tweet->user->location;
     $node->field_twitter_a_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->url;
     $node->field_twitter_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->display_url;
@@ -1032,6 +1082,59 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     );
     db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
   }
+}
+
+ /**
+  * Filter iconv from text.
+  */
+function tweet_feed_filter_iconv_text($text, $replace = '--') {
+  // The tweet author goes into the title field
+  // Filter it cleanly since it is going into the title field. If we cannot use iconv,
+  // then use something more primitive, but effective
+  // @see https://www.drupal.org/node/1910376
+  // @see http://webcollab.sourceforge.net/unicode.html
+  // Reject overly long 2 byte sequences, as well as characters above U+10000
+  // and replace with --.
+  $altered = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]' .
+   '|[\x00-\x7F][\x80-\xBF]+' .
+   '|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*' .
+   '|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})' .
+   '|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+   '--', $text);
+  // Reject overly long 3 byte sequences and UTF-16 surrogates and replace
+  // with --.
+  return preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]' . '|\xED[\xA0-\xBF][\x80-\xBF]/S', $replace, $altered);
+}
+
+/**
+ * Filter smart quotes to ASCII equivalent.
+ *
+ * @param string $text
+ *   Input text to filter.
+ *
+ * @return string
+ */
+function tweet_feed_filter_smart_quotes($text) {
+  // Convert varieties of smart quotes to ACSII equivalent.
+  $search = array(
+    chr(0xe2) . chr(0x80) . chr(0x98),
+    chr(0xe2) . chr(0x80) . chr(0x99),
+    chr(0xe2) . chr(0x80) . chr(0x9c),
+    chr(0xe2) . chr(0x80) . chr(0x9d),
+    chr(0xe2) . chr(0x80) . chr(0x93),
+    chr(0xe2) . chr(0x80) . chr(0x94),
+  );
+
+  $ascii_replace = array(
+    "'",
+    "'",
+    '"',
+    '"',
+    '-',
+    '&mdash;',
+  );
+
+  return str_replace($search, $ascii_replace, $text);
 }
 
 /**

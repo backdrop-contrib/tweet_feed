@@ -81,6 +81,13 @@ function tweet_feed_field_formatter_info() {
  */
 function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = $mentions = array();
+
+  $connection = Database::getConnection();
+  $utf8mb4_configurable = $connection->utf8mb4IsConfigurable();
+  $utf8mb4_active = $connection->utf8mb4IsActive();
+  $utf8mb4_supported = $connection->utf8mb4IsSupported();
+  $utf8 = ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) ? TRUE : FALSE;
+
   switch ($display['type']) {
     // Override check plain
     case 'tweet_feed_user_mentions':
@@ -97,9 +104,16 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
     // Give us a way to display emoji.
     case 'emoji_formatter':
       foreach ($items as $delta=>$item) {
-        $element[$delta] = array(
-          '#markup' => $item['value'],
-        );
+        if ($utf8 === TRUE) {
+          $element[$delta] = array(
+            '#markup' => $item['value'],
+          );
+        }
+        else {
+          $element[$delta] = array(
+            '#markup' => utf8_decode($item['value']),
+          );
+        }
       }
       break;
   }

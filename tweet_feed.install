@@ -199,11 +199,32 @@ function tweet_feed_uninstall() {
  */
 function tweet_feed_requirements($phase) {
   $t = get_t();
-  $req = _system_check_db_utf8mb4_requirements('install');
+  $connection = Database::getConnection();
+  $utf8mb4_configurable = $connection->utf8mb4IsConfigurable();
+  $utf8mb4_active = $connection->utf8mb4IsActive();
+  $utf8mb4_supported = $connection->utf8mb4IsSupported();
+  
   $requirements = array();
   $requirements['tweet_feed']['title'] = $t('Tweet Feed Database UTF-8 Support');
   if ($phase == 'runtime') {
-    if ($req['value'] == $t('Enabled')) {
+    if ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) {
+      $requirements['tweet_feed']['value'] = 'UTF-8 Supported, enabled and ready.';
+      $requirements['tweet_feed']['description'] = NULL;
+      $requirements['tweet_feed']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      $requirements['tweet_feed']['value'] = 'Not Supported.';
+      //$requirements['tweet_feed']['description'] = $t('In order to properly support emoji and special character content, Tweet Feed now required UTF-8 database support. To learn how to configure this in Drupal, go to: https://www.drupal.org/node/2754539');
+      $requirements['tweet_feed']['description'] = $t('Tweet Feed is now compliant with UTF-8 multibyte database support. To learn how to configure this in Drupal, go to: https://www.drupal.org/node/2754539. Support for non UTF-8 multibyte tables is deprecated and is likely to be removed in a future version.');
+      $requirements['tweet_feed']['severity'] = REQUIREMENT_WARNING;
+    }
+  }
+  /**
+   * Keeping this code here for when we stop supporting non UTF-8 multibyte database tables.
+   */
+  /*
+  elseif ($phase == 'install' || $phase == 'update') {
+    if ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) {
       $requirements['tweet_feed']['value'] = 'UTF-8 Supported, enabled and ready.';
       $requirements['tweet_feed']['description'] = NULL;
       $requirements['tweet_feed']['severity'] = REQUIREMENT_OK;
@@ -214,13 +235,7 @@ function tweet_feed_requirements($phase) {
       $requirements['tweet_feed']['severity'] = REQUIREMENT_ERROR;
     }
   }
-  elseif ($phase == 'install' || $phase == 'update') {
-    if ($req['value'] == $t('Enabled')) {
-      $requirements['tweet_feed']['value'] = 'Not Supported.';
-      $requirements['tweet_feed']['description'] = $t('In order to properly support emoji and special character content, Tweet Feed now required UTF-8 database support. To learn how to configure this in Drupal, go to: https://www.drupal.org/node/2754539');
-      $requirements['tweet_feed']['severity'] = REQUIREMENT_ERROR;
-    }
-  }
+  */
   return $requirements;
 }
 
