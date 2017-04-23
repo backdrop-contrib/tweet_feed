@@ -409,6 +409,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         $params[$key] = $value;
       }
     }
+
     $data = new stdClass();
     switch ($feed->query_type) {
       case QUERY_TIMELINE:
@@ -469,6 +470,9 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
             $params
           )
         );
+        if (empty($tdata->search_metadata->next_results)) {
+          $lowest_id = 0;
+        }
         break;
     }
 
@@ -760,11 +764,15 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   // Get started with our node data structure
   $node->type = 'twitter_tweet_feed';
   $node->uid = 1;
-  $node->status = 1;
+
+  // We need to respect the default state of the content type for tweets. If set to
+  // unpublished, then we need to set the status to zero not one.
+  $node_type = variable_get('node_options_twitter_tweet_feed');
+  $node->status = in_array('status', $node_type);
   $node->comment = 0;
-  $node->promote = 0;
+  $node->promote = in_array('promote', $node_type);
   $node->moderate = 0;
-  $node->sticky = 0;
+  $node->sticky = in_array('sticky', $node_type);
   $node->language = LANGUAGE_NONE;
 
   // Check to see if utf8mb4 is available and configured.
