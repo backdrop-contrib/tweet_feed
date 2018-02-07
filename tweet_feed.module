@@ -252,13 +252,14 @@ function tweet_feed_cron() {
 
   // Run through items in the queue
   for ($i = 0; $i < $queue_size; $i++) {
-    $item = $queue->claimItem($i);
-    $feed_object = tweet_feed_get_feed_object($item->data['feed'][0]);
-    if (!empty($feed_object)) {
-      tweet_feed_save_tweet($item->data['tweet'], $feed_object, $item->data['update_node_id'], $item->data['hash']);
+    if ($item = $queue->claimItem($i)) {
+      $feed_object = tweet_feed_get_feed_object($item->data['feed'][0]);
+      if (!empty($feed_object)) {
+        tweet_feed_save_tweet($item->data['tweet'], $feed_object, $item->data['update_node_id'], $item->data['hash']);
+      }
+      $queue->releaseItem($item);
+      $queue->deleteItem($item);
     }
-    $queue->releaseItem($item);
-    $queue->deleteItem($item);
   }
 }
 
@@ -354,10 +355,10 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
   if (empty($feed)) {
     return FALSE;
   }
-  
+
   // Load in our twitter oauth class
   module_load_include('inc', 'tweet_feed', 'inc/twitter-oauth');
-  
+
   // If we have selected to clear our prior tweets for this particular feed, then we need
   // to do that here.
   if (!empty($feed->clear_prior)) {
@@ -542,7 +543,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
  * for use with our drush command
  */
 function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_count = 0, $web_interface = FALSE) {
-  
+
   $tweets = array();
   $total_hashi = 0;
   foreach($tweet_data as $key => $tweet) {
@@ -719,7 +720,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   if ($hashtags === FALSE) {
     tweet_feed_bail();
   }
-  
+
   // Add our user mentions to it's relative taxonomy. Handled just like hashtags
   $user_mentions = tweet_feed_process_taxonomy($tweet->entities->user_mentions, 'user_mention_terms');
 
@@ -738,8 +739,8 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Process the tweet. This linkes our twitter names, hash tags and converts any
   // URL's into HTML.
-  $tweet_html = tweet_feed_format_output($tweet_text, $feed->new_window, $feed->hash_taxonomy, $hashtags); 
-          
+  $tweet_html = tweet_feed_format_output($tweet_text, $feed->new_window, $feed->hash_taxonomy, $hashtags);
+
   // Populate our node object with the data we will need to save
   $node = new stdClass();
   $node->created = $creation_timestamp;
@@ -853,7 +854,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
       }
     }
   }
-    
+
   // If we have a place, then assign it based on which components we have available
   // to us.
   if (!empty($tweet->place->full_name)) {
@@ -933,7 +934,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
           'tweet_feed_mention_name' => $mention->name,
           'tweet_feed_mention_screen_name' => $mention->screen_name,
           'tweet_feed_mention_id' => $mention->id,
-        ); 
+        );
       }
       else {
         $node->field_tweet_user_mentions[$node->language][$key] = array(
@@ -1048,7 +1049,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     }
     else {
       $node->body[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->description));
-      $node->field_twitter_a_screen_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name));     
+      $node->field_twitter_a_screen_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name));
     }
 
     $node->field_twitter_location[$node->language][0]['value'] = $tweet->user->location;
