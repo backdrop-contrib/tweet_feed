@@ -689,3 +689,100 @@ function tweet_feed_run_import($fid) {
   batch_set($batch);
   batch_process('admin/config/services/tweet_feed/feeds');
 }
+
+/**
+ * tweet_feed_export()
+ * Export all current settings and configurations
+ */
+function tweet_feed_export() {
+  $export_data = array();
+  $result = db_select('tweet_accounts', 'a')
+    ->fields('a')
+    ->orderBy('account_name', 'ASC')
+    ->execute();
+  while ($account = $result->fetchObject()) {
+    // Determine how many queries this feed is responsible for
+    $feed_result = db_select('tweet_feeds', 'f')
+      ->fields('f')
+      ->condition('f.aid', $account->aid)
+      ->execute();
+    $export_data[$account->aid]['account'] = $account;
+    while ($feed = $feed_result->fetchObject()) {
+      $export_data[$account->aid]['feeds'][$feed->fid] = $feed;
+    }
+  }
+
+  $output = json_encode($export_data);
+  header('Content-Type: text/json');
+  header('Content-Disposition: attachment; filename="tweet-feed-settings.json"');
+  print $output;
+  exit();
+}
+
+/**
+ * tweet_feed_import_form().
+ * The form field for the user to provide the json to import.
+ */
+
+function tweet_feed_import_form($form, &$form_state) {
+  $form['import_block'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Import Data'),
+    '#description' => t('Please paste your JSON export data in this field.'),
+    '#required' => TRUE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  return $form;
+}
+
+/**
+ * tweet_feed_import_form_submit()
+ * Process the json provided in the form for importing.
+ */
+function tweet_feed_import_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  $data = json_decode($values['import_block']);
+  if ($data !== NULL) {
+    foreach ($data as $key => $data) {
+      $account = $data->account;
+      $feeds = $data->feeds;
+
+      // Define our array of data provided by the form
+      $data = array(
+        'account_name' => $account->account_name,
+        'consumer_key' => $account->consumer_key,
+        'consumer_secret' => $account->consumer_secret,
+        'oauth_token' => $account->oauth_token,
+        'oauth_token_secret' => $account->oauth_token_secret,
+      );
+      $status = drupal_write_record('tweet_accounts', $data);
+      $aid = $data['aid'];
+
+      foreach ($feeds as $feed) {
+        // Define our array of data provided by the form
+        $data = array(
+          'aid' => $aid,
+          'feed_name' => $feed->feed_name,
+          'query_type' => $feed->query_type,
+          'timeline_id' => $feed->timeline_id,
+          'search_term' => $feed->search_term,
+          'list_name' => $feed->list_name,
+          'pull_count' => $feed->pull_count,
+          'clear_prior' => $feed->clear_prior,
+          'new_window' => $feed->new_window,
+          'hash_taxonomy' => 0,
+        );
+        $status = drupal_write_record('tweet_feeds', $data);
+      }
+    }
+  }
+  else {
+    drupal_set_message('Settings could not be imported.');
+    return FALSE;
+  }
+  drupal_set_message('Settings imported.');
+  drupal_goto('admin/config/services/tweet_feed/accounts');
+}

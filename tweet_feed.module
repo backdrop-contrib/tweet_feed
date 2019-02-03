@@ -31,6 +31,7 @@ function tweet_feed_menu() {
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_NORMAL_ITEM,
+    'weight' => 1,
   );
   $items['admin/config/services/tweet_feed/settings'] = array(
     'title' => t('Settings'),
@@ -41,6 +42,7 @@ function tweet_feed_menu() {
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_NORMAL_ITEM,
+    'weight' => 2,
   );
   $items['admin/config/services/tweet_feed/accounts'] = array(
     'title' => t('Twitter API Accounts'),
@@ -50,6 +52,7 @@ function tweet_feed_menu() {
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_NORMAL_ITEM,
+    'weight' => 3,
   );
   $items['admin/config/services/tweet_feed/feeds'] = array(
     'title' => t('Twitter Feeds'),
@@ -59,6 +62,28 @@ function tweet_feed_menu() {
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_NORMAL_ITEM,
+    'weight' => 4,
+  );
+  $items['admin/config/services/tweet_feed/import-form'] = array(
+    'title' => t('Import Config'),
+    'description' => t('Import feed and account settings from JSON'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tweet_feed_import_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer tweet feed settings'),
+    'file' => 'tweet_feed_admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 5,
+  );
+  $items['admin/config/services/tweet_feed/export'] = array(
+    'title' => t('Export Config'),
+    'description' => t('Export all current feed and accounts settings'),
+    'page callback' => 'tweet_feed_export',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer tweet feed settings'),
+    'file' => 'tweet_feed_admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 6,
   );
   $items['admin/config/services/tweet_feed/feeds/run/%tweet_feed_id'] = array(
     'title' => t('Import Feed'),
@@ -768,7 +793,13 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // We need to respect the default state of the content type for tweets. If set to
   // unpublished, then we need to set the status to zero not one.
-  $node_type = variable_get('node_options_twitter_tweet_feed');
+  $node_type = variable_get('node_options_twitter_tweet_feed', array());
+
+  // If the node type has not been updated, assume published.
+  if (empty($node_type)) {
+    $node_type = ['status'];
+  }
+
   $node->status = in_array('status', $node_type);
   $node->comment = 0;
   $node->promote = in_array('promote', $node_type);
