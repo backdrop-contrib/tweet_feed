@@ -1,0 +1,14 @@
+
+# Tweet entity menu items definition
+entity.tweet_entity.collection:
+  title: 'Tweet entity list'
+  route_name: entity.tweet_entity.collection
+  description: 'List Tweet entity entities'
+  parent: system.admin_structure
+  weight: 100
+
+tweet_entity.admin.structure.settings:
+  title: Tweet entity settings
+  description: 'Configure Tweet entity entities'
+  route_name: tweet_entity.settings
+  parent: system.admin_structure

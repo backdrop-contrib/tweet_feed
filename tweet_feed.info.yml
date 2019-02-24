@@ -1,0 +1,5 @@
+name: Tweet Feed
+type: module
+description: A custom Twitter implementation of both twitter feeds and user profiles.
+core: 8.x
+package: Other

@@ -1,0 +1,14 @@
+{
+  "name": "drupal/tweet_feed",
+  "type": "drupal-module",
+  "description": "A custom Twitter implementation of both twitter feeds and user profiles.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/tweet_feed",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/tweet_feed",
+    "source": "http://cgit.drupalcode.org/tweet_feed"
+  },
+  "require": { }
+}

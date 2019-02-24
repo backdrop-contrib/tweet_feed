@@ -1,0 +1,5 @@
+entity.tweet_entity.add_form:
+  route_name: entity.tweet_entity.add_form
+  title: 'Add Tweet entity'
+  appears_on:
+    - entity.tweet_entity.collection
