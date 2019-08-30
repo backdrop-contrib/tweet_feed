@@ -16,7 +16,7 @@ use Drupal\user\UserInterface;
  *
  * @ContentEntityType(
  *   id = "tweet_entity",
- *   label = @Translation("Tweet entity"),
+ *   label = @Translation("Tweet"),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\tweet_feed\TweetEntityListBuilder",
@@ -162,7 +162,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 5,
+        'weight' => 6,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -173,29 +173,22 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['name'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Name'))
-      ->setDescription(t('The name of the Tweet entity entity.'))
-      ->setSettings([
-        'max_length' => 50,
-        'text_processing' => 0,
-      ])
+    $fields['tweet'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Tweet Contents'))
+      ->setDescription(t('The contents of the tweet'))
       ->setDefaultValue('')
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'string',
         'weight' => 1,
       ])
       ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
         'weight' => 1,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
- 
       $fields['user_mentions_field_type'] = BaseFieldDefinition::create('user_mentions_field_type')
-      ->setLabel(t('USer Mentions'))
+      ->setLabel(t('User Mentions'))
       ->setDescription(t('Users mentioned in the tweet'))
       ->setSettings([
         'max_length' => 50,
@@ -215,20 +208,43 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-
-
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Publishing status'))
-      ->setDescription(t('A boolean indicating whether the Tweet entity is published.'))
-      ->setDefaultValue(TRUE);
+      ->setDescription(t('Is the tweet published. Check to publish tweet.'))
+      ->setDefaultValue(TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'boolean',
+        'weight' => 3,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'checkbox',
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
-      ->setDescription(t('The time that the entity was created.'));
+      ->setDescription(t('The time that the entity was created.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 4,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
-      ->setDescription(t('The time that the entity was last edited.'));
+      ->setDescription(t('The time that the entity was last edited.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 5,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
 
     return $fields;
   }

@@ -3,12 +3,12 @@
 entity.tweet_entity.collection:
   title: 'Tweet entity list'
   route_name: entity.tweet_entity.collection
-  description: 'List Tweet entity entities'
+  description: 'List Tweet entities'
   parent: system.admin_structure
   weight: 100
 
 tweet_entity.admin.structure.settings:
   title: Tweet entity settings
-  description: 'Configure Tweet entity entities'
+  description: 'Configure Tweet entity'
   route_name: tweet_entity.settings
   parent: system.admin_structure
