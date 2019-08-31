@@ -1,22 +1,16 @@
-add tweet entity entities:
-  title: 'Create new Tweet entity entities'
-
-administer tweet entity entities:
-  title: 'Administer Tweet entity entities'
-  description: 'Allow to access the administration form to configure Tweet entity entities.'
+add tweet feed entities:
+  title: 'Create new Tweet Feed entities'
+administer tweet feed entities:
+  title: 'Administer Tweet Feed entities'
+  description: 'Allow to access the administration form to configure Tweet Feed entities.'
   restrict access: true
-
-delete tweet entity entities:
-  title: 'Delete Tweet entity entities'
-
-edit tweet entity entities:
-  title: 'Edit Tweet entity entities'
-
-access tweet entity overview:
-  title: 'Access the Tweet entity overview page'
-
-view published tweet entity entities:
-  title: 'View published Tweet entity entities'
-
-view unpublished tweet entity entities:
-  title: 'View unpublished Tweet entity entities'
+delete tweet feed entities:
+  title: 'Delete Tweet Feed entities'
+edit tweet feed entities:
+  title: 'Edit Tweet Feed entities'
+access tweet feed overview:
+  title: 'Access the Tweet Feed overview page'
+view published tweet feed entities:
+  title: 'View published Tweet Feed entities'
+view unpublished tweet feed entities:
+  title: 'View unpublished Tweet Feed entities'

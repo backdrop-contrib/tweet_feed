@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Twitter Hashtag Terms'
+vid: twitter_hashtag_terms
+description: 'Hash tags contained in Tweet Feed entities.'
+weight: 0

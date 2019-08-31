@@ -16,7 +16,7 @@ use Drupal\user\UserInterface;
  *
  * @ContentEntityType(
  *   id = "tweet_entity",
- *   label = @Translation("Tweet"),
+ *   label = @Translation("Tweet Feed"),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\tweet_feed\TweetEntityListBuilder",
@@ -34,7 +34,7 @@ use Drupal\user\UserInterface;
  *     },
  *   },
  *   base_table = "tweet_entity",
- *   admin_permission = "administer tweet entity entities",
+ *   admin_permission = "administer tweet feed entities",
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "name",
@@ -148,6 +148,97 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
+    $fields['tweet_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet ID'))
+      ->setDescription(t('The Twitter ID for this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['tweet_title'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Title'))
+      ->setDescription(t('The cleansed title for this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 1,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 1,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['tweet_author'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Author'))
+      ->setDescription(t('The Twitter user name of the author of this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 2,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['tweet_author_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Author ID'))
+      ->setDescription(t('The Twitter ID of the author of this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 3,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['tweet_author_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Author Name'))
+      ->setDescription(t('The name of the author of this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 4,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+      
+    $fields['twitter_author_boolean'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Twitter Author Verified'))
+      ->setDescription(t('Is this author verified?'))
+      ->setDefaultValue(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'boolean',
+        'weight' => 5,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 5,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+ 
     $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Authored by'))
       ->setDescription(t('The user ID of author of the Tweet entity entity.'))

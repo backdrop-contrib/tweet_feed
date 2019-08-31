@@ -1,14 +1,31 @@
 
-# Tweet entity menu items definition
+# Tweet Feed entity menu items definition
 entity.tweet_entity.collection:
-  title: 'Tweet entity list'
+  title: 'Tweet Feed'
   route_name: entity.tweet_entity.collection
-  description: 'List Tweet entities'
+  description: 'List of all imported Twitter content.'
   parent: system.admin_structure
-  weight: 100
-
+tweet_entity.admin.structure.settings.fields:
+  title: Manage fields
+  description: 'Tweet Feed settings page.'
+  route_name: entity.tweet_entity.field_ui_fields
+  parent: entity.tweet_entity.collection
+  weight: 0
+tweet_entity.admin.structure.settings.form_display:
+  title: Manage form display
+  description: 'Tweet Feed settings page.'
+  route_name: entity.entity_form_display.tweet_entity.default
+  parent: entity.tweet_entity.collection
+  weight: 10
+tweet_entity.admin.structure.settings.display:
+  title: Manage display
+  description: 'Tweet Feed settings page.'
+  route_name: entity.entity_view_display.tweet_entity.default
+  parent: entity.tweet_entity.collection
+  weight: 20
 tweet_entity.admin.structure.settings:
-  title: Tweet entity settings
-  description: 'Configure Tweet entity'
+  title: Settings
+  description: 'Tweet Feed settings page.'
   route_name: tweet_entity.settings
-  parent: system.admin_structure
+  parent: entity.tweet_entity.collection
+  weight: 30
