@@ -19,7 +19,7 @@ class TweetEntitySettingsForm extends FormBase {
    *   The unique string identifying the form.
    */
   public function getFormId() {
-    return 'tweetentity_settings';
+    return 'tweet_feed_settings';
   }
 
   /**

@@ -10,13 +10,13 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\user\UserInterface;
 
 /**
- * Defines the Tweet entity entity.
+ * Defines the Tweet Feed Tweet entity.
  *
  * @ingroup tweet_feed
  *
  * @ContentEntityType(
  *   id = "tweet_entity",
- *   label = @Translation("Tweet Feed"),
+ *   label = @Translation("Tweet Feed Tweets"),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\tweet_feed\TweetEntityListBuilder",
@@ -37,7 +37,7 @@ use Drupal\user\UserInterface;
  *   admin_permission = "administer tweet feed entities",
  *   entity_keys = {
  *     "id" = "id",
- *     "label" = "name",
+ *     "tweet_id" = "tweet_id",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
  *     "langcode" = "langcode",
@@ -70,15 +70,15 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getName() {
-    return $this->get('name')->value;
+  public function getTweetID() {
+    return $this->get('tweet_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setName($name) {
-    $this->set('name', $name);
+  public function setTweetID($tweet_id) {
+    $this->set('tweet_id', $tweet_id);
     return $this;
   }
 
@@ -238,22 +238,79 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
- 
-    $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Authored by'))
-      ->setDescription(t('The user ID of author of the Tweet entity entity.'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setSetting('handler', 'default')
-      ->setTranslatable(TRUE)
-      ->setDisplayOptions('view', [
+    $fields['profile_image'] = BaseFieldDefinition::create('image')
+      ->setLabel(t('Profile Image'))
+      ->setDescription(t('The user profile image for twice.'))
+      ->setSettings([
+        'uri_scheme' => 'public',
+        'file_directory' => 'tweet_feed/[date:custom:Y]-[date:custom:m]',
+        'alt_field_required' => FALSE,
+        'file_extensions' => 'png jpg jpeg gif',
+      ])
+      ->setDisplayOptions('view', array(
         'label' => 'hidden',
-        'type' => 'author',
-        'weight' => 0,
+        'type' => 'default',
+        'weight' => 6,
+      ))
+      ->setDisplayOptions('form', array(
+        'weight' => 6,
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+ 
+    $fields['tweet_contents'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Tweet Contents'))
+      ->setDescription(t('The contents of the tweet'))
+      ->setDefaultValue('')
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 7,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 7,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['linked_images'] = BaseFieldDefinition::create('image')
+      ->setLabel(t('Linked Images'))
+      ->setDescription(t('Images linked in tweets.'))
+      ->setSettings([
+        'uri_scheme' => 'public',
+        'file_directory' => 'tweet_feed/[date:custom:Y]-[date:custom:m]',
+        'alt_field_required' => FALSE,
+        'file_extensions' => 'png jpg jpeg gif',
+      ])
+      ->setDisplayOptions('view', array(
+        'label' => 'hidden',
+        'type' => 'default',
+        'weight' => 8,
+      ))
+      ->setDisplayOptions('form', array(
+        'weight' => 8,
+      ))
+      ->setCardinality(-1)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+ 
+    $fields['hashtags'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Hashtags Used'))
+      ->setDescription(t('Any hashtags that are contained in a tweet.'))
+      ->setRevisionable(FALSE)
+      ->setSetting('target_type', 'taxonomy_term')
+      ->setSetting('handler', 'default:taxonomy_term')
+      ->setSetting('handler_settings', [
+        'target_bundles' => [
+          'twitter_hashtag_terms' => 'twitter_hashtag_terms',
+        ],
+      ])
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'weight' => 9,
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 6,
+        'weight' => 9,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -264,21 +321,22 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['tweet'] = BaseFieldDefinition::create('string_long')
-      ->setLabel(t('Tweet Contents'))
-      ->setDescription(t('The contents of the tweet'))
-      ->setDefaultValue('')
+    $fields['retweet_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Retweet Count'))
+      ->setDescription(t('The number of times this tweet has been re-tweeted.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 1,
+        'weight' => 10,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 1,
+        'weight' => 10,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-      $fields['user_mentions_field_type'] = BaseFieldDefinition::create('user_mentions_field_type')
+    $fields['user_mentions'] = BaseFieldDefinition::create('user_mentions_field_type')
       ->setLabel(t('User Mentions'))
       ->setDescription(t('Users mentioned in the tweet'))
       ->setSettings([
@@ -289,13 +347,156 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
-        'weight' => 2,
+        'weight' => 11,
       ])
       ->setDisplayOptions('form', [
         'type' => 'user_mentions_field_type',
-        'weight' => 2,
+        'weight' => 11,
       ])
       ->setCardinality(-1)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['favorite_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Favorite Count'))
+      ->setDescription(t('The number of times this tweet has been favorited.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 12,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 12,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['geographic_coordinates'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Geographic Coordinates'))
+      ->setDescription(t('The geographic coordinates of a tweet if provided.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 13,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 13,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['creation_date'] = BaseFieldDefinition::create('datetime')
+      ->setLabel(t('Creation Date'))
+      ->setDescription(t('The creation date of this tweet, not the time it was added to Drupal.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 14,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 14,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['geographic_place'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Geographic Place'))
+      ->setDescription(t('The geographic location of a tweet if provided.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 15,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 15,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['source'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Source'))
+      ->setDescription(t('The name of the application used to generate a tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 16,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 16,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['user_mentions_tags'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('User Mentions'))
+      ->setDescription(t('The users mentioned in a tweet in the form of tags.'))
+      ->setRevisionable(FALSE)
+      ->setSetting('target_type', 'taxonomy_term')
+      ->setSetting('handler', 'default:taxonomy_term')
+      ->setSetting('handler_settings', [
+        'target_bundles' => [
+          'user_mention_terms' => 'user_mention_terms',
+        ],
+      ])
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'weight' => 17,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 17,
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ],
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['link'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Link to Tweet'))
+      ->setDescription(t('The URL to go directly to this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 18,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 18,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Authored by'))
+      ->setDescription(t('The user ID of author of the Tweet entity entity.'))
+      ->setRevisionable(FALSE)
+      ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default')
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'author',
+        'weight' => 30,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 30,
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ],
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -306,11 +507,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'boolean',
-        'weight' => 3,
+        'weight' => 31,
       ])
       ->setDisplayOptions('form', [
         'type' => 'checkbox',
-        'weight' => 3,
+        'weight' => 31,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -320,10 +521,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDescription(t('The time that the entity was created.'))
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 4,
+        'weight' => 32,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 4,
+        'weight' => 32,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -333,11 +534,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDescription(t('The time that the entity was last edited.'))
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 5,
+        'weight' => 33,
       ])
       ->setDisplayConfigurable('view', TRUE);
 
     return $fields;
   }
-
 }

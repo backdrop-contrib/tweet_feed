@@ -11,7 +11,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup tweet_feed
  */
-interface TweetEntityInterface extends  ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+interface TweetEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
   // Add get/set methods for your configuration properties here.
 
@@ -21,7 +21,7 @@ interface TweetEntityInterface extends  ContentEntityInterface, EntityChangedInt
    * @return string
    *   Name of the Tweet entity.
    */
-  public function getName();
+  public function getTweetID();
 
   /**
    * Sets the Tweet entity name.
@@ -32,7 +32,7 @@ interface TweetEntityInterface extends  ContentEntityInterface, EntityChangedInt
    * @return \Drupal\tweet_feed\Entity\TweetEntityInterface
    *   The called Tweet entity entity.
    */
-  public function setName($name);
+  public function setTweetID($tweet_id);
 
   /**
    * Gets the Tweet entity creation timestamp.
