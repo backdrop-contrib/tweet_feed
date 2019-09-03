@@ -3,3 +3,9 @@ entity.tweet_entity.add_form:
   title: 'Add Tweet'
   appears_on:
     - entity.tweet_entity.collection
+
+entity.tweet_profile_entity.add_form:
+  route_name: entity.tweet_profile_entity.add_form
+  title: 'Add Twitter Profile'
+  appears_on:
+    - entity.tweet_profile.entity.collection

@@ -1,31 +1,58 @@
 
 # Tweet Feed entity menu items definition
-entity.tweet_entity.collection:
+tweet_feed.collection:
   title: 'Tweet Feed'
   route_name: entity.tweet_entity.collection
-  description: 'List of all imported Twitter content.'
+  description: 'Administration of Tweets and the Profiles that go along with them.'
   parent: system.admin_structure
+
+tweet_entity.admin.structure.tweets:
+  title: 'Tweets'
+  description: 'Tweets imported from the Tweet Feed module.'
+  route_name: tweet_entity.settings
+  parent: tweet_feed.collection
+  weight: 10
+tweet_profile_entity.admin.structure.tweets:
+  title: 'Tweet Profiles'
+  description: 'Profiles for users of imported tweets.'
+  route_name: tweet_profile_entity.settings
+  parent: tweet_feed.collection
+  weight: 20
+
 tweet_entity.admin.structure.settings.fields:
   title: Manage fields
-  description: 'Tweet Feed settings page.'
+  description: 'Manage the custom fields for tweets.'
   route_name: entity.tweet_entity.field_ui_fields
-  parent: entity.tweet_entity.collection
+  parent: tweet_entity.admin.structure.tweets
   weight: 0
 tweet_entity.admin.structure.settings.form_display:
   title: Manage form display
-  description: 'Tweet Feed settings page.'
+  description: 'Manage the display order for the tweets form.'
   route_name: entity.entity_form_display.tweet_entity.default
-  parent: entity.tweet_entity.collection
+  parent: tweet_entity.admin.structure.tweets
   weight: 10
 tweet_entity.admin.structure.settings.display:
   title: Manage display
-  description: 'Tweet Feed settings page.'
+  description: 'Manage the display of tweet fields.'
   route_name: entity.entity_view_display.tweet_entity.default
-  parent: entity.tweet_entity.collection
+  parent: tweet_entity.admin.structure.tweets
   weight: 20
-tweet_entity.admin.structure.settings:
-  title: Settings
-  description: 'Tweet Feed settings page.'
-  route_name: tweet_entity.settings
-  parent: entity.tweet_entity.collection
-  weight: 30
+
+tweet_profile_entity.admin.structure.settings.fields:
+  title: Manage fields
+  description: 'Manage the custom fields for Twitter profiles.'
+  route_name: entity.tweet_profile_entity.field_ui_fields
+  parent: tweet_profile_entity.admin.structure.tweets
+  weight: 0
+tweet_profile_entity.admin.structure.settings.form_display:
+  title: Manage form display
+  description: 'Manage the form display settings for Twitter profiles.'
+  route_name: entity.entity_form_display.tweet_profile_entity.default
+  parent: tweet_profile_entity.admin.structure.tweets
+  weight: 10
+tweet_profile_entity.admin.structure.settings.display:
+  title: Manage display
+  description: 'Manage the display of fields on a Twitter profile.'
+  route_name: entity.entity_view_display.tweet_profile_entity.default
+  parent: tweet_profile_entity.admin.structure.tweets
+  weight: 20

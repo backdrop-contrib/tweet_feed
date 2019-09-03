@@ -11,7 +11,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup tweet_feed
  */
-interface TweetEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+interface TweetProfileEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
   // Add get/set methods for your configuration properties here.
 
