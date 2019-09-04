@@ -1,0 +1,19 @@
+uuid: ab7377f6-a956-483e-a0c9-d7947ba481e0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_tweet_feed_name
+    - taxonomy.vocabulary.twitter_followers
+id: taxonomy_term.twitter_followers.field_tweet_feed_name
+field_name: field_tweet_feed_name
+entity_type: taxonomy_term
+bundle: twitter_followers
+label: 'Tweet Feed Name'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

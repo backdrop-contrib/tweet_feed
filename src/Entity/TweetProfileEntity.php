@@ -462,6 +462,62 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['followers'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Followers'))
+      ->setDescription(t('Current followers.'))
+      ->setRevisionable(FALSE)
+      ->setSetting('target_type', 'taxonomy_term')
+      ->setSetting('handler', 'default:taxonomy_term')
+      ->setSetting('handler_settings', [
+        'target_bundles' => [
+          'twitter_followers' => 'twitter_followers',
+        ],
+      ])
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'weight' => 19,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 19,
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ],
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['former_followers'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Former Followers'))
+      ->setDescription(t('They were followers, but they are not anymore!'))
+      ->setRevisionable(FALSE)
+      ->setSetting('target_type', 'taxonomy_term')
+      ->setSetting('handler', 'default:taxonomy_term')
+      ->setSetting('handler_settings', [
+        'target_bundles' => [
+          'twitter_followers' => 'twitter_followers',
+        ],
+      ])
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'weight' => 20,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 20,
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ],
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'))

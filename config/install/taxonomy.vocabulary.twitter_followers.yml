@@ -1,0 +1,8 @@
+uuid: d27cfdd3-878f-4a32-94f7-3e40117b04ab
+langcode: en
+status: true
+dependencies: {  }
+name: 'Twitter Followers'
+vid: twitter_followers
+description: 'A list of terms for people that follow profiles.'
+weight: 0

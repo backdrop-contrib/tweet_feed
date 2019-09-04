@@ -1,0 +1,44 @@
+tweet_feed.twitter_accounts:
+  path: 'admin/structure/tweet_entity/twitter_accounts'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterAccountsController::display_accounts'
+    _title: 'Twitter API Accounts'
+  requirements:
+    _permission: 'administer twitter api accounts'
+tweet_feed.twitter_accounts_add:
+  path: 'admin/structure/tweet_entity/twitter_accounts/add'
+  defaults:
+    _form: '\Drupal\tweet_feed\Form\TwitterAccountsForm'
+    _title: 'Twitter API Account Information'
+  requirements:
+    _permission: 'administer twitter api accounts'
+
+tweet_feed.twitter_feeds:
+  path: 'admin/structure/tweet_entity/twitter_feeds'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterFeedsController::display_feeds'
+    _title: 'Twitter Feeds'
+  requirements:
+    _permission: 'administer twitter feeds'
+tweet_feed.twitter_feeds_add:
+  path: 'admin/structure/tweet_entity/twitter_feeds/add'
+  defaults:
+    _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
+    _title: 'Twitter Feed Information'
+  requirements:
+    _permission: 'administer twitter feeds'
+
+tweet_feed.twitter_feeds:
+  path: 'admin/structure/tweet_entity/twitter_feeds'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterFeedsController::display_feeds'
+    _title: 'Twitter Feeds'
+  requirements:
+    _permission: 'administer twitter feeds'
+tweet_feed.twitter_accounts_add:
+  path: 'admin/structure/tweet_entity/twitter_feeds/add'
+  defaults:
+    _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
+    _title: 'Twitter Feed Information'
+  requirements:
+    _permission: 'administer twitter feeds'

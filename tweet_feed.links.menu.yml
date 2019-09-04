@@ -1,5 +1,43 @@
+tweet_feed.twitter_accounts:
+  title: 'Twitter API Accounts'
+  route_name: tweet_feed.twitter_accounts
+  description: 'Add, edit or remove Twitter API accounts that can be used to access tweets.'
+  parent: tweet_feed.collection
+  weight: 30
+tweet_feed.twitter_accounts_add:
+  title: 'Add'
+  route_name: tweet_feed.twitter_accounts_add
+  description: 'Add a Twitter API account.'
+  parent: tweet_feed.twitter_accounts
+  weight: 10
+tweet_feed.twitter_accounts_view:
+  title: 'View'
+  route_name: tweet_feed.twitter_accounts
+  description: 'View existing Twitter API accounts.'
+  parent: tweet_feed.twitter_accounts
+  weight: 20
 
-# Tweet Feed entity menu items definition
+tweet_feed.twitter_feeds:
+  title: 'Twitter Feeds'
+  route_name: tweet_feed.twitter_feeds
+  description: 'Add, edit or remove Twitter feeds to pull down tweets.'
+  parent: tweet_feed.collection
+  weight: 40
+tweet_feed.twitter_feeds_add:
+  title: 'Add'
+  route_name: tweet_feed.twitter_feeds_add
+  description: 'Add a Twitter feed.'
+  parent: tweet_feed.twitter_feeds
+  weight: 10
+tweet_feed.twitter_feeds_view:
+  title: 'View'
+  route_name: tweet_feed.twitter_feeds
+  description: 'View existing Twitter feeds.'
+  parent: tweet_feed.twitter_feeds
+  weight: 20
+
+
+
 tweet_feed.collection:
   title: 'Tweet Feed'
   route_name: entity.tweet_entity.collection
