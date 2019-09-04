@@ -12,6 +12,20 @@ tweet_feed.twitter_accounts_add:
     _title: 'Twitter API Account Information'
   requirements:
     _permission: 'administer twitter api accounts'
+tweet_feed.edit_account:
+  path: 'admin/structure/tweet_entity/twitter_accounts/edit'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterAccountsController::display_accounts'
+    _title: 'Twitter API Accounts'
+  requirements:
+    _permission: 'administer twitter api accounts'
+tweet_feed.delete_account:
+  path: 'admin/structure/tweet_entity/twitter_accounts/delete'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterAccountsController::display_accounts'
+    _title: 'Twitter API Accounts'
+  requirements:
+    _permission: 'administer twitter api accounts'
 
 tweet_feed.twitter_feeds:
   path: 'admin/structure/tweet_entity/twitter_feeds'

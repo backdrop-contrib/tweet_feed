@@ -31,12 +31,12 @@ class TwitterAccountsController extends ControllerBase {
 
     $rows = [];
     $accounts = $config->get('accounts');
-    foreach ($accounts as $key => $account) {
-      $edit_link = Link::createFromRoute($this->t('Edit'), 'tweet_feed.edit_account', ['id' => $account->id]);
-      $delete_link = Link::createFromRoute($this->t('Delete'), 'tweet_feed.delete_account', ['id' => $account->id]);
+    foreach ($accounts as $account_machine_name => $account) {
+      $edit_link = Link::createFromRoute($this->t('Edit'), 'tweet_feed.edit_account', ['id' => $account_machine_name]);
+      $delete_link = Link::createFromRoute($this->t('Delete'), 'tweet_feed.delete_account', ['id' => $account_machine_name]);
       $row = [
-        ['data' => $account->name],
-        ['data' => $account->machine_name],
+        ['data' => $account['account_name']],
+        ['data' => $account_machine_name],
         ['data' => $edit_link],
         ['data' => $delete_link],
       ];
