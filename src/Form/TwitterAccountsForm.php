@@ -38,10 +38,14 @@ class TwitterAccountsForm extends ConfigFormBase {
     if (!empty($account_machine_name)) {
       $accounts = $config->get('accounts');
       $account = $accounts[$account_machine_name];
-      $form['account_machine_name'] = array(
+      $form['account_machine_name'] = [
         '#type' => 'hidden',
         '#value' => $account_machine_name,
-      );
+      ];
+      $form['account_update'] = [
+        '#type' => 'hidden',
+        '#value' => 1,
+      ];
       $account_name = $account['account_name'];
       $consumer_key = $account['consumer_key'];
       $consumer_secret = $account['consumer_secret'];
@@ -116,6 +120,16 @@ class TwitterAccountsForm extends ConfigFormBase {
     $accounts = $config->get('accounts');
     $account_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['account_name']));
 
+    if (empty($values['account_update']) && !empty($accounts[$account_machine_name])) {
+      $suffix = 1;
+      do {
+        $new_account_machine_name = $account_machine_name . '_' . $suffix;
+        $suffix++;
+      }
+      while (!empty($accounts[$new_account_machine_name]));
+      $account_machine_name = $new_account_machine_name;
+    }
+    
     if (empty($accounts[$account_machine_name])) {
       $accounts[$account_machine_name] = [];
     }
