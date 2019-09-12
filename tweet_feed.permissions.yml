@@ -15,8 +15,10 @@ view published tweet feed entities:
 view unpublished tweet feed entities:
   title: 'View unpublished Tweet Feed entities'
 administer twitter feeds:
+  title: 'Administer Imported Twitter Feeds.'
   description: 'Allow to access the administration form for adding Twitter feeds.'
   restrict access: true
 administer twitter api accounts:
+  title: 'Administer Twitter API Accounts'
   description: 'Allow to access the administration form to add Twitter API accounts.'
   restrict access: true

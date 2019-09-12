@@ -10,5 +10,14 @@
     "issues": "https://www.drupal.org/project/issues/tweet_feed",
     "source": "http://cgit.drupalcode.org/tweet_feed"
   },
-  "require": { }
+  "require": {
+    "abraham/twitteroauth": "^1.0.1"
+  },
+  "authors": [
+    {
+      "name": "Michael R. Bagnall (ElusiveMind)",
+      "homepage": "https://www.drupal.org/u/ElusiveMind",
+      "role": "Maintainer"
+    }
+  ]
 }

@@ -148,7 +148,7 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['profile_user_id'] = BaseFieldDefinition::create('string')
+    $fields['user_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Twitter User ID'))
       ->setDescription(t('The Twitter ID for this profile.'))
       ->setRevisionable(FALSE)
@@ -178,21 +178,6 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['bio'] = BaseFieldDefinition::create('string_long')
-      ->setLabel(t('Biography'))
-      ->setDescription(t('The biography/information text under the profile name for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 2,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['screen_name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Screen Name'))
       ->setDescription(t('The screen name for this twitter profile.'))
@@ -200,25 +185,10 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 3,
+        'weight' => 2,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 3,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['verified'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Twitter Author Verified'))
-      ->setDescription(t('Is this author verified?'))
-      ->setDefaultValue(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'boolean',
-        'weight' => 4,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 4,
+        'weight' => 2,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -230,6 +200,36 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
+        'weight' => 3,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['description'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Description'))
+      ->setDescription(t('The description/information text under the profile name for this profile.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 4,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['followers_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Number of Followers'))
+      ->setDescription(t('The number of followers this profile has.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
         'weight' => 5,
       ])
       ->setDisplayOptions('form', [
@@ -238,16 +238,90 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['url'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Profile URL'))
-      ->setDescription(t('The Twitter URL to this profile.'))
-      ->setDefaultValue('')
+    $fields['friends_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Number of Friends'))
+      ->setDescription(t('The number of friends of this profile.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'weight' => 6,
       ])
       ->setDisplayOptions('form', [
         'weight' => 6,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['listed_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Listed Count'))
+      ->setDescription(t('Number of times this profile is listed?'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 7,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 7,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(t('Created'))
+      ->setDescription(t('The time that the entity was created.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 8,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 8,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['favourites_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Number of Favorites'))
+      ->setDescription(t('The number of favorites for this profile.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 9,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 9,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['verified'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Twitter Author Verified'))
+      ->setDescription(t('Is this author verified?'))
+      ->setDefaultValue(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'boolean',
+        'weight' => 10,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 10,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['statuses_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Tweet Count'))
+      ->setDescription(t('The number of tweets for this profile.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 11,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 11,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -264,30 +338,10 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 7,
+        'weight' => 12,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 7,
-      ))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['background_image'] = BaseFieldDefinition::create('image')
-      ->setLabel(t('Background Image'))
-      ->setDescription(t('The user background image.'))
-      ->setSettings([
-        'uri_scheme' => 'public',
-        'file_directory' => 'tweet_feed/[date:custom:Y]-[date:custom:m]',
-        'alt_field_required' => FALSE,
-        'file_extensions' => 'png jpg jpeg gif',
-      ])
-      ->setDisplayOptions('view', array(
-        'label' => 'hidden',
-        'type' => 'default',
-        'weight' => 8,
-      ))
-      ->setDisplayOptions('form', array(
-        'weight' => 8,
+        'weight' => 12,
       ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -304,161 +358,11 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 9,
+        'weight' => 13,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 9,
+        'weight' => 13,
       ))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
- 
-    $fields['display_url'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Profile Display URL'))
-      ->setDescription(t('This is the display URL for the user\'s profile. It is not shortened.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 10,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 10,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['followers'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Number of Followers'))
-      ->setDescription(t('The number of followers this profile has.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 11,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 11,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['following'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Number of Users Following'))
-      ->setDescription(t('The number of users following this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 12,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 12,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['favorites'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Number of Favorites'))
-      ->setDescription(t('The number of favorites for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 13,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 13,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['tweet_count'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Tweet Count'))
-      ->setDescription(t('The number of tweets for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 14,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 14,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['background_color'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Background Color'))
-      ->setDescription(t('Background color for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 15,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 15,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['text_color'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Text Color'))
-      ->setDescription(t('The text color for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 16,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 16,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['link_color'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Link Color'))
-      ->setDescription(t('Link colors assigned to this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 18,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 18,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['sidebar_border_color'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Sidebar Border Color'))
-      ->setDescription(t('The border color code of the sidebar.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 18,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 18,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['sidebar_fill_color'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Sidebar Fill Color'))
-      ->setDescription(t('The color of the sidebar fill.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 18,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 18,
-      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -475,11 +379,11 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ])
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
-        'weight' => 19,
+        'weight' => 14,
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 19,
+        'weight' => 14,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -503,11 +407,11 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ])
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
-        'weight' => 20,
+        'weight' => 15,
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 20,
+        'weight' => 15,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -516,28 +420,6 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
         ],
       ])
       ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['created'] = BaseFieldDefinition::create('created')
-      ->setLabel(t('Created'))
-      ->setDescription(t('The time that the entity was created.'))
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 32,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 32,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['changed'] = BaseFieldDefinition::create('changed')
-      ->setLabel(t('Changed'))
-      ->setDescription(t('The time that the entity was last edited.'))
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 33,
-      ])
       ->setDisplayConfigurable('view', TRUE);
 
     return $fields;
