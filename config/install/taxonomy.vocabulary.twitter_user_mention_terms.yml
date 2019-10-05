@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Twitter User Mention Terms'
+vid: twitter_user_mention_terms
+description: 'User mentions contained in Tweet Feed entities.'
+weight: 0
