@@ -52,11 +52,8 @@ use Drupal\user\UserInterface;
  *   admin_permission = "administer tweet feed entities",
  *   entity_keys = {
  *     "id" = "id",
- *     "tweet_id" = "tweet_id",
+ *     "label" = "tweet_id",
  *     "uuid" = "uuid",
- *     "uid" = "user_id",
- *     "langcode" = "langcode",
- *     "status" = "status",
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/tweet_entity/{tweet_entity}",
@@ -80,21 +77,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $values += [
       'user_id' => \Drupal::currentUser()->id(),
     ];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getName() {
-    return $this->get('name')->value;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setName($name) {
-    $this->set('name', $name);
-    return $this;
   }
 
   /**
@@ -145,36 +127,141 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function isPublished() {
-    return (bool) $this->getEntityKey('status');
+  public function getTweetID() {
+    return $this->get('tweet_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setPublished($published) {
-    $this->set('status', $published ? TRUE : FALSE);
+  public function setTweetID($tweet_id) {
+    $this->set('tweet_id', $tweet_id);
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
+  public function getTweetTitle() {
+    return $this->get('tweet_title')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTweetTite($tweet_title) {
+    $this->set('tweet_title', $tweet_title);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTweetText() {
+    return $this->get('tweet_full_text')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTweetText($tweet_full_text) {
+    $this->set('tweet_full_text', $tweet_full_text);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTweetUserProfileID() {
+    return $this->get('tweet_user_profile_id')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTweetUserProfileID($tweet_user_profile_id) {
+    return $this->set('tweet_user_profile_id')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTweetUserProfile($tweet_user_profile_id) {
+    return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setLinkedImages($images) {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLinkedImages() {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+
+  
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['created_at'] = BaseFieldDefinition::create('created')
-      ->setLabel(t('Created At'))
-      ->setDescription(t('The time that the tweet was created.'))
-      ->setDisplayOptions('view', [
+    // Standard field, used as unique if primary index.
+    $fields['id'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('ID'))
+      ->setDescription(t('The ID of the Contact entity.'))
+      ->setReadOnly(TRUE);
+
+    // Standard field, unique outside of the scope of the current project.
+    $fields['uuid'] = BaseFieldDefinition::create('uuid')
+      ->setLabel(t('UUID'))
+      ->setDescription(t('The UUID of the Contact entity.'))
+      ->setReadOnly(TRUE);
+
+    // Owner field of the contact.
+    // Entity reference field, holds the reference to the user object.
+    // The view shows the user name field of the user.
+    // The form presents a auto complete field for the user name.
+    $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('User Name'))
+      ->setDescription(t('The Name of the associated user.'))
+      ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default')
+      ->setDisplayOptions('view', array(
         'label' => 'above',
-        'weight' => 0,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 0,
-      ])
+        'type' => 'entity_reference_label',
+        'weight' => -3,
+      ))
+      ->setDisplayOptions('form', array(
+        'type' => 'entity_reference_autocomplete',
+        'settings' => array(
+          'match_operator' => 'CONTAINS',
+          'size' => 60,
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ),
+        'weight' => -3,
+      ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
+
+    $fields['langcode'] = BaseFieldDefinition::create('language')
+      ->setLabel(t('Language code'))
+      ->setDescription(t('The language code of Contact entity.'));
+
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(t('Created'))
+      ->setDescription(t('The time that the entity was created.'));
+
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
+      ->setDescription(t('The time that the entity was last edited.'));
 
     $fields['tweet_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Tweet ID'))

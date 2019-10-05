@@ -37,11 +37,8 @@ use Drupal\user\UserInterface;
  *   admin_permission = "administer tweet feed profile entities",
  *   entity_keys = {
  *     "id" = "id",
- *     "profile_user_id" = "profile_user_id",
+ *     "label" = "user_id",
  *     "uuid" = "uuid",
- *     "uid" = "user_id",
- *     "langcode" = "langcode",
- *     "status" = "status",
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/tweet_profile_entity/{tweet_profile_entity}",
@@ -147,6 +144,18 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    // Standard field, used as unique if primary index.
+    $fields['id'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('ID'))
+      ->setDescription(t('The ID of the Contact entity.'))
+      ->setReadOnly(TRUE);
+
+    // Standard field, unique outside of the scope of the current project.
+    $fields['uuid'] = BaseFieldDefinition::create('uuid')
+      ->setLabel(t('UUID'))
+      ->setDescription(t('The UUID of the Contact entity.'))
+      ->setReadOnly(TRUE);
 
     $fields['user_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Twitter User ID'))
@@ -402,7 +411,7 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
       ->setSetting('handler', 'default:taxonomy_term')
       ->setSetting('handler_settings', [
         'target_bundles' => [
-          'twitter_followers' => 'twitter_followers',
+          'former_followers' => 'former_followers',
         ],
       ])
       ->setTranslatable(FALSE)

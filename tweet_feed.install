@@ -1,1 +1,35 @@
 <?php
+
+use Drupal\taxonomy\Entity\Vocabulary;
+
+/**
+ * implements hook_uninstall().
+ */
+function tweet_feed_uninstall() {
+  // Remove all of our custom taxonomies. We need to delete the terms first,
+  // then we can remove the taxonomies themselves.
+
+  // Look up the vocabulary ID's for our various vocabuilaries
+  $vocabulary_ids = [
+    'twitter_user_mention_terms', 'twitter_hashtag_terms', 'twitter_followers', 'twitter_former_followers',
+  ];
+
+  foreach ($vocabulary_ids as $vocabulary_id) {
+    // Remove all of the terms from this vocabulary.
+    $vids = Vocabulary::loadMultiple();
+    foreach ($vids as $vid) {
+      if ($vid->id() == $vocabulary_id) {
+        $container = \Drupal::getContainer();
+        $terms = $container->get('entity.manager')->getStorage('taxonomy_term')->loadTree($vid->id());
+        if (!empty($terms)) {
+          foreach($terms as $term) {
+            $term->delete();
+          }
+        }
+        // Then remove the vocabulary.
+        $vocabulary = Vocabulary::load($vid->id());
+        $vocabulary->delete();
+      }
+    }
+  }
+}
