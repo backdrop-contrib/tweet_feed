@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * implements hook_uninstall().
@@ -19,10 +20,10 @@ function tweet_feed_uninstall() {
     $vids = Vocabulary::loadMultiple();
     foreach ($vids as $vid) {
       if ($vid->id() == $vocabulary_id) {
-        $container = \Drupal::getContainer();
-        $terms = $container->get('entity.manager')->getStorage('taxonomy_term')->loadTree($vid->id());
+        $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid->id());
         if (!empty($terms)) {
           foreach($terms as $term) {
+            $term = \Drupal\taxonomy\Entity\Term::load($term->tid);
             $term->delete();
           }
         }

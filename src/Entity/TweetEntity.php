@@ -173,7 +173,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getTweetUserProfileID() {
-    return $this->get('tweet_user_profile_id')->value;
+    $this->get('tweet_user_profile_id')->value;
+    return $this;
   }
 
   /**
@@ -187,7 +188,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getTweetUserProfile($tweet_user_profile_id) {
-    return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+    $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+    return $this;
   }
 
   /**
@@ -204,8 +206,133 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function loadHashtags() {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
 
-  
+  /**
+   * {@inheritdoc}
+   */
+  public function addHashtag($hasgtag) {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function loadUserMentions() {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addUserMention($user_mention) {
+    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getGeographicCoordinatres() {
+    return $this->set('geographic_coordinates')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setGeographicCoordinates($geographic_coordinates) {
+    $this->get('geographic_coordinates', $geographic_coordinates);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getGeographicPlace() {
+    return $this->set('geographic_place')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setGeographicPlace($geographic_location) {
+    $this->get('geographic_place', $geographic_place);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSource() {
+    return $this->set('source')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setSource($source) {
+    $this->get('source', $source);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getUserMentionTags() {
+    //return $this->set('source')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUerMentionTags($source) {
+    //$this->get('source', $source);
+    //return $this;
+  }
+
+  public function isQuotedOrRepliedTweet() {
+
+  }
+
+  public function setQuotedOrRepliedTweet($quoted_replied) {
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getQuotedStatusId() {
+    return $this->set('geographic_place')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setQuotedStatusID($geographic_location) {
+    $this->get('geographic_place', $geographic_place);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInReplyToStatusID() {
+    return $this->set('in_reply_to_status_id')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setInReplyToStatusID($in_reply_to_status_id) {
+    $this->get('in_reply_to_status_id', $in_reply_to_status_id);
+    return $this;
+  }
+
+
   /**
    * {@inheritdoc}
    */
@@ -367,6 +494,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
           'placeholder' => '',
         ],
       ])
+      ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -439,12 +567,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $fields['user_mentions_tags'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('User Mentions'))
       ->setDescription(t('The users mentioned in a tweet in the form of tags.'))
-      ->setRevisionable(FALSE)
       ->setSetting('target_type', 'taxonomy_term')
       ->setSetting('handler', 'default:taxonomy_term')
       ->setSetting('handler_settings', [
         'target_bundles' => [
-          'user_mention_terms' => 'user_mention_terms',
+          'twitter_user_mention_terms' => 'twitter_user_mention_terms',
         ],
       ])
       ->setTranslatable(FALSE)
@@ -461,6 +588,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
           'placeholder' => '',
         ],
       ])
+      ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
