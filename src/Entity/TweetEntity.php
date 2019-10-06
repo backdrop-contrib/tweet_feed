@@ -23,6 +23,8 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\user\UserInterface;
+use Drupal\file\Entity\File;
+use Drupal\Core\Url;
 
 /**
  * Defines the Tweet Feed Tweet entity.
@@ -196,14 +198,23 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function setLinkedImages($images) {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getLinkedImages() {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  public function getLinkedImageURLS() {
+    $files = $this->get('linked_images')->getValue();
+    $urls = [];
+    foreach ($files as $file) {
+      $fo = File::load($file['target_id']);
+      $file_uri = $fo->getFileUri();
+
+      // I can't believe this will survive Drupal 9 but there is no deprecation notice on it yet.
+      $urls[] = file_create_url($file_uri);
+    }
+    return $urls;
   }
 
   /**
@@ -295,11 +306,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   }
 
   public function isQuotedOrRepliedTweet() {
-
+    return ($this->get('quoted_or_replied_tweet') != 'Off') ? TRUE : FALSE;
   }
 
   public function setQuotedOrRepliedTweet($quoted_replied) {
-
+    $this->set('quoted_or_replied_tweet', $quoted_replied);
   }
 
   /**

@@ -21,16 +21,17 @@ class TweetEntityAccessControlHandler extends EntityAccessControlHandler {
     /** @var \Drupal\tweet_feed\Entity\TweetEntityInterface $entity */
     switch ($operation) {
       case 'view':
-        if (!$entity->isPublished()) {
-          return AccessResult::allowedIfHasPermission($account, 'view unpublished tweet entity entities');
-        }
-        return AccessResult::allowedIfHasPermission($account, 'view published tweet entity entities');
+      $entity->getLinkedImages();
+      if (!$entity->isQuotedOrRepliedTweet()) {
+        return AccessResult::allowedIfHasPermission($account, 'view base quoted or replied-to tweets.');
+      }
+      return AccessResult::allowedIfHasPermission($account, 'access content');
 
       case 'update':
-        return AccessResult::allowedIfHasPermission($account, 'edit tweet entity entities');
+        return AccessResult::allowedIfHasPermission($account, 'edit tweet entities');
 
       case 'delete':
-        return AccessResult::allowedIfHasPermission($account, 'delete tweet entity entities');
+        return AccessResult::allowedIfHasPermission($account, 'delete tweet entities');
     }
 
     // Unknown operation, no opinion.
@@ -41,7 +42,7 @@ class TweetEntityAccessControlHandler extends EntityAccessControlHandler {
    * {@inheritdoc}
    */
   protected function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL) {
-    return AccessResult::allowedIfHasPermission($account, 'add tweet entity entities');
+    return AccessResult::allowedIfHasPermission($account, 'add tweet entities');
   }
 
 }
