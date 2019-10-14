@@ -22,6 +22,8 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\user\UserInterface;
 use Drupal\file\Entity\File;
 use Drupal\Core\Url;
@@ -201,6 +203,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
 
   }
 
+  public function getLinkesImages() {
+
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -220,8 +226,17 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function loadHashtags() {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  public function getHashtags() {
+    $hashtags = $this->get('hashtags')->getValue();
+    $tags = [];
+    if (!empty($hashtags)) {
+      foreach($hashtags as $key => $term) {
+        $tag = $this->entityTypeManager()->getStorage('taxonomy_term')->load($term['target_id'])->values;
+        $tags[]['name'] = $tag['name']['x-default'];
+        $tags[]['tid'] = $tag['tid']['x-default'];
+      }
+    }
+    return $tags;
   }
 
   /**

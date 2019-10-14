@@ -19,5 +19,12 @@
       "homepage": "https://www.drupal.org/u/ElusiveMind",
       "role": "Maintainer"
     }
-  ]
+  ],
+  "extra": {
+    "drush": {
+      "services": {
+        "drush.services.yml": "^9"
+      }
+    }
+  }
 }

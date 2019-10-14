@@ -21,7 +21,7 @@ class TweetEntityAccessControlHandler extends EntityAccessControlHandler {
     /** @var \Drupal\tweet_feed\Entity\TweetEntityInterface $entity */
     switch ($operation) {
       case 'view':
-      $entity->getLinkedImages();
+      $entity->getHashtags();
       if (!$entity->isQuotedOrRepliedTweet()) {
         return AccessResult::allowedIfHasPermission($account, 'view base quoted or replied-to tweets.');
       }

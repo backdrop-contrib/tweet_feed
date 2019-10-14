@@ -6,6 +6,8 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\taxonomy\Entity\Term;
+
 
 /**
  * Implements hook_help().
@@ -33,3 +35,4 @@ function tweet_feed_theme() {
     ],
   ];
 }
+

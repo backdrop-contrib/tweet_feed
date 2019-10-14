@@ -1,0 +1,5 @@
+services:
+  tweet_feed.commands:
+    class: \Drupal\tweet_feed\Commands\TweetFeedCommands
+    tags:
+      - { name: drush.command }

@@ -22,6 +22,6 @@ interface TweetEntityInterface extends ContentEntityInterface, EntityChangedInte
    * @return book $succes
    *   An iindication of success or failure of the operation.
    */
-  public function setLinkedImages($images)
+  public function setLinkedImages($images);
 
 }
