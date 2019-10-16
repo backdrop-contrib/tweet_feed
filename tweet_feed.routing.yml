@@ -34,25 +34,31 @@ tweet_feed.twitter_feeds:
     _title: 'Twitter Feeds'
   requirements:
     _permission: 'administer twitter feeds'
-tweet_feed.twitter_feeds_add:
+tweet_feed.add_feed:
   path: 'admin/structure/tweet_entity/twitter_feeds/add'
   defaults:
     _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
-    _title: 'Twitter Feed Information'
+    _title: 'Add Twitter Feeed'
   requirements:
     _permission: 'administer twitter feeds'
-
-tweet_feed.twitter_feeds:
-  path: 'admin/structure/tweet_entity/twitter_feeds'
-  defaults:
-    _controller: '\Drupal\tweet_feed\Controller\TwitterFeedsController::display_feeds'
-    _title: 'Twitter Feeds'
-  requirements:
-    _permission: 'administer twitter feeds'
-tweet_feed.twitter_accounts_add:
-  path: 'admin/structure/tweet_entity/twitter_feeds/add'
+tweet_feed.edit_feed:
+  path: 'admin/structure/tweet_entity/twitter_feeds/edit/{feed_machine_name}'
   defaults:
     _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
-    _title: 'Twitter Feed Information'
+    _title: 'Edit Twitter Feed'
+  requirements:
+    _permission: 'administer twitter feeds'
+tweet_feed.delete_feed:
+  path: 'admin/structure/tweet_entity/twitter_feeds/delete/{feed_machine_name}'
+  defaults:
+    _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
+    _title: 'Delete Twitter Feed'
+  requirements:
+    _permission: 'administer twitter feeds'
+tweet_feed.export_feed:
+  path: 'admin/structure/tweet_entity/twitter_feeds/export/{feed_machine_name}'
+  defaults:
+    _controller: '\Drupal\tweet_feed\Controller\TwitterFeedsController::export_feed'
+    _title: 'Export Twitter Feed'
   requirements:
     _permission: 'administer twitter feeds'

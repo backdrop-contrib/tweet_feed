@@ -23,9 +23,9 @@ tweet_feed.twitter_feeds:
   description: 'Add, edit or remove Twitter feeds to pull down tweets.'
   parent: tweet_feed.collection
   weight: 40
-tweet_feed.twitter_feeds_add:
+tweet_feed.feeds_add:
   title: 'Add'
-  route_name: tweet_feed.twitter_feeds_add
+  route_name: tweet_feed.add_feed
   description: 'Add a Twitter feed.'
   parent: tweet_feed.twitter_feeds
   weight: 10

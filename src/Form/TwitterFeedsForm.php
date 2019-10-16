@@ -38,7 +38,7 @@ class TwitterFeedsForm extends ConfigFormBase {
     // Set up our settings form for this particular account (new or update)
     if (!empty($feed_machine_name)) {
       $feeds = $config->get('feeds');
-      $feed = $accounts[$feed_machine_name];
+      $feed = $feeds[$feed_machine_name];
       if (!empty($feed)) {
         $form['feed_machine_name'] = [
           '#type' => 'hidden',
@@ -50,11 +50,21 @@ class TwitterFeedsForm extends ConfigFormBase {
         ];
       }
 
+      $aid = $feed['aid'];
+      $feed_name = $feed['feed_name'];
+      $query_type = $feed['query_type'];
+      $search_term = $feed['search_term'];
+      $list_name = $feed['list_name'];
+      $timeline_id = $feed['timeline_id'];
+      $pull_count = $feed['pull_count'];
+      $new_window = $feed['new_window'];
+      $hash_taxonomy = $feed['hash_taxonomy'];
+      $clear_prior = $feed['clear_prior'];
     }
     else {
       // Otherwise just initialize the form so we do not have a swath of errors
       $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
-      $twitter_user_id = $pull_count = $new_window = $clear_prior = $timeline_id = NULL;
+      $timeline_id = $pull_count = $new_window = $clear_prior = NULL;
       $hash_taxonomy = NULL;
     }
 
@@ -202,10 +212,43 @@ class TwitterFeedsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    parent::submitForm($form, $form_state);
+    $values = $form_state->getValues();
+    $config = $this->config('tweet_feed.twitter_feeds');
+    $feeds = $config->get('feeds');
+    $feed_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['feed_name']));
+
+    if (empty($values['feed_update']) && !empty($feeds[$feed_machine_name])) {
+      $suffix = 1;
+      do {
+        $new_feed_machine_name = $new_feed_machine_name . '_' . $suffix;
+        $suffix++;
+      }
+      while (!empty($feeds[$new_feed_machine_name]));
+      $feed_machine_name = $new_feed_machine_name;
+    }
     
-    //$this->config('probo.probosettings')
-    //  ->set('jira_enabled', $form_state->getValue('jira_enabled'))
-    //  ->save();
+    if (empty($feeds[$feed_machine_name])) {
+      $feeds[$feed_machine_name] = [];
+    }
+    else {
+      $feed_machine_name = $values['feed_machine_name'];
+    }
+
+    $feeds[$feed_machine_name]['aid'] = $values['aid'];
+    $feeds[$feed_machine_name]['feed_name'] = $values['feed_name'];
+    $feeds[$feed_machine_name]['query_type'] = $values['query_type'];
+    $feeds[$feed_machine_name]['search_term'] = $values['search_term'];
+    $feeds[$feed_machine_name]['timeline_id'] = $values['timeline_id'];
+    $feeds[$feed_machine_name]['list_name'] = $values['list_name'];
+    $feeds[$feed_machine_name]['pull_count'] = $values['pull_count'];
+    $feeds[$feed_machine_name]['new_window'] = $values['new_window'];
+    $feeds[$feed_machine_name]['hash_taxonomy'] = $values['hash_taxonomy'];
+    $feeds[$feed_machine_name]['clear_prior'] = $values['clear_prior'];
+
+    $this->config('tweet_feed.twitter_feeds')
+      ->set('feeds', $feeds)
+      ->save();
+
+    parent::submitForm($form, $form_state);
   }
 }

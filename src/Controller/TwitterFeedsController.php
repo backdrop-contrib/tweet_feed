@@ -29,21 +29,24 @@ class TwitterFeedsController extends ControllerBase {
       ['data' => '# Per Pull'],
       ['data' => 'Edit'],
       ['data' => 'Delete'],
-      ['data' => 'Import'],
+      ['data' => 'Export'],
     ];
 
     $rows = [];
+    $types = ['','Search','Timeline', 'List'];
     $feeds = $config->get('feeds');
     foreach ($feeds as $key => $feed) {
-      $edit_link = Link::createFromRoute($this->t('Edit'), 'tweet_feed.edit_feed', ['id' => $feed->id]);
-      $delete_link = Link::createFromRoute($this->t('Delete'),'tweet_feed.delete_feed', ['id' => $feed->id]);
-      $import_link = Link::createFromRoute($this->t('Import'),'tweet_feed.import_feed', ['id' => $feed->id]);
+      $edit_link = Link::createFromRoute($this->t('Edit'), 'tweet_feed.edit_feed', ['feed_machine_name' => $key]);
+      $delete_link = Link::createFromRoute($this->t('Delete'),'tweet_feed.delete_feed', ['feed_machine_name' => $key]);
+      $export_link = Link::createFromRoute($this->t('Export'),'tweet_feed.export_feed', ['feed_machine_name' => $key]);
       $row = [
-        ['data' => $account->name],
-        ['data' => $account->machine_name],
+        ['data' => $feed['feed_name']],
+        ['data' => $key],
+        ['data' => $types[$feed['query_type']]],
+        ['data' => $feed['pull_count'] * 100],
         ['data' => $edit_link],
         ['data' => $delete_link],
-        ['data' => $import_link],
+        ['data' => $export_link],
       ];
       $rows[] = $row;
     }
@@ -55,6 +58,11 @@ class TwitterFeedsController extends ControllerBase {
       '#rows' => $rows,
       '#empty' => 'THERE ARE NO TWITTER FEEDS CURRENTLY CREATED.',
     ];
+  }
+
+
+  public function export_feed($id) {
+
   }
 
 }

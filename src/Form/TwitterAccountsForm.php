@@ -113,7 +113,6 @@ class TwitterAccountsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    parent::submitForm($form, $form_state);
     
     $values = $form_state->getValues();
     $config = $this->config('tweet_feed.twitter_accounts');
@@ -144,5 +143,7 @@ class TwitterAccountsForm extends ConfigFormBase {
     $this->config('tweet_feed.twitter_accounts')
       ->set('accounts', $accounts)
       ->save();
+
+    parent::submitForm($form, $form_state);
   }
 }

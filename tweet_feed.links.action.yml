@@ -17,7 +17,7 @@ tweet_feed.twitter_accounts:
     - tweet_feed.twitter_accounts
 
 tweet_feed.twitter_feeds:
-  route_name: tweet_feed.twitter_feeds_add
+  route_name: tweet_feed.add_feed
   title: 'Add Twitter Feed'
   appears_on:
     - tweet_feed.twitter_feeds
