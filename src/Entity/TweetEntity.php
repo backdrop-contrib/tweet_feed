@@ -177,46 +177,46 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getTweetUserProfileID() {
-    $this->get('tweet_user_profile_id')->value;
-    return $this;
+    return $this->get('tweet_user_profile_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setTweetUserProfileID($tweet_user_profile_id) {
-    return $this->set('tweet_user_profile_id')->value;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getTweetUserProfile($tweet_user_profile_id) {
-    $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+    $this->set('tweet_user_profile_id', $tweet_user_profile_id);
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setLinkedImages($images) {
-
+  public function getTweetUserProfile() {
+    $id = $this->get('tweet_user_profile_id');
+    return \Drupal::entityTypeManager()->getStorage('user')->load($id);
   }
 
-  public function getLinkesImages() {
-
+  /**
+   * {@inheritdoc}
+   */
+  public function getLinkedImages() {
+    $files = $this->get('linked_images')->getValue();
+    $images = [];
+    foreach ($files as $file) {
+      $fo = File::load($file['target_id']);
+      $images[] = $fo;
+    }
+    return $images;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getLinkedImageURLS() {
-    $files = $this->get('linked_images')->getValue();
+    $files = $this->getLinkedImages();
     $urls = [];
     foreach ($files as $file) {
-      $fo = File::load($file['target_id']);
       $file_uri = $fo->getFileUri();
-
       // I can't believe this will survive Drupal 9 but there is no deprecation notice on it yet.
       $urls[] = file_create_url($file_uri);
     }
@@ -226,8 +226,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getHashtags() {
-    $hashtags = $this->get('hashtags')->getValue();
+  private function getTags($tags) {
+    $hashtags = $this->get($tags)->getValue();
     $tags = [];
     if (!empty($hashtags)) {
       foreach($hashtags as $key => $term) {
@@ -242,36 +242,29 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function addHashtag($hasgtag) {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  public function getHashtags() {
+    return $this->getTags('hashtags');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function loadUserMentions() {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function addUserMention($user_mention) {
-    //return $this->get('tweet_user_profile_id', $tweet_user_profile_id);
+  public function getUserMentionsTags() {
+    return $this->getTags('user_mentions_tags');
   }
 
   /**
    * {@inheritdoc}
    */
   public function getGeographicCoordinatres() {
-    return $this->set('geographic_coordinates')->value;
+    return $this->get('geographic_coordinates')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setGeographicCoordinates($geographic_coordinates) {
-    $this->get('geographic_coordinates', $geographic_coordinates);
+    $this->set('geographic_coordinates', $geographic_coordinates);
     return $this;
   }
 
@@ -279,14 +272,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getGeographicPlace() {
-    return $this->set('geographic_place')->value;
+    return $this->get('geographic_place')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setGeographicPlace($geographic_location) {
-    $this->get('geographic_place', $geographic_place);
+    $this->set('geographic_place', $geographic_place);
     return $this;
   }
 
@@ -294,36 +287,37 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getSource() {
-    return $this->set('source')->value;
+    return $this->get('source')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setSource($source) {
-    $this->get('source', $source);
+    $this->set('source', $source);
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getUserMentionTags() {
-    //return $this->set('source')->value;
+  public function getUserMentions() {
+    $mentions = $this->get('user_mentions');
+    foreach ($mentions as $mentions) {
+
+    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setUerMentionTags($source) {
-    //$this->get('source', $source);
-    //return $this;
-  }
-
   public function isQuotedOrRepliedTweet() {
     return ($this->get('quoted_or_replied_tweet') != 'Off') ? TRUE : FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function setQuotedOrRepliedTweet($quoted_replied) {
     $this->set('quoted_or_replied_tweet', $quoted_replied);
   }
@@ -332,14 +326,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getQuotedStatusId() {
-    return $this->set('geographic_place')->value;
+    return $this->get('geographic_place')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setQuotedStatusID($geographic_location) {
-    $this->get('geographic_place', $geographic_place);
+    $this->set('geographic_place', $geographic_place);
     return $this;
   }
 
@@ -347,17 +341,23 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getInReplyToStatusID() {
-    return $this->set('in_reply_to_status_id')->value;
+    return $this->get('in_reply_to_status_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setInReplyToStatusID($in_reply_to_status_id) {
-    $this->get('in_reply_to_status_id', $in_reply_to_status_id);
+    $this->set('in_reply_to_status_id', $in_reply_to_status_id);
     return $this;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function save() {
+    return $this->save();
+  }
 
   /**
    * {@inheritdoc}
