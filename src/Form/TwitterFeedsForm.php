@@ -142,8 +142,7 @@ class TwitterFeedsForm extends ConfigFormBase {
     );
     $form['tweet_feed_query_settings']['timeline_id'] = array(
       '#type' => 'textfield',
-      '#title' => t('Exact Twitter User ID For Timline Query'),
-      '#description' => t('You can get this by going to mytwitterid.com'),
+      '#title' => t('Twitter Screen Name For Timline Query'),
       '#max_length' => 64,
       '#default_value' => $timeline_id,
       '#states' => array(
@@ -171,10 +170,10 @@ class TwitterFeedsForm extends ConfigFormBase {
     );
     $form['tweet_feed_query_settings']['pull_count'] = array(
       '#type' => 'textfield',
-      '#title' => t('Number of Items to Pull x 100'),
+      '#title' => t('Number of tweets to pull per import.'),
       '#maxlength' => 3,
       '#size' => 3,
-      '#description' => t('Twitter limits tweet pulling to 1500 every 15 minutes for Timeline and List queries and 18,000 for searches. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs. To say nothing of PHP memory :)'),
+      '#description' => t('Twitter limits tweet pulling to 3200 every 15 minutes for Timeline and List queries and 18,000 for searches. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs.'),
       '#required' => TRUE,
       '#default_value' => $pull_count,
       '#weight' => 7,

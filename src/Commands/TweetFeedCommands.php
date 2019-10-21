@@ -3,8 +3,9 @@
 namespace Drupal\tweet_feed\Commands;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
-use Consolidation\OutputFormatters\StructuredData\RowsOfFields;
 use Drush\Commands\DrushCommands;
+use Drupal\tweet_feed\Controller\TweetFeed;
+
 
 /**
  * A Drush commandfile.
@@ -31,47 +32,24 @@ class TweetFeedCommands extends DrushCommands {
    * @aliases tfi
    */
   public function import($feed) {
-    $config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
-    $feeds = $config->get('accounts');
-    if (!empty($feeds)) {
-      foreach ($feeds as $key=>$value) {
-        if ($key == $feed) {
-          $connection = new TwitterOAuth($value['consumer_key'], $value['consumer_secret'], $value['oauth_token'], $value['oauth_token_secret']);
-          $content = $connection->get("account/verify_credentials");
-          print_r($content);
-        }
+    $feed_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_feeds');
+    $feeds = $feed_config->get('feeds');
+    if (!empty($feeds[$feed])) {
+      /** Get the account of the feed we are processing */
+      $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
+      $accounts = $accounts_config->get('accounts');
+      if (!empty($accounts[$feeds[$feed]['aid']])) {
+        $account = $accounts[$feeds[$feed]['aid']];
+        $connection = new TwitterOAuth($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
+
+
+        $content = $connection->get("search/tweets", ['count' => 100, 'q' => 'wmata', 'tweet_mode' => 'extended']);
+
+        //$content = $connection->get("statuses/user_timeline", ['count' => 100, 'screen_name' => 'mbags17', 'tweet_mode' => 'extended']);
+        print_r($content);
+
       }
     }
   }
 
-  /**
-   * An example of the table output format.
-   *
-   * @param array $options An associative array of options whose values come from cli, aliases, config, etc.
-   *
-   * @field-labels
-   *   group: Group
-   *   token: Token
-   *   name: Name
-   * @default-fields group,token,name
-   *
-   * @command tweet_feed:token
-   * @aliases token
-   *
-   * @filter-default-field name
-   * @return \Consolidation\OutputFormatters\StructuredData\RowsOfFields
-   */
-  public function token($options = ['format' => 'table']) {
-    $all = \Drupal::token()->getInfo();
-    foreach ($all['tokens'] as $group => $tokens) {
-      foreach ($tokens as $key => $token) {
-        $rows[] = [
-          'group' => $group,
-          'token' => $key,
-          'name' => $token['name'],
-        ];
-      }
-    }
-    return new RowsOfFields($rows);
-  }
 }

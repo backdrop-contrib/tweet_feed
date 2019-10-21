@@ -14,14 +14,11 @@ use Drupal\user\EntityOwnerInterface;
 interface TweetEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
   /**
-   * Set and save images to our locat public file system as they are brought in from Twitter.
+   * Get the tweet ID as it is on Twitter from our tweet.
    *
-   * @param array $images
-   *   An array of images broughtin by a single tweet. Usually just one but cannot be too careful.
-   *
-   * @return book $succes
-   *   An iindication of success or failure of the operation.
+   * @return string $tweet_id
+   *   The tweet ID of the tweet object. String due to the size of the number.
    */
-  public function setLinkedImages($images);
+  public function getTweetID();
 
 }

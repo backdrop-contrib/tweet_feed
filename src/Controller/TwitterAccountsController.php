@@ -7,7 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
- * Class ProboRepositoryController.
+ * Class TwitterAccountsController.
  */
 class TwitterAccountsController extends ControllerBase {
 

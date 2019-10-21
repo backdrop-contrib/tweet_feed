@@ -101,6 +101,13 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
+  public function getID() {
+    return $this->get('id')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getOwner() {
     return $this->get('user_id')->entity;
   }
@@ -216,7 +223,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $files = $this->getLinkedImages();
     $urls = [];
     foreach ($files as $file) {
-      $file_uri = $fo->getFileUri();
+      $file_uri = $file->getFileUri();
       // I can't believe this will survive Drupal 9 but there is no deprecation notice on it yet.
       $urls[] = file_create_url($file_uri);
     }
@@ -352,12 +359,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function save() {
-    return $this->save();
-  }
 
   /**
    * {@inheritdoc}
@@ -368,13 +369,13 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     // Standard field, used as unique if primary index.
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('ID'))
-      ->setDescription(t('The ID of the Contact entity.'))
+      ->setDescription(t('The ID of the tweet entity.'))
       ->setReadOnly(TRUE);
 
     // Standard field, unique outside of the scope of the current project.
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
-      ->setDescription(t('The UUID of the Contact entity.'))
+      ->setDescription(t('The UUID of the tweet entity.'))
       ->setReadOnly(TRUE);
 
     // Owner field of the contact.

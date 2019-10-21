@@ -55,10 +55,4 @@ tweet_feed.delete_feed:
     _title: 'Delete Twitter Feed'
   requirements:
     _permission: 'administer twitter feeds'
-tweet_feed.export_feed:
-  path: 'admin/structure/tweet_entity/twitter_feeds/export/{feed_machine_name}'
-  defaults:
-    _controller: '\Drupal\tweet_feed\Controller\TwitterFeedsController::export_feed'
-    _title: 'Export Twitter Feed'
-  requirements:
-    _permission: 'administer twitter feeds'
+
