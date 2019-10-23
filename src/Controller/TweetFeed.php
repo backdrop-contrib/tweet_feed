@@ -23,7 +23,310 @@ class TweetFeed extends ControllerBase {
    *  The information on the feed from which this feed is being fetched.
    */
   public function save_tweet($tweet, $feed) {
+    // Get the creation time of the tweet and store it.
+    $creation_timestamp = strtotime($tweet->created_at);
 
+    // Add our hash tags to the hashtag taxonomy. If it already exists, then get the tid
+    // for that term. Returns an array of tid's for hashtags used.
+    $hashtags = $this->process_taxonomy($tweet->entities->hashtags, 'hashtag_terms');
+
+    // Add our user mentions to it's relative taxonomy. Handled just like hashtags
+    $user_mentions = $this->process_taxonomy($tweet->entities->user_mentions, 'user_mention_terms');
+
+    $tweet_text = $tweet->full_text;
+
+    // Process the tweet. This linkes our twitter names, hash tags and converts any
+    // URL's into HTML.
+    $tweet_html = $this->format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
+
+    // Populate our node object with the data we will need to save
+    $entity = Drupal\tweet_feed\Entity\TweetEntity();
+    $hashtags = $entity->setTags($tweet->entities->hashtags, 'hashtag_terms');
+    $user_mentions = $entity->setTags($tweet->entities->user_mentions, 'user_mention_terms');
+    $entity->setUuid(Drupal\Component\Uuid::generate());
+    $entity->setOwnerId(1);
+    $entity->setCreatedTime(strtotime($tweet->created_at));
+    $entity->setTweetId($tweet->id_str);
+    $entity->setTweetTitle(mb_substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet_text), 0, 255));
+    $entity->setTweetFullText($this->format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
+    $entity->setTweetUserProfileId($tweet->user->id);
+    $entity->setHashtags($hashtags);
+    $entity->setUserMentions($user_mentions);
+    $entity->setIsVerifiedUser((int) $tweet->user->verified);
+    $entity->setFeedMachineName($feed->machine_name);
+
+    /** Geographic Information if it exist */
+    if (!empty($tweet->place) && is_object($tweet->place)) {
+      $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
+      $entity->setGeographicCoordites($bb);
+    }
+
+    /** Handle media and by media I mean images attached to this tweet. */
+    if (!empty($tweet->entities->media) && is_array($tweet->entities->media)) {
+      $files = [];
+      foreach ($tweet->entities->media as $key => $media) {
+        if (is_object($media)) {
+          /** Edge case - a really big image could push a PHP max memory issue. I need to research */
+          /** alternative ways of doing this. */
+          $image = file_get_contents($media->media_url . ':large');
+          if (!empty($image)) {
+            $this->check_path('public://tweet-feed-tweet-images');
+            $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', FILE_EXISTS_REPLACE);
+            if (is_object($file_temp)) {
+              $file = [
+                'fid' => $file_temp->fid,
+                'filename' => $file_temp->filename,
+                'filemime' => $file_temp->filemime,
+                'uid' => 1,
+                'uri' => $file_temp->uri,
+                'status' => 1,
+              ];
+              $files[] = $file;
+            }
+            unset($file);
+            unset($file_temp);
+            unset($image);
+          }
+        }
+      }
+      $entity->setLinkedImages($files);
+    }
+
+    $entity->save();
+
+    if (0) {
+    // If we have a place, then assign it based on which components we have available
+    // to us.
+    if (!empty($tweet->place->full_name)) {
+      $node->field_geographic_place[$node->language][0] = array(
+        'value' => $tweet->place->full_name,
+        'safe_value' => $tweet->place->full_name,
+      );
+      if (!empty($tweet->place->country)) {
+        $node->field_geographic_place[$node->language][0]['value'] .= ', ' . $tweet->place->country;
+        $node->field_geographic_place[$node->language][0]['safe_value'] .= ', ' . $tweet->place->country;
+      }
+    }
+
+    if ($utf8 === TRUE) {
+      // Handle the author name
+      $node->field_tweet_author[$node->language][0] = array(
+        'value' => $tweet->user->screen_name,
+        'safe_value' => $tweet->user->screen_name,
+      );
+    }
+    else {
+      $node->field_tweet_author[$node->language][0] = array(
+        'value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
+        'safe_value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
+      );
+    }
+
+    // Handle the author id
+    $node->field_tweet_author_id[$node->language][0] = array(
+      'value' => $tweet->user->id,
+      'safe_value' => $tweet->user->id,
+    );
+
+    // Handle the tweet creation date
+    $created_dt = DateTime::createFromFormat('D M d H:i:s O Y', $tweet->created_at);
+    $node->field_tweet_creation_date[$node->language][0] = array(
+      'value' => $created_dt->format('Y-m-d H:i:s'),
+      'timezone' => 'UTC/GMT',
+      'timezone_db' => 'UTC/GMT',
+      'datatype' => 'datetime',
+    );
+
+    // Handle the tweet id
+    $node->field_tweet_id[$node->language][0] = array(
+      'value' => $tweet->id_str,
+      'safe_value' => $tweet->id_str,
+    );
+
+    // Handle the favorite count for this tweet
+    $node->field_twitter_favorite_count[$node->language][0]['value'] = $tweet->favorite_count;
+
+    // Handle the hashtags
+    foreach ($hashtags as $hashtag) {
+      $node->field_twitter_hashtags[$node->language][] = array(
+        'target_id' => $hashtag,
+      );
+    }
+
+    // Handle the re-tweet count
+    $node->field_twitter_retweet_count[$node->language][0]['value'] = $tweet->retweet_count;
+
+    // Handle the tweet source
+    $node->field_tweet_source[$node->language][0] = array(
+      'value' => $tweet->source,
+      'safe_value' => strip_tags($tweet->source),
+    );
+
+    // Create a direct link to this tweet
+    $node->field_link_to_tweet[$node->language][0]['value'] = 'https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str;
+
+    // Handle user mentions (our custom field defined by the module). Also places them in
+    // the user mentions taxonomy.
+    if (!empty($tweet->entities->user_mentions) && is_array($tweet->entities->user_mentions)) {
+      foreach ($tweet->entities->user_mentions as $key => $mention) {
+        if ($utf8 == TRUE) {
+          $node->field_tweet_user_mentions[$node->language][$key] = array(
+            'tweet_feed_mention_name' => $mention->name,
+            'tweet_feed_mention_screen_name' => $mention->screen_name,
+            'tweet_feed_mention_id' => $mention->id,
+          );
+        }
+        else {
+          $node->field_tweet_user_mentions[$node->language][$key] = array(
+            'tweet_feed_mention_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->name)),
+            'tweet_feed_mention_screen_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->screen_name)),
+            'tweet_feed_mention_id' => $mention->id,
+          );
+        }
+      }
+
+      foreach ($user_mentions as $mention) {
+        $node->field_twitter_mentions_in_tweet[$node->language][] = array(
+          'target_id' => $mention,
+        );
+      }
+    }
+
+    // Not sure about this method of getting the big twitter profile image, but we're
+    // going to roll with it for now.
+    $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
+
+    // Handle the profile image obtained from twitter.com
+    $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-image', $tweet->id_str);
+    if ($file !== NULL) {
+      $node->field_profile_image[$node->language][0] = (array)$file;
+    }
+
+    /// Allow other modules to alter the node about to be saved
+    drupal_alter('tweet_feed_tweet_save', $node, $tweet);
+
+    if (empty($node)) {
+      return;
+    }
+
+    // Save the node
+    node_save($node);
+    $nid = $node->nid;
+
+    // Unset the node variable so we can re-use it
+    unset($node);
+
+    // If we are creating a user profile for the person who made this tweet, then we need
+    // to either create it or update it here. To determine create/update we need to check
+    // the hash of the profile id and see if it matches our data.
+    if (variable_get('tweet_feed_get_tweeter_profiles', FALSE) == TRUE) {
+      $user_hash = md5(serialize($tweet->user));
+      // See if we have a profile for the author if this tweet. If we do not then we do not
+      // need to do the rest of the checks
+      $query = new EntityFieldQuery();
+      $result = $query->entityCondition('entity_type', 'node')
+                      ->entityCondition('bundle', 'twitter_user_profile')
+                      ->fieldCondition('field_twitter_user_id', 'value', $tweet->user->id, '=')
+                      ->execute();
+      // If we have a result, then we have a profile! Then we need to check to see if the hash
+      // of the profile is the same as the hash of the user data. If so, then update. If not,
+      // then skip and on to the next
+      if (isset($result['node'])) {
+        $result = db_select('tweet_user_hashes', 'h')
+                  ->fields('h', array('nid', 'tuid', 'hash'))
+                  ->condition('h.tuid', $tweet->user->id)
+                  ->execute();
+        if ($result->rowCount() > 0) {
+          $tdata = $result->fetchObject();
+          // If our hashes are equal, we have nothing to update and can move along
+          if ($user_hash == $tdata->hash) {
+            return;
+          }
+          else {
+            $update_node_id = $tdata->nid;
+          }
+        }
+      }
+
+      // Populate our node object with the data we will need to save
+      $node = new stdClass();
+
+      // If we are being passed a node id for updating, then set it here so we update that
+      // node. (might be an edge case)
+      if ($update_node_id > 0) {
+        $node->nid = $update_node_id;
+      }
+
+      // Initialize the standard parts of our tweeting node.
+      $node->type = 'twitter_user_profile';
+      $node->uid = 1;
+      $node->created = $creation_timestamp;
+      $node->status = 1;
+      $node->comment = 0;
+      $node->promote = 0;
+      $node->moderate = 0;
+      $node->sticky = 0;
+      $node->language = LANGUAGE_NONE;
+
+      $node->field_twitter_user_id[$node->language][0]['value'] = $tweet->user->id_str;
+      $node->title = $tweet->user->name;
+
+      if ($utf8 == TRUE) {
+        $node->body[$node->language][0]['value'] = $tweet->user->description;
+        $node->field_twitter_a_screen_name[$node->language][0]['value'] = $tweet->user->screen_name;
+      }
+      else {
+        $node->body[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->description));
+        $node->field_twitter_a_screen_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name));
+      }
+
+      $node->field_twitter_location[$node->language][0]['value'] = $tweet->user->location;
+      $node->field_twitter_a_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->url;
+      $node->field_twitter_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->display_url;
+      $node->field_twitter_followers[$node->language][0]['value'] = $tweet->user->followers_count;
+      $node->field_twitter_following[$node->language][0]['value'] = $tweet->user->friends_count;
+      $node->field_twitter_favorites_count[$node->language][0]['value'] = $tweet->user->favourites_count;
+      $node->field_twitter_tweet_count[$node->language][0]['value'] = $tweet->user->statuses_count;
+      $node->field_tweet_author_verified[$node->language][0]['value'] = (int) $tweet->user->verified;
+
+      // Handle the profile background image obtained from twitter.com
+      $file = tweet_feed_process_twitter_image($tweet->user->profile_background_image_url, 'tweet-feed-profile-background-image', $tweet->user->id_str);
+      if ($file !== NULL) {
+        $node->field_background_image[$node->language][0] = (array)$file;
+      }
+
+      // Handle the user profile image obtained from twitter.com
+      $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-user-profile-image', $tweet->user->id_str);
+      if ($file !== NULL) {
+        $node->field_profile_image[$node->language][0] = (array)$file;
+      }
+
+      // Handle the user profile banner image obtained from twitter.com
+      $file = tweet_feed_process_twitter_image($tweet->user->profile_banner_url, 'tweet-feed-profile-banner-image', $tweet->user->id_str);
+      if ($file !== NULL) {
+        $node->field_banner_image[$node->language][0] = (array)$file;
+      }
+
+      $node->field_background_color[$node->language][0]['value'] = $tweet->user->profile_background_color;
+      $node->field_profile_text_color[$node->language][0]['value'] = $tweet->user->profile_text_color;
+      $node->field_link_color[$node->language][0]['value'] = $tweet->user->profile_link_color;
+      $node->field_sidebar_border_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_border_color;
+      $node->field_sidebar_fill_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_fill_color;
+
+      node_save($node);
+
+      // Make sure the hash in our tweet_hashes table is right by deleting what is there
+      // for this node and updating
+      db_delete('tweet_user_hashes')
+        ->condition('nid', $node->nid)
+        ->execute();
+      $hash_insert = array(
+        'tuid' => $tweet->user->id_str,
+        'nid' => $node->nid,
+        'hash' => $user_hash,
+      );
+      db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
+    }
   }
 
   /**
@@ -45,6 +348,11 @@ class TweetFeed extends ControllerBase {
     $feeds = $config->get('feeds');
     if (!empty($feeds[$feed_machine_name])) {
       $feed = $feeds[$feed_machine_name];
+
+      /** I do not want to replicate this data in the settings for feeds so we will just */
+      /** assign it ad-hoc to the array here. */
+      $feed->machine_name = $feed_machine_name;
+
       /** Get the account of the feed we are processing */
       $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
       $accounts = $accounts_config->get('accounts');
@@ -213,7 +521,52 @@ class TweetFeed extends ControllerBase {
    * @param array $terms
    *   An array of taxonomy objects to be saved to the node for this tweet.
    */
+/**
+ * Process hashtags and user mentions in tweets
+ *
+ * We need to store these in our taxonomy (do not save duplicates) and save a reference
+ * to them in our created tweet node
+ *
+ * @param array $entities
+ *   An array of entities to be saved to our taxonomy.
+ * @param string $taxonomy
+ *   The machine name of the taxonomy to be saved to.
+ * @param array $tids
+ *   The term id's to be saved
+ */
   public function process_taxonomy($entities, $taxonomy) {
+    $tids = [];
+    foreach($entities as $entity) {
+      switch($taxonomy) {
+        case 'hashtag_terms':
+          $taxonomy_name = $entity->text;
+          break;
+        case 'user_mention_terms':
+          $taxonomy_name = $entity->screen_name;
+          break;
+        default:
+          break;
+      }
+
+      $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($taxonomy);
+      if (!empty($terms)) {
+        foreach ($terms as $term) {
+          if ($term->term_name == $taxonomy_name) {
+            $tid = $term->id;
+          }
+        }
+        if (!empty($tid)) {
+          $new_term = \Drupal\taxonomy\Entity\Term::create([
+            'vid' => $taxonomy,
+            'name' => $taxonomy_name,
+          ]);
+          $tid = $new_term->tid;
+          $new_term->save();
+        }
+        $tids[] = $tid;
+      }
+    }
+    return $tids;
   }
 
   /**
@@ -317,5 +670,21 @@ class TweetFeed extends ControllerBase {
       }
     }
   }
+
+/**
+ * Make sure the directory exists. If not, create it
+ *
+ * @param string $uri
+ *   The URI location of the path to be created.
+ */
+function check_path($uri) {
+  $instance = file_stream_wrapper_get_instance_by_uri($uri);
+  $real_path = $instance->realpath();
+  if (!file_exists($real_path)) {
+    @mkdir($real_path, 0777, TRUE);
+  }
+  return file_exists($real_path);
+}
+
 
 }

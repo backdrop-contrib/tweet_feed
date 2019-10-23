@@ -13,13 +13,12 @@ use Drupal\Core\Link;
  */
 class TweetEntityListBuilder extends EntityListBuilder {
 
-
   /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['id'] = $this->t('Tweet entity ID');
-    $header['name'] = $this->t('Name');
+    $header['id'] = $this->t('Tweet ID');
+    $header['name'] = $this->t('Tweet Title');
     return $header + parent::buildHeader();
   }
 
@@ -28,11 +27,11 @@ class TweetEntityListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\tweet_feed\Entity\TweetEntity */
-    $row['id'] = $entity->id();
+    $row['id'] = $entity->getTweetID();
     $row['name'] = Link::createFromRoute(
       $entity->label(),
       'entity.tweet_entity.edit_form',
-      ['tweet_entity' => $entity->id()]
+      ['tweet_entity' => $entity->getTweetTitle()]
     );
     return $row + parent::buildRow($entity);
   }

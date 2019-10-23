@@ -101,10 +101,18 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getID() {
-    return $this->get('id')->entity;
+  public function getId() {
+    return $this->get('id')->value;
   }
 
+  public function getUuid($uuid) {
+    return $this->get('uuid')->value;
+  }
+
+  public function setUuid($uuid) {
+    $this->set('uuid', $uuid);
+    return $this;
+  }
   /**
    * {@inheritdoc}
    */
@@ -138,14 +146,29 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getTweetID() {
+  public function getFeedMachineName() {
+    return $this->get('feed_machine_name')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFeedMachineName($feed_machine_name) {
+    $this->set('feed_machine_name', $feed_machine_name);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTweetId() {
     return $this->get('tweet_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setTweetID($tweet_id) {
+  public function setTweetId($tweet_id) {
     $this->set('tweet_id', $tweet_id);
     return $this;
   }
@@ -168,14 +191,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getTweetText() {
+  public function getTweetFullText() {
     return $this->get('tweet_full_text')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setTweetText($tweet_full_text) {
+  public function setTweetFullText($tweet_full_text) {
     $this->set('tweet_full_text', $tweet_full_text);
     return $this;
   }
@@ -183,14 +206,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getTweetUserProfileID() {
+  public function getTweetUserProfileId() {
     return $this->get('tweet_user_profile_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setTweetUserProfileID($tweet_user_profile_id) {
+  public function setTweetUserProfileId($tweet_user_profile_id) {
     $this->set('tweet_user_profile_id', $tweet_user_profile_id);
     return $this;
   }
@@ -206,6 +229,21 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
+  public function getIsVerifiedUser() {
+    return ($this->get('is_verified_user') != 'Off') ? TRUE : FALSE;\
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setIsVerifiedUser($is_verified_user) {
+    $this->set('is_verified_user', $is_verified_user);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getLinkedImages() {
     $files = $this->get('linked_images')->getValue();
     $images = [];
@@ -216,10 +254,15 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $images;
   }
 
+  public function setLinkedImages($images) {
+
+
+  }
+
   /**
    * {@inheritdoc}
    */
-  public function getLinkedImageURLS() {
+  public function getLinkedImageUrls() {
     $files = $this->getLinkedImages();
     $urls = [];
     foreach ($files as $file) {
@@ -246,11 +289,53 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $tags;
   }
 
+  private function setTags($entities, $taxonomy) {
+    $tids = [];
+    foreach($entities as $entity) {
+      switch($taxonomy) {
+        case 'hashtag_terms':
+          $taxonomy_name = $entity->text;
+          break;
+        case 'user_mention_terms':
+          $taxonomy_name = $entity->screen_name;
+          break;
+        default:
+          break;
+      }
+
+      $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($taxonomy);
+      if (!empty($terms)) {
+        foreach ($terms as $term) {
+          if ($term->term_name == $taxonomy_name) {
+            $tid = $term->id;
+          }
+        }
+        if (!empty($tid)) {
+          $new_term = \Drupal\taxonomy\Entity\Term::create([
+            'vid' => $taxonomy,
+            'name' => $taxonomy_name,
+          ]);
+          $tid = $new_term->tid;
+          $new_term->save();
+        }
+        $tids[] = $tid;
+      }
+    }
+    return $tids;
+  }
+
   /**
    * {@inheritdoc}
    */
   public function getHashtags() {
     return $this->getTags('hashtags');
+  }
+
+   /**
+   * {@inheritdoc}
+   */
+  public function setHashtags($hashtags) {
+    return $this->get('hashtags');
   }
 
   /**
@@ -327,6 +412,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    */
   public function setQuotedOrRepliedTweet($quoted_replied) {
     $this->set('quoted_or_replied_tweet', $quoted_replied);
+    return $this;
   }
 
   /**
@@ -358,7 +444,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $this->set('in_reply_to_status_id', $in_reply_to_status_id);
     return $this;
   }
-
 
   /**
    * {@inheritdoc}
@@ -405,17 +490,24 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['langcode'] = BaseFieldDefinition::create('language')
-      ->setLabel(t('Language code'))
-      ->setDescription(t('The language code of Contact entity.'));
-
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'));
 
-    $fields['changed'] = BaseFieldDefinition::create('changed')
-      ->setLabel(t('Changed'))
-      ->setDescription(t('The time that the entity was last edited.'));
+    $fields['feed_machine_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Feed machine name'))
+      ->setDescription(t('The machine name of the feed that owns this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['tweet_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Tweet ID'))
@@ -475,12 +567,26 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
  
+    $fields['is_verified_user'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Is this a verified user?'))
+      ->setDefaultValue(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'boolean',
+        'weight' => 4,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 4,
+      ]
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['linked_images'] = BaseFieldDefinition::create('image')
       ->setLabel(t('Linked Images'))
       ->setDescription(t('Images linked in tweets.'))
       ->setSettings([
         'uri_scheme' => 'public',
-        'file_directory' => 'tweet_feed/[date:custom:Y]-[date:custom:m]',
+        'file_directory' => 'tweet-feeds-tweet-images/[date:custom:Y]-[date:custom:m]',
         'alt_field_required' => FALSE,
         'file_extensions' => 'png jpg jpeg gif',
       ])
@@ -546,7 +652,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['geographic_coordinates'] = BaseFieldDefinition::create('string')
+    $fields['geographic_coordinates'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Geographic Coordinates'))
       ->setDescription(t('The geographic coordinates of a tweet if provided.'))
       ->setRevisionable(FALSE)
