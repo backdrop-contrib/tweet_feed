@@ -42,7 +42,7 @@ function tweet_feed_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a>';
       $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; padding-top: 15px; width: 100%; font-size: 8pt; line-height: 1.3em;">';
       $output .= '<img src="/' . drupal_get_path('module', 'tweet_feed') . '/images/flyingflip-logo.png" width="151" height="50" alt="FlyingFlip Studios" align="right" /><br />';
-      $output .= 'Released 2019 - v8.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbags17<br clear="right">';
+      $output .= '2019-2020 - v8.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbags17<br clear="right">';
       $output .= '<style>.item-list, hr { display: none; }</style></div>';
       return $output;
 

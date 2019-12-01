@@ -113,6 +113,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $this->set('uuid', $uuid);
     return $this;
   }
+
   /**
    * {@inheritdoc}
    */
@@ -230,7 +231,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getIsVerifiedUser() {
-    return ($this->get('is_verified_user') != 'Off') ? TRUE : FALSE;\
+    return ($this->get('is_verified_user') != 'Off') ? TRUE : FALSE;
   }
 
   /**
@@ -370,7 +371,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function setGeographicPlace($geographic_location) {
+  public function setGeographicPlace($geographic_place) {
     $this->set('geographic_place', $geographic_place);
     return $this;
   }
@@ -577,7 +578,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayOptions('form', [
         'weight' => 4,
-      ]
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 

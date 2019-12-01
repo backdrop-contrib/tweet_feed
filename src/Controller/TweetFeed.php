@@ -6,6 +6,7 @@ use Drupal\Core\Link;
 use Drush\Log;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\tweet_feed\Entity\TweetProfileEntity;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
 /**
@@ -92,69 +93,17 @@ class TweetFeed extends ControllerBase {
       $entity->setLinkedImages($files);
     }
 
-    $entity->save();
+    if (!empty($tweet->place->full_name)) {
+      $entity->setGeographicPlace($tweet->place->full_name);
+    }
 
     if (0) {
     // If we have a place, then assign it based on which components we have available
     // to us.
-    if (!empty($tweet->place->full_name)) {
-      $node->field_geographic_place[$node->language][0] = array(
-        'value' => $tweet->place->full_name,
-        'safe_value' => $tweet->place->full_name,
-      );
-      if (!empty($tweet->place->country)) {
-        $node->field_geographic_place[$node->language][0]['value'] .= ', ' . $tweet->place->country;
-        $node->field_geographic_place[$node->language][0]['safe_value'] .= ', ' . $tweet->place->country;
-      }
-    }
 
-    if ($utf8 === TRUE) {
-      // Handle the author name
-      $node->field_tweet_author[$node->language][0] = array(
-        'value' => $tweet->user->screen_name,
-        'safe_value' => $tweet->user->screen_name,
-      );
-    }
-    else {
-      $node->field_tweet_author[$node->language][0] = array(
-        'value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
-        'safe_value' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name)),
-      );
-    }
-
-    // Handle the author id
-    $node->field_tweet_author_id[$node->language][0] = array(
-      'value' => $tweet->user->id,
-      'safe_value' => $tweet->user->id,
-    );
-
-    // Handle the tweet creation date
-    $created_dt = DateTime::createFromFormat('D M d H:i:s O Y', $tweet->created_at);
-    $node->field_tweet_creation_date[$node->language][0] = array(
-      'value' => $created_dt->format('Y-m-d H:i:s'),
-      'timezone' => 'UTC/GMT',
-      'timezone_db' => 'UTC/GMT',
-      'datatype' => 'datetime',
-    );
-
-    // Handle the tweet id
-    $node->field_tweet_id[$node->language][0] = array(
-      'value' => $tweet->id_str,
-      'safe_value' => $tweet->id_str,
-    );
-
-    // Handle the favorite count for this tweet
-    $node->field_twitter_favorite_count[$node->language][0]['value'] = $tweet->favorite_count;
-
-    // Handle the hashtags
-    foreach ($hashtags as $hashtag) {
-      $node->field_twitter_hashtags[$node->language][] = array(
-        'target_id' => $hashtag,
-      );
-    }
-
-    // Handle the re-tweet count
-    $node->field_twitter_retweet_count[$node->language][0]['value'] = $tweet->retweet_count;
+    /** Handle tweet author. If the author does not exist, then create them. */
+    $entity->setTweetUserProfileId($tweet->user->id);
+    $entity->setTweetId($tweet->id_str);
 
     // Handle the tweet source
     $node->field_tweet_source[$node->language][0] = array(
@@ -202,19 +151,14 @@ class TweetFeed extends ControllerBase {
       $node->field_profile_image[$node->language][0] = (array)$file;
     }
 
-    /// Allow other modules to alter the node about to be saved
-    drupal_alter('tweet_feed_tweet_save', $node, $tweet);
+    \Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
 
-    if (empty($node)) {
+    if (empty($entity)) {
       return;
     }
 
     // Save the node
-    node_save($node);
-    $nid = $node->nid;
-
-    // Unset the node variable so we can re-use it
-    unset($node);
+    $entity->save();
 
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
@@ -328,6 +272,7 @@ class TweetFeed extends ControllerBase {
       db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
     }
   }
+
 
   /**
    * Get Twitter Data
@@ -518,22 +463,9 @@ class TweetFeed extends ControllerBase {
    *   An array of entities to be saved to our taxonomy.
    * @param string $taxonomy
    *   The machine name of the taxonomy to be saved to.
-   * @param array $terms
-   *   An array of taxonomy objects to be saved to the node for this tweet.
+   * @param array $tids
+   *   The term id's to be saved
    */
-/**
- * Process hashtags and user mentions in tweets
- *
- * We need to store these in our taxonomy (do not save duplicates) and save a reference
- * to them in our created tweet node
- *
- * @param array $entities
- *   An array of entities to be saved to our taxonomy.
- * @param string $taxonomy
- *   The machine name of the taxonomy to be saved to.
- * @param array $tids
- *   The term id's to be saved
- */
   public function process_taxonomy($entities, $taxonomy) {
     $tids = [];
     foreach($entities as $entity) {
@@ -671,20 +603,18 @@ class TweetFeed extends ControllerBase {
     }
   }
 
-/**
- * Make sure the directory exists. If not, create it
- *
- * @param string $uri
- *   The URI location of the path to be created.
- */
-function check_path($uri) {
-  $instance = file_stream_wrapper_get_instance_by_uri($uri);
-  $real_path = $instance->realpath();
-  if (!file_exists($real_path)) {
-    @mkdir($real_path, 0777, TRUE);
+  /**
+   * Make sure the directory exists. If not, create it
+   *
+   * @param string $uri
+   *   The URI location of the path to be created.
+   */
+  function check_path($uri) {
+    $instance = file_stream_wrapper_get_instance_by_uri($uri);
+    $real_path = $instance->realpath();
+    if (!file_exists($real_path)) {
+      @mkdir($real_path, 0777, TRUE);
+    }
+    return file_exists($real_path);
   }
-  return file_exists($real_path);
-}
-
-
 }

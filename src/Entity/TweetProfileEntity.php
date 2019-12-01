@@ -57,6 +57,13 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
   /**
    * {@inheritdoc}
    */
+  public function __construct($user_id) {
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
     $values += [
@@ -97,45 +104,15 @@ class TweetProfileEntity extends ContentEntityBase implements TweetProfileEntity
   /**
    * {@inheritdoc}
    */
-  public function getOwner() {
-    return $this->get('user_id')->entity;
+  public function getUserID() {
+    return $this->get('user_id')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getOwnerId() {
-    return $this->get('user_id')->target_id;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwnerId($uid) {
-    $this->set('user_id', $uid);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('user_id', $account->id());
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isPublished() {
-    return (bool) $this->getEntityKey('status');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setPublished($published) {
-    $this->set('status', $published ? TRUE : FALSE);
+  public function setUserID($user_id) {
+    $this->set('user_id', $user_id);
     return $this;
   }
 

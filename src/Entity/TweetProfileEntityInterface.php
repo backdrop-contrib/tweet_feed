@@ -13,7 +13,16 @@ use Drupal\user\EntityOwnerInterface;
  */
 interface TweetProfileEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
-  // Add get/set methods for your configuration properties here.
+  /**
+   * Load a Twitter profile based on the Twitter user_id, not the internal reference.
+   * 
+   * @param string $user_id
+   *   The twitter user_id.
+   * 
+   * @return TweetProfileEntity $profile
+   *   The profile of the user requested. Returns FALSE if none exists.
+   */
+  public function __construct($user_id);
 
   /**
    * Gets the Tweet entity name.
@@ -53,25 +62,6 @@ interface TweetProfileEntityInterface extends ContentEntityInterface, EntityChan
    */
   public function setCreatedTime($timestamp);
 
-  /**
-   * Returns the Tweet entity published status indicator.
-   *
-   * Unpublished Tweet entity are only visible to restricted users.
-   *
-   * @return bool
-   *   TRUE if the Tweet entity is published.
-   */
-  public function isPublished();
 
-  /**
-   * Sets the published status of a Tweet entity.
-   *
-   * @param bool $published
-   *   TRUE to set this Tweet entity to published, FALSE to set it to unpublished.
-   *
-   * @return \Drupal\tweet_feed\Entity\TweetEntityInterface
-   *   The called Tweet entity entity.
-   */
-  public function setPublished($published);
 
 }
