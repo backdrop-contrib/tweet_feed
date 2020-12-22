@@ -2,7 +2,6 @@ name: Tweet Feed
 type: module
 description: A custom Twitter implementation of both twitter feeds and user profiles.
 core: 8.x
-package: Other
+core_version_requirement: ^8 || ^9
 
-dependencies:
-  - entity_reference
+package: Other

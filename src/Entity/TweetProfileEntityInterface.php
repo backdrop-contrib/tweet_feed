@@ -11,7 +11,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup tweet_feed
  */
-interface TweetProfileEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+interface TweetProfileEntityInterface extends ContentEntityInterface, EntityChangedInterface {
 
   /**
    * Load a Twitter profile based on the Twitter user_id, not the internal reference.
