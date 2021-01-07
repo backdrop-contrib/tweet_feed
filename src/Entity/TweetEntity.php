@@ -105,10 +105,16 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this->get('id')->value;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getUuid($uuid) {
     return $this->get('uuid')->value;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function setUuid($uuid) {
     $this->set('uuid', $uuid);
     return $this;
@@ -255,6 +261,9 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $images;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function setLinkedImages($images) {
 
 
@@ -290,7 +299,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $tags;
   }
 
-  private function setTags($entities, $taxonomy) {
+  /**
+   * {@inheritdoc}
+   */
+   private function setTags($entities, $taxonomy) {
     $tids = [];
     foreach($entities as $entity) {
       switch($taxonomy) {

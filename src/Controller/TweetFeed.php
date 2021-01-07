@@ -7,6 +7,7 @@ use Drush\Log;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\tweet_feed\Entity\TweetProfileEntity;
+use Drupal\tweet_feed\Entity\TweetEntity;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
 /**
@@ -23,16 +24,17 @@ class TweetFeed extends ControllerBase {
    * @param array $feed
    *  The information on the feed from which this feed is being fetched.
    */
-  public function save_tweet($tweet, $feed) {
+  public function saveTweet($tweet, $feed) {
+
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
 
     // Add our hash tags to the hashtag taxonomy. If it already exists, then get the tid
     // for that term. Returns an array of tid's for hashtags used.
-    $hashtags = $this->process_taxonomy($tweet->entities->hashtags, 'hashtag_terms');
+    $hashtags = $this->processTaxonomy($tweet->entities->hashtags, 'hashtag_terms');
 
     // Add our user mentions to it's relative taxonomy. Handled just like hashtags
-    $user_mentions = $this->process_taxonomy($tweet->entities->user_mentions, 'user_mention_terms');
+    $user_mentions = $this->processTaxonomy($tweet->entities->user_mentions, 'twitter_user_mention_terms');
 
     $tweet_text = $tweet->full_text;
 
@@ -271,7 +273,7 @@ class TweetFeed extends ControllerBase {
       );
       db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
     }
-  }
+  } }
 
 
   /**
@@ -466,37 +468,40 @@ class TweetFeed extends ControllerBase {
    * @param array $tids
    *   The term id's to be saved
    */
-  public function process_taxonomy($entities, $taxonomy) {
+  public function processTaxonomy($entities, $taxonomy) {
     $tids = [];
     foreach($entities as $entity) {
       switch($taxonomy) {
         case 'hashtag_terms':
           $taxonomy_name = $entity->text;
           break;
-        case 'user_mention_terms':
+        case 'twitter_user_mention_terms':
           $taxonomy_name = $entity->screen_name;
           break;
         default:
           break;
       }
 
+      $tid = NULL;
       $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($taxonomy);
+
       if (!empty($terms)) {
         foreach ($terms as $term) {
-          if ($term->term_name == $taxonomy_name) {
-            $tid = $term->id;
+          if ($term->name == $taxonomy_name) {
+            $tid = $term->tid;
+            break;
           }
         }
-        if (!empty($tid)) {
-          $new_term = \Drupal\taxonomy\Entity\Term::create([
-            'vid' => $taxonomy,
-            'name' => $taxonomy_name,
-          ]);
-          $tid = $new_term->tid;
-          $new_term->save();
-        }
-        $tids[] = $tid;
       }
+      if (empty($tid)) {
+        $new_term = \Drupal\taxonomy\Entity\Term::create([
+          'vid' => $taxonomy,
+          'name' => $taxonomy_name,
+        ]);
+        $tid = $new_term->tid;
+        $new_term->save();
+      }
+      $tids[] = $tid;
     }
     return $tids;
   }

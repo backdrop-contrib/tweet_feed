@@ -64,8 +64,9 @@ class TwitterFeedsForm extends ConfigFormBase {
     else {
       // Otherwise just initialize the form so we do not have a swath of errors
       $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
-      $timeline_id = $pull_count = $new_window = $clear_prior = NULL;
+      $timeline_id = $new_window = $clear_prior = NULL;
       $hash_taxonomy = NULL;
+      $pull_count = 200;
     }
 
     // Get a list of the configured accounts so we can assign this feed to a particular
@@ -173,7 +174,7 @@ class TwitterFeedsForm extends ConfigFormBase {
       '#title' => t('Number of tweets to pull per import.'),
       '#maxlength' => 3,
       '#size' => 3,
-      '#description' => t('Twitter limits tweet pulling to 3200 every 15 minutes for Timeline and List queries and 18,000 for searches. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs.'),
+      '#description' => t('Twitter limits the number of tweets to 200 per request. If this value is > 200, it will have to be done in multiple requests. Please be aware of Twitter\'s API request limits, so you are not in violation.'),
       '#required' => TRUE,
       '#default_value' => $pull_count,
       '#weight' => 7,

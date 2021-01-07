@@ -35,6 +35,8 @@ class TweetFeedCommands extends DrushCommands {
     $feed_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_feeds');
     $feeds = $feed_config->get('feeds');
     if (!empty($feeds[$feed])) {
+      $data = $feeds[$feed];
+
       /** Get the account of the feed we are processing */
       $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
       $accounts = $accounts_config->get('accounts');
@@ -42,14 +44,40 @@ class TweetFeedCommands extends DrushCommands {
         $account = $accounts[$feeds[$feed]['aid']];
         $connection = new TwitterOAuth($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
 
+        switch ($data['query_type']) {
+          case 3:
+            $content = $connection->get("lists/statuses", ['count' => $data['pull_count'], 'slug' => $data['list_name'], 'owner_screen_name' => $data['timeline_id'], 'tweet_mode' => 'extended']);
+            break;
+          case 2:
+            $content = $connection->get("statuses/user_timeline", ['count' => $data['pull_count'], 'screen_name' => $data['timeline_id'], 'tweet_mode' => 'extended']);
+            break;
+          case 1:
+          default:
+            $content = $connection->get("search/tweets", ['count' => $data['pull_count'], 'q' => $data['search_term'], 'tweet_mode' => 'extended']);
+            break;
+        }
 
-        $content = $connection->get("search/tweets", ['count' => 100, 'q' => 'wmata', 'tweet_mode' => 'extended']);
+        $tweetFeed = new TweetFeed();
 
-        //$content = $connection->get("statuses/user_timeline", ['count' => 100, 'screen_name' => 'mbags17', 'tweet_mode' => 'extended']);
-        print_r($content);
+        if ($data['query_type'] == 2 || $data['query_type'] == 3) {
+          // Get the lowest ID from the last element in the timeline
+          $end_of_the_line = array_pop($content);
+          array_push($tdata, $end_of_the_line);
+          $lowest_id = $end_of_the_line->id_str;
 
+          // Proceed with our processing
+          $tweet_data = $tdata;
+        }
+        else {
+          $tweet_data = $content->statuses;
+        }
+
+        foreach ($tweet_data as $tweet) {
+          $tweetFeed->saveTweet($tweet, $feed);
+        }
       }
     }
   }
-
 }
+
+
