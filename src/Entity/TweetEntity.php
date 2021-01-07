@@ -302,7 +302,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-   private function setTags($entities, $taxonomy) {
+  private function setTags($entities, $taxonomy) {
     $tids = [];
     foreach($entities as $entity) {
       switch($taxonomy) {

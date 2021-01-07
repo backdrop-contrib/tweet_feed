@@ -62,18 +62,33 @@ class TweetFeedCommands extends DrushCommands {
         if ($data['query_type'] == 2 || $data['query_type'] == 3) {
           // Get the lowest ID from the last element in the timeline
           $end_of_the_line = array_pop($content);
-          array_push($tdata, $end_of_the_line);
+          array_push($content, $end_of_the_line);
           $lowest_id = $end_of_the_line->id_str;
 
           // Proceed with our processing
-          $tweet_data = $tdata;
+          $tweet_data = $content;
         }
         else {
           $tweet_data = $content->statuses;
         }
 
         foreach ($tweet_data as $tweet) {
-          $tweetFeed->saveTweet($tweet, $feed);
+          print_r($tweet);
+          exit();
+
+          $tweetFeed->saveTweet($tweet, $data);
+
+
+
+          /**
+           * We have a quoted tweet. So we will save this as well for context but go no further.
+           * I am not sure we want to go down the rabit hole.
+           */
+          if (!empty($tweet->quoted_status_id)) {
+
+
+
+          }
         }
       }
     }

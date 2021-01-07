@@ -31,7 +31,7 @@ class TweetFeed extends ControllerBase {
 
     // Add our hash tags to the hashtag taxonomy. If it already exists, then get the tid
     // for that term. Returns an array of tid's for hashtags used.
-    $hashtags = $this->processTaxonomy($tweet->entities->hashtags, 'hashtag_terms');
+    $hashtags = $this->processTaxonomy($tweet->entities->hashtags, 'twitter_hashtag_terms');
 
     // Add our user mentions to it's relative taxonomy. Handled just like hashtags
     $user_mentions = $this->processTaxonomy($tweet->entities->user_mentions, 'twitter_user_mention_terms');
@@ -40,12 +40,16 @@ class TweetFeed extends ControllerBase {
 
     // Process the tweet. This linkes our twitter names, hash tags and converts any
     // URL's into HTML.
-    $tweet_html = $this->format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
+    $tweet_html = tweet_feed_format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
+
+    print $tweet_html;
+    exit();
+
+
+
 
     // Populate our node object with the data we will need to save
     $entity = Drupal\tweet_feed\Entity\TweetEntity();
-    $hashtags = $entity->setTags($tweet->entities->hashtags, 'hashtag_terms');
-    $user_mentions = $entity->setTags($tweet->entities->user_mentions, 'user_mention_terms');
     $entity->setUuid(Drupal\Component\Uuid::generate());
     $entity->setOwnerId(1);
     $entity->setCreatedTime(strtotime($tweet->created_at));
