@@ -78,15 +78,19 @@ class TweetFeedCommands extends DrushCommands {
 
           $tweetFeed->saveTweet($tweet, $data);
 
-
+          /**
+           * If we have a replied to tweet, we get a reference to the tweet being replied to,
+           * but we do not get the tweet itself - so we need to retrieve that tweet, save it,
+           * and then reference it when we do the view.
+           */
 
           /**
            * We have a quoted tweet. So we will save this as well for context but go no further.
-           * I am not sure we want to go down the rabit hole.
+           * I am not sure we want to go down the rabit hole. Quoted tweets are kept in the same
+           * dataset as the tweet that quotes it, so we do not need to make an API call to get the
+           * tweet.
            */
           if (!empty($tweet->quoted_status_id)) {
-
-
 
           }
         }

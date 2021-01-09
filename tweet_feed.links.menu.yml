@@ -36,8 +36,6 @@ tweet_feed.twitter_feeds_view:
   parent: tweet_feed.twitter_feeds
   weight: 20
 
-
-
 tweet_feed.collection:
   title: 'Tweet Feed'
   route_name: entity.tweet_entity.collection

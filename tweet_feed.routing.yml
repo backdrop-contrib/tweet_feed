@@ -51,7 +51,7 @@ tweet_feed.edit_feed:
 tweet_feed.delete_feed:
   path: 'admin/structure/tweet_entity/twitter_feeds/delete/{feed_machine_name}'
   defaults:
-    _form: '\Drupal\tweet_feed\Form\TwitterFeedsForm'
+    _form: '\Drupal\tweet_feed\Form\TwitterFeedsDeleteForm'
     _title: 'Delete Twitter Feed'
   requirements:
     _permission: 'administer twitter feeds'

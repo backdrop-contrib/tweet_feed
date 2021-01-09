@@ -4,7 +4,7 @@ namespace Drupal\tweet_feed\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-
+use Drupal\Core\Url;
 
 /**
  * Form controller for Tweet entity edit forms.
@@ -51,10 +51,12 @@ class TwitterAccountsForm extends ConfigFormBase {
       $consumer_secret = $account['consumer_secret'];
       $oauth_token = $account['oauth_token'];
       $oauth_token_secret = $account['oauth_token_secret'];
+      $account_name_disabled = TRUE;
     }
     else {
       $account_name = $consumer_key = $oauth_token = NULL;
       $consumer_secret = $oauth_token_secret = NULL;
+      $account_name_disabled = FALSE;
     }
 
     $form['tweet_feed_account'] = array(
@@ -66,6 +68,7 @@ class TwitterAccountsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => t('Account Name'),
       '#max_length' => 128,
+      '#disabled' => $account_name_disabled,
       '#required' => TRUE,
       '#default_value' => $account_name,
     );
@@ -113,28 +116,37 @@ class TwitterAccountsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    
-    $values = $form_state->getValues();
+    parent::submitForm($form, $form_state);
+
     $config = $this->config('tweet_feed.twitter_accounts');
     $accounts = $config->get('accounts');
-    $account_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['account_name']));
+    $values = $form_state->getValues();
 
-    if (empty($values['account_update']) && !empty($accounts[$account_machine_name])) {
-      $suffix = 1;
-      do {
-        $new_account_machine_name = $account_machine_name . '_' . $suffix;
-        $suffix++;
+    // If we're updating, then do things differently
+    if (empty($values['account_update'])) {
+      $account_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['account_name']));
+
+      if (!empty($accounts[$account_machine_name])) {
+        $suffix = 1;
+        do {
+          $new_account_machine_name = $account_machine_name . '_' . $suffix;
+          $suffix++;
+        }
+        while (!empty($accounts[$new_account_machine_name]));
+        $account_machine_name = $new_account_machine_name;
       }
-      while (!empty($accounts[$new_account_machine_name]));
-      $account_machine_name = $new_account_machine_name;
-    }
-    
-    if (empty($accounts[$account_machine_name])) {
-      $accounts[$account_machine_name] = [];
+
+      if (empty($accounts[$account_machine_name])) {
+        $accounts[$account_machine_name] = [];
+      }
+      else {
+        $account_machine_name = $values['account_machine_name'];
+      }
     }
     else {
       $account_machine_name = $values['account_machine_name'];
     }
+
     $accounts[$account_machine_name]['account_name'] = $values['account_name'];
     $accounts[$account_machine_name]['consumer_key'] = $values['consumer_key'];
     $accounts[$account_machine_name]['consumer_secret'] = $values['consumer_secret'];
@@ -144,6 +156,7 @@ class TwitterAccountsForm extends ConfigFormBase {
       ->set('accounts', $accounts)
       ->save();
 
-    parent::submitForm($form, $form_state);
+    $url = Url::fromRoute('tweet_feed.twitter_accounts');
+    $form_state->setRedirectUrl($url);
   }
 }

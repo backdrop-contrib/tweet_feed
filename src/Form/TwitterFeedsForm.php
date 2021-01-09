@@ -2,6 +2,7 @@
 
 namespace Drupal\tweet_feed\Form;
 
+use Drupal\Core\Url;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -60,11 +61,13 @@ class TwitterFeedsForm extends ConfigFormBase {
       $new_window = $feed['new_window'];
       $hash_taxonomy = $feed['hash_taxonomy'];
       $clear_prior = $feed['clear_prior'];
+      $twitter_feed_name_disabled = TRUE;
     }
     else {
       // Otherwise just initialize the form so we do not have a swath of errors
       $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
       $timeline_id = $new_window = $clear_prior = NULL;
+      $twitter_feed_name_disabled = FALSE;
       $hash_taxonomy = NULL;
       $pull_count = 200;
     }
@@ -99,6 +102,7 @@ class TwitterFeedsForm extends ConfigFormBase {
       '#description' => t('The name of the feed as it will appear on administrative forms'),
       '#default_value' => $feed_name,
       '#required' => TRUE,
+      '#disabled' => $twitter_feed_name_disabled,
       '#weight' => 1,
     );
     $form['tweet_feed_query_settings']['aid'] = array(
@@ -212,23 +216,31 @@ class TwitterFeedsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    parent::submitForm($form, $form_state);
+
     $values = $form_state->getValues();
     $config = $this->config('tweet_feed.twitter_feeds');
     $feeds = $config->get('feeds');
-    $feed_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['feed_name']));
 
-    if (empty($values['feed_update']) && !empty($feeds[$feed_machine_name])) {
-      $suffix = 1;
-      do {
-        $new_feed_machine_name = $new_feed_machine_name . '_' . $suffix;
-        $suffix++;
+    if (empty($values['feed_update'])) {
+      $feed_machine_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($values['feed_name']));
+
+      if (!empty($feeds[$feed_machine_name])) {
+        $suffix = 1;
+        do {
+          $new_feed_machine_name = $new_feed_machine_name . '_' . $suffix;
+          $suffix++;
+        }
+        while (!empty($feeds[$new_feed_machine_name]));
+        $feed_machine_name = $new_feed_machine_name;
       }
-      while (!empty($feeds[$new_feed_machine_name]));
-      $feed_machine_name = $new_feed_machine_name;
-    }
-    
-    if (empty($feeds[$feed_machine_name])) {
-      $feeds[$feed_machine_name] = [];
+
+      if (empty($feeds[$feed_machine_name])) {
+        $feeds[$feed_machine_name] = [];
+      }
+      else {
+        $feed_machine_name = $values['feed_machine_name'];
+      }
     }
     else {
       $feed_machine_name = $values['feed_machine_name'];
@@ -249,6 +261,7 @@ class TwitterFeedsForm extends ConfigFormBase {
       ->set('feeds', $feeds)
       ->save();
 
-    parent::submitForm($form, $form_state);
+    $url = Url::fromRoute('tweet_feed.twitter_feeds');
+    $form_state->setRedirectUrl($url);
   }
 }
