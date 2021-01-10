@@ -1,3 +1,11 @@
+tweet_feed.general:
+  path: '/admin/tweet-feed'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::overview'
+    link_id: 'tweet_feed.general'
+    _title: 'Tweet Feed Admin'
+  requirements:
+    _permission: 'access tweet admin'
 tweet_feed.twitter_accounts:
   path: 'admin/structure/tweet_entity/twitter_accounts'
   defaults:
