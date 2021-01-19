@@ -26,6 +26,10 @@ class TweetFeed extends ControllerBase {
    */
   public function saveTweet($tweet, $feed) {
 
+    print_r($tweet);
+    exit();
+
+
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
 
@@ -42,34 +46,20 @@ class TweetFeed extends ControllerBase {
     // URL's into HTML.
     $tweet_html = tweet_feed_format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
 
-    print $tweet_html;
-    exit();
-
-
-
-
-    // Populate our node object with the data we will need to save
+    // Populate our tweet entity with the data we will need to save
     $entity = Drupal\tweet_feed\Entity\TweetEntity();
-    $entity->setUuid(Drupal\Component\Uuid::generate());
     $entity->setOwnerId(1);
+    $entity->setUuid(Drupal\Component\Uuid::generate());
     $entity->setCreatedTime(strtotime($tweet->created_at));
+    $entity->setFeedMachineName($feed->machine_name);
     $entity->setTweetId($tweet->id_str);
     $entity->setTweetTitle(mb_substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet_text), 0, 255));
-    $entity->setTweetFullText($this->format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
+    $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
     $entity->setTweetUserProfileId($tweet->user->id);
-    $entity->setHashtags($hashtags);
-    $entity->setUserMentions($user_mentions);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
-    $entity->setFeedMachineName($feed->machine_name);
-
-    /** Geographic Information if it exist */
-    if (!empty($tweet->place) && is_object($tweet->place)) {
-      $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
-      $entity->setGeographicCoordites($bb);
-    }
 
     /** Handle media and by media I mean images attached to this tweet. */
-    if (!empty($tweet->entities->media) && is_array($tweet->entities->media)) {
+    if (0 && !empty($tweet->entities->media) && is_array($tweet->entities->media)) {
       $files = [];
       foreach ($tweet->entities->media as $key => $media) {
         if (is_object($media)) {
@@ -99,26 +89,33 @@ class TweetFeed extends ControllerBase {
       $entity->setLinkedImages($files);
     }
 
+    $entity->setHashtags($hashtags);
+    $entity->setUserMentions($user_mentions);
+
+    if (!empty($tweet->place) && is_object($tweet->place)) {
+      $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
+      $entity->setGeographicCoordites($bb);
+    }
+
     if (!empty($tweet->place->full_name)) {
       $entity->setGeographicPlace($tweet->place->full_name);
     }
 
-    if (0) {
-    // If we have a place, then assign it based on which components we have available
-    // to us.
+    if (!empty($tweet->source)) {
+      $entity->setSource($tweet->source);
+    }
 
-    /** Handle tweet author. If the author does not exist, then create them. */
+    // User Mention Taxonomy Tags
+    // Is Quoted or Replied Tweet (Bool)
+    // Quoted Tweet Id
+    // Replied-to Tweet ID
+
+    $entity->setLinkToTweet('https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str);
     $entity->setTweetUserProfileId($tweet->user->id);
-    $entity->setTweetId($tweet->id_str);
 
-    // Handle the tweet source
-    $node->field_tweet_source[$node->language][0] = array(
-      'value' => $tweet->source,
-      'safe_value' => strip_tags($tweet->source),
-    );
+    // profile image
 
-    // Create a direct link to this tweet
-    $node->field_link_to_tweet[$node->language][0]['value'] = 'https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str;
+    if (0) {
 
     // Handle user mentions (our custom field defined by the module). Also places them in
     // the user mentions taxonomy.

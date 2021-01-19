@@ -458,6 +458,45 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this;
   }
 
+  public function getLinkToTweet() {
+    return $this->get('link_to_tweet')->value;
+  }
+
+  public function setLinkToTweet($link_to_tweet) {
+    $this->set('link_to_tweet', $link_to_tweet);
+    return $this;
+  }
+
+  public function getOwnerProfileId() {
+    return $this->get('owner_profile_id')->value;
+  }
+
+  public function setOwnerProfileId($owner_profile_id) {
+    $this->set('owner_profile_id', $owner_profile_id);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setProfileImage($image) {
+
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getProfileImage() {
+    $file = $this->getProfileImage();
+
+    $file_uri = $file->getFileUri();
+    // I can't believe this will survive Drupal 9 but there is no deprecation notice on it yet.
+    $urls = file_create_url($file_uri);
+    return $url;
+  }
+
+
   /**
    * {@inheritdoc}
    */
@@ -537,7 +576,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
- 
+
     $fields['tweet_user_profile_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Tweet Author ID'))
       ->setDescription(t('The Twitter ID of the author of this tweet.'))
@@ -552,7 +591,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
- 
+
     $fields['is_verified_user'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Is this a verified user?'))
       ->setDefaultValue(FALSE)
@@ -572,7 +611,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDescription(t('Images linked in tweets.'))
       ->setSettings([
         'uri_scheme' => 'public',
-        'file_directory' => 'tweet-feeds-tweet-images/[date:custom:Y]-[date:custom:m]',
+        'file_directory' => 'tweet-feed-tweet-images/[date:custom:Y]-[date:custom:m]',
         'alt_field_required' => FALSE,
         'file_extensions' => 'png jpg jpeg gif',
       ])
@@ -587,7 +626,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
- 
+
     $fields['hashtags'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Hashtags Used'))
       ->setDescription(t('Any hashtags that are contained in a tweet.'))
@@ -725,7 +764,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
-  
+
     $fields['quoted_status_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Tweet which was re-tweeted for comments'))
       ->setDescription(t('This is the ID of the tweet which was re-tweeted with comments.'))
@@ -748,11 +787,62 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 18,
+        'weight' => 19,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 18,
+        'weight' => 19,
       ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['link_to_tweet'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Link'))
+      ->setDescription(t('The URL that will take the user to the tweet on Twitter.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 20,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 20,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['owner_profile_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Tweet Owner Profile ID'))
+      ->setDescription(t('The Twitter ID of the owner of this tweet.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'weight' => 21,
+      ])
+      ->setDisplayOptions('form', [
+        'weight' => 21,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['profile_image'] = BaseFieldDefinition::create('image')
+      ->setLabel(t('Profile Image'))
+      ->setDescription(t('The Profile Image of the Tweeter.'))
+      ->setSettings([
+        'uri_scheme' => 'public',
+        'file_directory' => 'tweet-feed-tweet-profile-images/[date:custom:Y]-[date:custom:m]',
+        'alt_field_required' => FALSE,
+        'file_extensions' => 'png jpg jpeg gif',
+      ])
+      ->setDisplayOptions('view', array(
+        'label' => 'hidden',
+        'type' => 'default',
+        'weight' => 22,
+      ))
+      ->setDisplayOptions('form', array(
+        'weight' => 22,
+      ))
+      ->setCardinality(1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
