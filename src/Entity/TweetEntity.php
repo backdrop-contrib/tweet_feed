@@ -327,7 +327,18 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function setUserMentions($user_mentions) {
-    return $this->set('user_mentions', $user_mentions);
+    $um = [];
+    if (count($user_mentions) > 0) {
+      foreach ($user_mentions as $user_mention) {
+        $um[] = [
+          'mention_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($user_mention->name)),
+          'mention_screen_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($user_mention->screen_name)),
+          'mention_id' => $user_mention->id_str,
+        ];
+      }
+    }
+    print_r($um);
+    $this->set('user_mentions', $um);    
   }
 
 

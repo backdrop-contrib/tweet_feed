@@ -73,21 +73,21 @@ class UserMentionsWidgetType extends WidgetBase {
 
     $element['mention_name'] = [
       '#type' => 'textfield',
-      '#title' => 'The name of a person mentioned in this tweet.',
+      '#title' => 'The display name of the user mentioned.',
       '#default_value' => isset($items[$delta]->mention_name) ? $items[$delta]->mention_name : NULL,
       '#size' => 60,
       '#maxlength' => 255,
     ];
     $element['mention_screen_name'] = [
       '#type' => 'textfield',
-      '#title' => 'The screen name of the person mentioned in this tweet.',
+      '#title' => 'The screen name of the user mentioned.',
       '#default_value' => isset($items[$delta]->mention_screen_name) ? $items[$delta]->mention_screen_name : NULL,
       '#size' => 60,
       '#maxlength' => 255,
     ];
     $element['mention_id'] = [
       '#type' => 'textfield',
-      '#title' => 'The twitter numerical id of the person mentioned in this tweet.',
+      '#title' => 'The Twitter id of the user mentioned.',
       '#default_value' => isset($items[$delta]->mention_id) ? $items[$delta]->mention_id : NULL,
       '#size' => 60,
       '#maxlength' => 255,
@@ -98,7 +98,6 @@ class UserMentionsWidgetType extends WidgetBase {
     if ($this->fieldDefinition->getFieldStorageDefinition()->getCardinality() == 1) {
       $element += [
         '#type' => 'fieldset',
-        '#attributes' => array('class' => array('container-inline')),
       ];
     }
     return $element;

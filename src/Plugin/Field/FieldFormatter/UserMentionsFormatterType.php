@@ -72,9 +72,10 @@ class UserMentionsFormatterType extends FormatterBase {
    *   The textual output generated.
    */
   protected function viewValue(FieldItemInterface $item) {
-    // The text value has no text format assigned to it, so the user input
-    // should equal the output, including newlines.
-    return nl2br(Html::escape($item->value));
+    $values = $item->toArray();
+    $url = 'http://www.twitter.com/' . Html::escape($values['mention_screen_name']);
+    $display = '<div class="tweet-feed-user-mention"><a class="tweet-feed-user-mention-anchor" href="' . $url . '">' . $values['mention_name'] . '</a></div>';
+    return $display;
   }
 
 }

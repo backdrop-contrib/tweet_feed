@@ -9,6 +9,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\tweet_feed\Entity\TweetProfileEntity;
 use Drupal\tweet_feed\Entity\TweetEntity;
 use Abraham\TwitterOAuth\TwitterOAuth;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Language\Language;
 
 /**
  * Class TweetFeed.
@@ -25,6 +27,11 @@ class TweetFeed extends ControllerBase {
    *  The information on the feed from which this feed is being fetched.
    */
   public function saveTweet($tweet, $feed) {
+    $language = Language::LANGCODE_DEFAULT;
+
+    // $node =  \Drupal\node\Entity\Node::load(1);
+    // print_r($node);
+    // exit();
 
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
@@ -47,20 +54,18 @@ class TweetFeed extends ControllerBase {
     $uuid_service = \Drupal::service('uuid');
     
     //$entity->setOwnerId(1);
+    
     $entity->setUuid($uuid_service->generate());
     $entity->setCreatedTime(strtotime($tweet->created_at));
-    $entity->setFeedMachineName($feed->machine_name);
+    $entity->setFeedMachineName($feed['machine_name']);
     $entity->setTweetId($tweet->id_str);
-
-    $entity->setTweetTitle(mb_substr(\Drupal\Component\Utility\Html::decodeEntities($tweet->user->screen_name) . ': ' . \Drupal\Component\Utility\Html::decodeEntities($tweet_text), 0, 255));
-    
-    
-    
-    
-    
+    $entity->setTweetTitle(mb_substr(Html::decodeEntities($tweet->user->screen_name) . ': ' . Html::decodeEntities($tweet_text), 0, 255));
     $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
     $entity->setTweetUserProfileId($tweet->user->id);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
+    $entity->setUserMentions($tweet->entities->user_mentions);
+    print "here";
+    exit();
 
     /** Handle media and by media I mean images attached to this tweet. */
     if (0 && !empty($tweet->entities->media) && is_array($tweet->entities->media)) {
@@ -133,11 +138,7 @@ class TweetFeed extends ControllerBase {
           );
         }
         else {
-          $node->field_tweet_user_mentions[$node->language][$key] = array(
-            'tweet_feed_mention_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->name)),
-            'tweet_feed_mention_screen_name' => tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($mention->screen_name)),
-            'tweet_feed_mention_id' => $mention->id,
-          );
+
         }
       }
 
@@ -220,7 +221,7 @@ class TweetFeed extends ControllerBase {
       $node->promote = 0;
       $node->moderate = 0;
       $node->sticky = 0;
-      $node->language = LANGUAGE_NONE;
+      
 
       $node->field_twitter_user_id[$node->language][0]['value'] = $tweet->user->id_str;
       $node->title = $tweet->user->name;
@@ -530,61 +531,7 @@ class TweetFeed extends ControllerBase {
    * @return object file
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
-  function process_twitter_image($url, $type, $tid = NULL) {
-  }
-
-  /**
-   * Filter iconv from text.
-   */
-  function ilter_iconv_text($text, $replace = '--') {
-    // The tweet author goes into the title field
-    // Filter it cleanly since it is going into the title field. If we cannot use iconv,
-    // then use something more primitive, but effective
-    // @see https://www.drupal.org/node/1910376
-    // @see http://webcollab.sourceforge.net/unicode.html
-    // Reject overly long 2 byte sequences, as well as characters above U+10000
-    // and replace with --.
-    $altered = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]' .
-     '|[\x00-\x7F][\x80-\xBF]+' .
-     '|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*' .
-     '|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})' .
-     '|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
-     '--', $text);
-    // Reject overly long 3 byte sequences and UTF-16 surrogates and replace
-    // with --.
-    return preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]' . '|\xED[\xA0-\xBF][\x80-\xBF]/S', $replace, $altered);
-  }
-
-  /**
-   * Filter smart quotes to ASCII equivalent.
-   *
-   * @param string $text
-   *   Input text to filter.
-   *
-   * @return string $text
-   *   Filtered text.
-   */
-  public function filter_smart_quotes($text) {
-    // Convert varieties of smart quotes to ACSII equivalent.
-    $search = array(
-      chr(0xe2) . chr(0x80) . chr(0x98),
-      chr(0xe2) . chr(0x80) . chr(0x99),
-      chr(0xe2) . chr(0x80) . chr(0x9c),
-      chr(0xe2) . chr(0x80) . chr(0x9d),
-      chr(0xe2) . chr(0x80) . chr(0x93),
-      chr(0xe2) . chr(0x80) . chr(0x94),
-    );
-
-    $ascii_replace = array(
-      "'",
-      "'",
-      '"',
-      '"',
-      '-',
-      '&mdash;',
-    );
-
-    return str_replace($search, $ascii_replace, $text);
+  public function process_twitter_image($url, $type, $tid = NULL) {
   }
 
   /**
