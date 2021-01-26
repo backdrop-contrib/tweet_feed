@@ -78,10 +78,41 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
-    $values += [
-      'user_id' => \Drupal::currentUser()->id(),
-    ];
+    // $values += [
+    //   'user_id' => \Drupal::currentUser()->id(),
+    // ];
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwner() {
+    return $this->get('user_id')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwnerId() {
+    return $this->get('user_id')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $account) {
+    $this->set('user_id', $account->id());
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwnerId($uid) {
+    $this->set('user_id', $uid);
+    return $this;
+  }
+
 
   /**
    * {@inheritdoc}
@@ -120,35 +151,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwner() {
-    return $this->get('user_id')->entity;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwnerId() {
-    return $this->get('user_id')->target_id;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwnerId($uid) {
-    $this->set('user_id', $uid);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('user_id', $account->id());
-    return $this;
-  }
 
   /**
    * {@inheritdoc}
@@ -190,7 +192,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public function setTweetTite($tweet_title) {
+  public function setTweetTitle($tweet_title) {
     $this->set('tweet_title', $tweet_title);
     return $this;
   }
@@ -299,64 +301,37 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $tags;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  private function setTags($entities, $taxonomy) {
-    $tids = [];
-    foreach($entities as $entity) {
-      switch($taxonomy) {
-        case 'hashtag_terms':
-          $taxonomy_name = $entity->text;
-          break;
-        case 'user_mention_terms':
-          $taxonomy_name = $entity->screen_name;
-          break;
-        default:
-          break;
-      }
-
-      $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($taxonomy);
-      if (!empty($terms)) {
-        foreach ($terms as $term) {
-          if ($term->term_name == $taxonomy_name) {
-            $tid = $term->id;
-          }
-        }
-        if (!empty($tid)) {
-          $new_term = \Drupal\taxonomy\Entity\Term::create([
-            'vid' => $taxonomy,
-            'name' => $taxonomy_name,
-          ]);
-          $tid = $new_term->tid;
-          $new_term->save();
-        }
-        $tids[] = $tid;
-      }
-    }
-    return $tids;
-  }
 
   /**
    * {@inheritdoc}
    */
   public function getHashtags() {
-    return $this->getTags('hashtags');
+    //return $this->getTags('hashtags');
   }
 
    /**
    * {@inheritdoc}
    */
   public function setHashtags($hashtags) {
-    return $this->get('hashtags');
+    return $this->set('hashtags', $hashtags);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getUserMentionsTags() {
-    return $this->getTags('user_mentions_tags');
+  public function getUserMentions() {
+    //return $this->getTags('user_mentions_tags');
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUserMentions($user_mentions) {
+    return $this->set('user_mentions', $user_mentions);
+  }
+
+
+
 
   /**
    * {@inheritdoc}
@@ -401,16 +376,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   public function setSource($source) {
     $this->set('source', $source);
     return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getUserMentions() {
-    $mentions = $this->get('user_mentions');
-    foreach ($mentions as $mentions) {
-
-    }
   }
 
   /**
@@ -510,6 +475,12 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setReadOnly(TRUE);
 
     // Standard field, unique outside of the scope of the current project.
+    $fields['user_id'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('User Id'))
+      ->setDescription(t('The user id of the owner of this tweet.'))
+      ->setReadOnly(TRUE);
+
+      // Standard field, unique outside of the scope of the current project.
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
       ->setDescription(t('The UUID of the tweet entity.'))

@@ -35,6 +35,7 @@ class TweetFeedCommands extends DrushCommands {
     $feeds = $feed_config->get('feeds');
     if (!empty($feeds[$feed])) {
       $data = $feeds[$feed];
+      $data['machine_name'] = $feed;
 
       /** Get the account of the feed we are processing */
       $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
@@ -56,14 +57,15 @@ class TweetFeedCommands extends DrushCommands {
             break;
         }
 
-        if (!empty($content) && is_object($content)) {
+        if (!empty($content->errors)) {
           $errors = $content->errors;
           foreach($error as $error) {
             $this->logger()->error("Tweet Feed: Twitter Error ($error->code) - $error->message");
           }
           return;
         }
-        elseif (!empty($content) && is_array($content)) {
+
+        if (!empty($content)) {
           $tweetFeed = new TweetFeed();
           if ($data['query_type'] == 2 || $data['query_type'] == 3) {
             // Get the lowest ID from the last element in the timeline

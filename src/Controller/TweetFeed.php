@@ -26,10 +26,6 @@ class TweetFeed extends ControllerBase {
    */
   public function saveTweet($tweet, $feed) {
 
-    print_r($tweet);
-    exit();
-
-
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
 
@@ -40,20 +36,28 @@ class TweetFeed extends ControllerBase {
     // Add our user mentions to it's relative taxonomy. Handled just like hashtags
     $user_mentions = $this->processTaxonomy($tweet->entities->user_mentions, 'twitter_user_mention_terms');
 
-    $tweet_text = $tweet->full_text;
-
     // Process the tweet. This linkes our twitter names, hash tags and converts any
     // URL's into HTML.
+    $tweet_text = $tweet->full_text;
     $tweet_html = tweet_feed_format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
 
     // Populate our tweet entity with the data we will need to save
-    $entity = Drupal\tweet_feed\Entity\TweetEntity();
-    $entity->setOwnerId(1);
-    $entity->setUuid(Drupal\Component\Uuid::generate());
+    $entity = new TweetEntity([], 'tweet_entity');
+  
+    $uuid_service = \Drupal::service('uuid');
+    
+    //$entity->setOwnerId(1);
+    $entity->setUuid($uuid_service->generate());
     $entity->setCreatedTime(strtotime($tweet->created_at));
     $entity->setFeedMachineName($feed->machine_name);
     $entity->setTweetId($tweet->id_str);
-    $entity->setTweetTitle(mb_substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet_text), 0, 255));
+
+    $entity->setTweetTitle(mb_substr(\Drupal\Component\Utility\Html::decodeEntities($tweet->user->screen_name) . ': ' . \Drupal\Component\Utility\Html::decodeEntities($tweet_text), 0, 255));
+    
+    
+    
+    
+    
     $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
     $entity->setTweetUserProfileId($tweet->user->id);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
@@ -162,6 +166,9 @@ class TweetFeed extends ControllerBase {
 
     // Save the node
     $entity->save();
+
+    print "first attempted save";
+    exit();
 
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
@@ -473,7 +480,7 @@ class TweetFeed extends ControllerBase {
     $tids = [];
     foreach($entities as $entity) {
       switch($taxonomy) {
-        case 'hashtag_terms':
+        case 'twitter_hashtag_terms':
           $taxonomy_name = $entity->text;
           break;
         case 'twitter_user_mention_terms':
