@@ -50,6 +50,18 @@ class TweetFeed extends ControllerBase {
 
     // Populate our tweet entity with the data we will need to save
     $entity = new TweetEntity([], 'tweet_entity');
+    $el = $entity->load(1);
+    $el->setTweetId(237819);
+    $el->save();
+    $el = $entity->load(1);
+
+
+
+    print $el->getTweetId();
+    //print "loaded";
+    //print_r($el->toArray());
+    exit();
+
   
     $uuid_service = \Drupal::service('uuid');
     

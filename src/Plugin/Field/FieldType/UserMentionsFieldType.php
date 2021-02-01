@@ -15,7 +15,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @FieldType(
  *   id = "user_mentions_field_type",
- *   label = @Translation("User mentions field type"),
+ *   label = @Translation("User mentions"),
  *   description = @Translation("A collection of fields that make up user mentions."),
  *   default_widget = "user_mentions_widget_type",
  *   default_formatter = "user_mentions_formatter_type"
@@ -136,7 +136,7 @@ class UserMentionsFieldType extends FieldItemBase {
     $mention_name = $this->get('mention_name')->getValue();
     $mention_screen_name = $this->get('mention_screen_name')->getValue();
     $mention_id = $this->get('mention_id')->getValue();
-    return empty($mention_name) && empty($mention_screen_name) && ($mention_id);
+    return empty($mention_name) && empty($mention_screen_name) && empty($mention_id);
   }
 
 }

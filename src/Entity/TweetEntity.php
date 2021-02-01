@@ -56,7 +56,7 @@ use Drupal\Core\Url;
  *   admin_permission = "administer tweet feed entities",
  *   entity_keys = {
  *     "id" = "id",
- *     "label" = "tweet_id",
+ *     "label" = "tweet_title",
  *     "uuid" = "uuid",
  *   },
  *   links = {
@@ -77,6 +77,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
+
     parent::preCreate($storage_controller, $values);
     // $values += [
     //   'user_id' => \Drupal::currentUser()->id(),
@@ -150,7 +151,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $this->set('uuid', $uuid);
     return $this;
   }
-
 
   /**
    * {@inheritdoc}
@@ -300,7 +300,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     }
     return $tags;
   }
-
 
   /**
    * {@inheritdoc}
@@ -485,21 +484,26 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDescription(t('The ID of the tweet entity.'))
       ->setReadOnly(TRUE);
 
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(t('Created'))
+      ->setDescription(t('The time that the entity was created.'));
+
+    // Standard field, unique outside of the scope of the current project.
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
+      ->setDescription(t('The time that the entity was last changed.'));
+
     // Standard field, unique outside of the scope of the current project.
     $fields['user_id'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('User Id'))
       ->setDescription(t('The user id of the owner of this tweet.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(FALSE);
 
-      // Standard field, unique outside of the scope of the current project.
+    // Standard field, unique outside of the scope of the current project.
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
       ->setDescription(t('The UUID of the tweet entity.'))
       ->setReadOnly(TRUE);
-
-    $fields['created'] = BaseFieldDefinition::create('created')
-      ->setLabel(t('Created'))
-      ->setDescription(t('The time that the entity was created.'));
 
     $fields['feed_machine_name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Feed machine name'))

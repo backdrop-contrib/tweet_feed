@@ -1,5 +1,5 @@
 tweet_feed.general:
-  path: '/admin/tweet-feed'
+  path: '/admin/structure/tweet-feed'
   defaults:
     _controller: '\Drupal\system\Controller\SystemController::overview'
     link_id: 'tweet_feed.general'

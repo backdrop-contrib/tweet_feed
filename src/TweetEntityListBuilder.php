@@ -31,7 +31,7 @@ class TweetEntityListBuilder extends EntityListBuilder {
     $row['name'] = Link::createFromRoute(
       $entity->label(),
       'entity.tweet_entity.edit_form',
-      ['tweet_entity' => $entity->getTweetTitle()]
+      ['tweet_entity' => $entity->getTweetID()]
     );
     return $row + parent::buildRow($entity);
   }

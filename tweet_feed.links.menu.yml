@@ -5,12 +5,6 @@ tweet_feed.general:
   menu_name: tweet_feed.general
   parent: system.admin_structure
 
-tweet_feed.twitter_accounts:
-  title: 'Twitter API Accounts'
-  route_name: tweet_feed.twitter_accounts
-  description: 'Add, edit or remove Twitter API accounts that can be used to access tweets.'
-  parent: tweet_feed.general
-  weight: 30
 tweet_feed.twitter_accounts_add:
   title: 'Add'
   route_name: tweet_feed.twitter_accounts_add
@@ -23,6 +17,12 @@ tweet_feed.twitter_accounts_view:
   description: 'View existing Twitter API accounts.'
   parent: tweet_feed.twitter_accounts
   weight: 20
+tweet_feed.twitter_accounts:
+  title: 'Twitter API Accounts'
+  route_name: tweet_feed.twitter_accounts
+  description: 'Add, edit or remove Twitter API accounts that can be used to access tweets.'
+  parent: tweet_feed.general
+  weight: 30
 
 tweet_feed.twitter_feeds:
   title: 'Twitter Feeds'
@@ -49,13 +49,6 @@ tweet_entity.admin.structure.tweets:
   route_name: tweet_entity.settings
   parent: tweet_feed.general
   weight: 10
-tweet_profile_entity.admin.structure.tweets:
-  title: 'Tweet Profiles'
-  description: 'Profiles for users of imported tweets.'
-  route_name: tweet_profile_entity.settings
-  parent: tweet_feed.general
-  weight: 20
-
 tweet_entity.admin.structure.settings.fields:
   title: Manage fields
   description: 'Manage the custom fields for tweets.'
@@ -75,6 +68,12 @@ tweet_entity.admin.structure.settings.display:
   parent: tweet_entity.admin.structure.tweets
   weight: 20
 
+tweet_profile_entity.admin.structure.tweets:
+  title: 'Tweet Profiles'
+  description: 'Profiles for users of imported tweets.'
+  route_name: tweet_profile_entity.settings
+  parent: tweet_feed.general
+  weight: 20
 tweet_profile_entity.admin.structure.settings.fields:
   title: Manage fields
   description: 'Manage the custom fields for Twitter profiles.'

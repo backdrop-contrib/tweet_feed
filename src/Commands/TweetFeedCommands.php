@@ -59,7 +59,7 @@ class TweetFeedCommands extends DrushCommands {
 
         if (!empty($content->errors)) {
           $errors = $content->errors;
-          foreach($error as $error) {
+          foreach($errors as $error) {
             $this->logger()->error("Tweet Feed: Twitter Error ($error->code) - $error->message");
           }
           return;
