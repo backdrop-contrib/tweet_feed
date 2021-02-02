@@ -336,12 +336,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
         ];
       }
     }
-    print_r($um);
     $this->set('user_mentions', $um);    
   }
-
-
-
 
   /**
    * {@inheritdoc}
@@ -388,48 +384,27 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function isQuotedOrRepliedTweet() {
-    return ($this->get('quoted_or_replied_tweet') != 'Off') ? TRUE : FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setQuotedOrRepliedTweet($quoted_replied) {
-    $this->set('quoted_or_replied_tweet', $quoted_replied);
+  public function setTypeOfTweetReference($reference) {
+    $this->set('type_of_tweet_reference', $reference);
     return $this;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getQuotedStatusId() {
-    return $this->get('geographic_place')->value;
+  public function getTypeOfTweetReference() {
+    return $this->get('type_of_tweet_reference');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setQuotedStatusID($geographic_location) {
-    $this->set('geographic_place', $geographic_place);
-    return $this;
+  public function getReferencedTweetId() {
+    return $this->get('referenced_tweet_id');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getInReplyToStatusID() {
-    return $this->get('in_reply_to_status_id')->value;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setInReplyToStatusID($in_reply_to_status_id) {
-    $this->set('in_reply_to_status_id', $in_reply_to_status_id);
+  public function setReferencedTweetId($id) {
+    $this->set('referenced_tweet_id', $id);
     return $this;
   }
 
@@ -527,10 +502,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 0,
+        'weight' => 5,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 0,
+        'weight' => 5,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -542,10 +517,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 1,
+        'weight' => 10,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 1,
+        'weight' => 10,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -555,10 +530,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDescription(t('The contents of the tweet. Untruncated.'))
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 7,
+        'weight' => 15,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 7,
+        'weight' => 15,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -570,10 +545,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 3,
+        'weight' => 20,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 3,
+        'weight' => 20,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -584,10 +559,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'boolean',
-        'weight' => 4,
+        'weight' => 25,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 4,
+        'weight' => 25,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -604,10 +579,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 8,
+        'weight' => 30,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 8,
+        'weight' => 30,
       ))
       ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
@@ -626,11 +601,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
-        'weight' => 9,
+        'weight' => 35,
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 9,
+        'weight' => 35,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -653,11 +628,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
-        'weight' => 11,
+        'weight' => 40,
       ])
       ->setDisplayOptions('form', [
         'type' => 'user_mentions_field_type',
-        'weight' => 11,
+        'weight' => 40,
       ])
       ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
@@ -670,10 +645,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 13,
+        'weight' => 45,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 13,
+        'weight' => 45,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -685,10 +660,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 15,
+        'weight' => 50,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 15,
+        'weight' => 50,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -700,10 +675,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 16,
+        'weight' => 55,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 16,
+        'weight' => 55,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -720,11 +695,11 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
-        'weight' => 17,
+        'weight' => 60,
       ])
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 17,
+        'weight' => 60,
         'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
@@ -736,47 +711,40 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['quoted_or_replied_tweet'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Quoted or Replied Tweet?'))
-      ->setDescription(t('Is this tweet a re-tweet with a comment or a tweet that was replied to? These are not displayed outside the context of the re-tweet.'))
+    $fields['type_of_tweet_reference'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Type of Tweet Reference'))
+      ->setDescription(t('Is this a re-tweet with a comment, a tweet that was replied to, or a quoted tweet? Helps provide minimal context.'))
       ->setDefaultValue(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'boolean',
-        'weight' => 5,
+        'weight' => 65,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 5,
+        'weight' => 65,
       ])
       ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('view', TRUE)
+      ->setSettings([
+        'allowed_values' => [
+          'replied' => t('Reply'),
+          'retweeted' => t('Re-Tweet'),
+          'quoted' => t('Quoted Re-Tweet')
+        ]
+      ])
+      ->setDefaultValue([
+        ['value' => 'standard'],
+      ]);
 
-    $fields['quoted_status_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Tweet which was re-tweeted for comments'))
-      ->setDescription(t('This is the ID of the tweet which was re-tweeted with comments.'))
+    $fields['referenced_tweet_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Referenced Tweet ID'))
       ->setRevisionable(FALSE)
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 18,
+        'weight' => 70,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 18,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['in_reply_to_status_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Reply to status id.'))
-      ->setDescription(t('This is the ID of the tweet which was being replied to.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 19,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 19,
+        'weight' => 70,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -788,10 +756,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 20,
+        'weight' => 75,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 20,
+        'weight' => 75,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -803,10 +771,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 21,
+        'weight' => 80,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 21,
+        'weight' => 80,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -823,10 +791,10 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 22,
+        'weight' => 85,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 22,
+        'weight' => 85,
       ))
       ->setCardinality(1)
       ->setDisplayConfigurable('form', TRUE)

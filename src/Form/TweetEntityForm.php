@@ -4,6 +4,7 @@ namespace Drupal\tweet_feed\Form;
 
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger;
 
 /**
  * Form controller for Tweet entity edit forms.
@@ -31,7 +32,8 @@ class TweetEntityForm extends ContentEntityForm {
     $entity = &$this->entity;
 
     $status = parent::save($form, $form_state);
-
+    $this->message = \Drupal::messenger();
+    
     switch ($status) {
       case SAVED_NEW:
         $this->message->addMessage(

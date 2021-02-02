@@ -8,7 +8,7 @@ entity.tweet_profile_entity.add_form:
   route_name: entity.tweet_profile_entity.add_form
   title: 'Add Twitter Profile'
   appears_on:
-    - entity.tweet_profile.entity.collection
+    - entity.tweet_profile_entity.collection
 
 tweet_feed.twitter_accounts:
   route_name: tweet_feed.twitter_accounts_add

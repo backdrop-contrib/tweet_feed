@@ -50,23 +50,18 @@ class TweetFeed extends ControllerBase {
 
     // Populate our tweet entity with the data we will need to save
     $entity = new TweetEntity([], 'tweet_entity');
-    $el = $entity->load(1);
-    $el->setTweetId(237819);
-    $el->save();
-    $el = $entity->load(1);
+    // $el = $entity->load(1);
+    // $el->setTweetId(237819);
+    // $el->save();
+    // $el = $entity->load(1);
+    // print $el->getTweetId();
+    // print "loaded";
+    // print_r($el->toArray());
+    // exit();
 
-
-
-    print $el->getTweetId();
-    //print "loaded";
-    //print_r($el->toArray());
-    exit();
-
-  
+    $specific_tweets = [];
     $uuid_service = \Drupal::service('uuid');
-    
-    //$entity->setOwnerId(1);
-    
+    $entity->setOwnerId(1);
     $entity->setUuid($uuid_service->generate());
     $entity->setCreatedTime(strtotime($tweet->created_at));
     $entity->setFeedMachineName($feed['machine_name']);
@@ -76,7 +71,31 @@ class TweetFeed extends ControllerBase {
     $entity->setTweetUserProfileId($tweet->user->id);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
     $entity->setUserMentions($tweet->entities->user_mentions);
-    print "here";
+
+    /** Re-Tweet*/
+    if (!empty($tweet->retweeted_status->id_str)) {
+      $entity->setTypeOfTweetReference('retweeted');
+      $entity->setReferencedTweetId($tweet->retweeted_status->id_str);
+      $specific_tweets[] = $tweet->retweeted_status->id_str;
+    }
+
+    /** Tweet Reply*/
+    if (!empty($tweet->in_reply_to_status_id_str)) {
+      $entity->setTypeOfTweetReference('replied');
+      $entity->setReferencedTweetId($tweet->in_reply_to_status_id_str);
+      $specific_tweets[] = $tweet->in_reply_to_status_id_str;
+    }
+    
+    /** Quoted Tweet w/Comment */
+    if (!empty($tweet->is_quote_status)) {
+      $entity->setTypeOfTweetReference('quoted');
+      $entity->setReferencedTweetId($tweet->quoted_status_id_str);
+      $specific_tweets[] = $tweet->quoted_status_id_str;
+    }
+
+    PRINT_R($tweet);
+    $entity->save();
+    print "first attempted save";
     exit();
 
     /** Handle media and by media I mean images attached to this tweet. */
@@ -110,8 +129,8 @@ class TweetFeed extends ControllerBase {
       $entity->setLinkedImages($files);
     }
 
-    $entity->setHashtags($hashtags);
-    $entity->setUserMentions($user_mentions);
+    //$entity->setHashtags($hashtags);
+    //$entity->setUserMentions($user_mentions);
 
     if (!empty($tweet->place) && is_object($tweet->place)) {
       $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
@@ -160,6 +179,7 @@ class TweetFeed extends ControllerBase {
         );
       }
     }
+    // Save the node
 
     // Not sure about this method of getting the big twitter profile image, but we're
     // going to roll with it for now.
@@ -171,17 +191,13 @@ class TweetFeed extends ControllerBase {
       $node->field_profile_image[$node->language][0] = (array)$file;
     }
 
-    \Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
+    //\Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
 
     if (empty($entity)) {
       return;
     }
 
-    // Save the node
-    $entity->save();
 
-    print "first attempted save";
-    exit();
 
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
