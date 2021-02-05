@@ -267,8 +267,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function setLinkedImages($images) {
-
-
+    $this->set('linked_images', $images);
+    return $this;
   }
 
   /**
@@ -305,21 +305,26 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getHashtags() {
-    //return $this->getTags('hashtags');
+    return $this->getTags('hashtags');
   }
 
    /**
    * {@inheritdoc}
    */
   public function setHashtags($hashtags) {
-    return $this->set('hashtags', $hashtags);
+    $tags = [];
+    foreach ($hashtags as $hashtag) {
+      $tags[]['target_id'] = $hashtag;
+    }
+    $this->set('hashtags', $tags);
+    return $this;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getUserMentions() {
-    //return $this->getTags('user_mentions_tags');
+    return $this->get('user_mentions');
   }
 
   /**
@@ -336,7 +341,20 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
         ];
       }
     }
-    $this->set('user_mentions', $um);    
+    $this->set('user_mentions', $um);
+  }
+
+  public function setUserMentionsTags($user_mentions_tags) {
+    $tags = [];
+    foreach ($user_mentions_tags as $user_mentions_tag) {
+      $tags[]['target_id'] = $user_mentions_tag;
+    }
+    $this->set('user_mentions_tags', $tags);
+    return $this;
+  }
+
+  public function getUserMentionsTags() {
+    return $this->getTags('user_mentions_tags');
   }
 
   /**

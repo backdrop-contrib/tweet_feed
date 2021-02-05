@@ -58,7 +58,7 @@ class TweetFeed extends ControllerBase {
     // print "loaded";
     // print_r($el->toArray());
     // exit();
-
+ 
     $specific_tweets = [];
     $uuid_service = \Drupal::service('uuid');
     $entity->setOwnerId(1);
@@ -93,13 +93,8 @@ class TweetFeed extends ControllerBase {
       $specific_tweets[] = $tweet->quoted_status_id_str;
     }
 
-    PRINT_R($tweet);
-    $entity->save();
-    print "first attempted save";
-    exit();
-
     /** Handle media and by media I mean images attached to this tweet. */
-    if (0 && !empty($tweet->entities->media) && is_array($tweet->entities->media)) {
+    if (!empty($tweet->entities->media) && is_array($tweet->entities->media)) {
       $files = [];
       foreach ($tweet->entities->media as $key => $media) {
         if (is_object($media)) {
@@ -108,19 +103,17 @@ class TweetFeed extends ControllerBase {
           $image = file_get_contents($media->media_url . ':large');
           if (!empty($image)) {
             $this->check_path('public://tweet-feed-tweet-images');
-            $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', FILE_EXISTS_REPLACE);
+            $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', 1);
             if (is_object($file_temp)) {
-              $file = [
-                'fid' => $file_temp->fid,
-                'filename' => $file_temp->filename,
-                'filemime' => $file_temp->filemime,
-                'uid' => 1,
-                'uri' => $file_temp->uri,
-                'status' => 1,
+              $fid = $file_temp->fid->getvalue()[$key]['value'];
+              $files[] = [
+                'target_id' => $fid,
+                'alt' => '',
+                'title' => $media->id,
+                'width' => $media->sizes->large->w,
+                'height' => $media->sizes->large->h,
               ];
-              $files[] = $file;
             }
-            unset($file);
             unset($file_temp);
             unset($image);
           }
@@ -129,8 +122,13 @@ class TweetFeed extends ControllerBase {
       $entity->setLinkedImages($files);
     }
 
-    //$entity->setHashtags($hashtags);
-    //$entity->setUserMentions($user_mentions);
+    if (!empty($hashtags)) {
+      $entity->setHashtags($hashtags);
+    }
+
+    if (!empty($user_mentions)) {
+      $entity->setUserMentionsTags($user_mentions);
+    }
 
     if (!empty($tweet->place) && is_object($tweet->place)) {
       $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
@@ -152,34 +150,9 @@ class TweetFeed extends ControllerBase {
 
     $entity->setLinkToTweet('https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str);
     $entity->setTweetUserProfileId($tweet->user->id);
-
-    // profile image
-
-    if (0) {
-
-    // Handle user mentions (our custom field defined by the module). Also places them in
-    // the user mentions taxonomy.
-    if (!empty($tweet->entities->user_mentions) && is_array($tweet->entities->user_mentions)) {
-      foreach ($tweet->entities->user_mentions as $key => $mention) {
-        if ($utf8 == TRUE) {
-          $node->field_tweet_user_mentions[$node->language][$key] = array(
-            'tweet_feed_mention_name' => $mention->name,
-            'tweet_feed_mention_screen_name' => $mention->screen_name,
-            'tweet_feed_mention_id' => $mention->id,
-          );
-        }
-        else {
-
-        }
-      }
-
-      foreach ($user_mentions as $mention) {
-        $node->field_twitter_mentions_in_tweet[$node->language][] = array(
-          'target_id' => $mention,
-        );
-      }
-    }
-    // Save the node
+    $entity->save();
+    print "attempted save\n\n";
+    return;
 
     // Not sure about this method of getting the big twitter profile image, but we're
     // going to roll with it for now.
@@ -597,8 +570,8 @@ class TweetFeed extends ControllerBase {
    * @param string $uri
    *   The URI location of the path to be created.
    */
-  function check_path($uri) {
-    $instance = file_stream_wrapper_get_instance_by_uri($uri);
+  private function check_path($uri) {
+    $instance = \Drupal::service('stream_wrapper_manager')->getViaUri($uri);
     $real_path = $instance->realpath();
     if (!file_exists($real_path)) {
       @mkdir($real_path, 0777, TRUE);

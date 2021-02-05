@@ -19,6 +19,33 @@ use Drupal\tweet_feed\Controller\TweetFeed;
  */
 class TweetFeedCommands extends DrushCommands {
 
+  protected $db;
+
+  /**
+   * Load our usable objects into scope.
+   */
+  public function __construct() {
+    $this->db = \Drupal::database();
+  }
+
+  /**
+   * Delete everthing (remove before prod)
+   *
+   * @usage tweet_feed:kill
+   *   Kill the data with fire.
+   *
+   * @command tweet_feed:kill
+   * @aliases tfk
+   */
+  public function kill() {
+    $this->db->truncate('tweet_entity')->execute();
+    $this->db->truncate('tweet_entity__hashtags')->execute();
+    $this->db->truncate('tweet_entity__linked_images')->execute();
+    $this->db->truncate('tweet_entity__user_mentions')->execute();
+    $this->db->truncate('tweet_entity__user_mentions_tags')->execute();
+    $this->db->truncate('tweet_profile_entity')->execute();
+  }
+
   /**
    * Import the latest batch of tweets.
    *
