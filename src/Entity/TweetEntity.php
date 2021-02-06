@@ -435,20 +435,12 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this;
   }
 
-  public function getOwnerProfileId() {
-    return $this->get('owner_profile_id')->value;
-  }
-
-  public function setOwnerProfileId($owner_profile_id) {
-    $this->set('owner_profile_id', $owner_profile_id);
-    return $this;
-  }
-
   /**
    * {@inheritdoc}
    */
   public function setProfileImage($image) {
-
+    $this->set('profile_image', $image);
+    return $this;
 
   }
 
@@ -456,14 +448,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public function getProfileImage() {
-    $file = $this->getProfileImage();
-
-    $file_uri = $file->getFileUri();
-    // I can't believe this will survive Drupal 9 but there is no deprecation notice on it yet.
-    $urls = file_create_url($file_uri);
-    return $url;
+    $files = $this->get('profile_image')->getValue();
+    $images = [];
+    foreach ($files as $file) {
+      $fo = File::load($file['target_id']);
+      $images[] = $fo;
+    }
+    return $images;
   }
-
 
   /**
    * {@inheritdoc}
@@ -778,21 +770,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ])
       ->setDisplayOptions('form', [
         'weight' => 75,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['owner_profile_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Tweet Owner Profile ID'))
-      ->setDescription(t('The Twitter ID of the owner of this tweet.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 80,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 80,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

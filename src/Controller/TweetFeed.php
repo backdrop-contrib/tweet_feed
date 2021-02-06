@@ -29,10 +29,6 @@ class TweetFeed extends ControllerBase {
   public function saveTweet($tweet, $feed) {
     $language = Language::LANGCODE_DEFAULT;
 
-    // $node =  \Drupal\node\Entity\Node::load(1);
-    // print_r($node);
-    // exit();
-
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
 
@@ -48,19 +44,11 @@ class TweetFeed extends ControllerBase {
     $tweet_text = $tweet->full_text;
     $tweet_html = tweet_feed_format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
 
-    // Populate our tweet entity with the data we will need to save
-    $entity = new TweetEntity([], 'tweet_entity');
-    // $el = $entity->load(1);
-    // $el->setTweetId(237819);
-    // $el->save();
-    // $el = $entity->load(1);
-    // print $el->getTweetId();
-    // print "loaded";
-    // print_r($el->toArray());
-    // exit();
- 
     $specific_tweets = [];
     $uuid_service = \Drupal::service('uuid');
+
+    // Populate our tweet entity with the data we will need to save
+    $entity = new TweetEntity([], 'tweet_entity');
     $entity->setOwnerId(1);
     $entity->setUuid($uuid_service->generate());
     $entity->setCreatedTime(strtotime($tweet->created_at));
@@ -143,28 +131,21 @@ class TweetFeed extends ControllerBase {
       $entity->setSource($tweet->source);
     }
 
-    // User Mention Taxonomy Tags
-    // Is Quoted or Replied Tweet (Bool)
-    // Quoted Tweet Id
-    // Replied-to Tweet ID
-
     $entity->setLinkToTweet('https://twitter.com/' . $tweet->user->screen_name . '/status/' . $tweet->id_str);
+
     $entity->setTweetUserProfileId($tweet->user->id);
-    $entity->save();
-    print "attempted save\n\n";
-    return;
 
-    // Not sure about this method of getting the big twitter profile image, but we're
-    // going to roll with it for now.
     $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
-
-    // Handle the profile image obtained from twitter.com
-    $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-image', $tweet->id_str);
-    if ($file !== NULL) {
-      $node->field_profile_image[$node->language][0] = (array)$file;
+    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'profile', $tweet->user->id_str);
+    if ($file !== FALSE) {
+      $file_array = [];
+      $file_array[] = $file;
+      $entity->setProfileImage($file_array);
     }
 
-    //\Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
+    \Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
+
+    $entity->save();
 
     if (empty($entity)) {
       return;
@@ -222,7 +203,6 @@ class TweetFeed extends ControllerBase {
       $node->promote = 0;
       $node->moderate = 0;
       $node->sticky = 0;
-      
 
       $node->field_twitter_user_id[$node->language][0]['value'] = $tweet->user->id_str;
       $node->title = $tweet->user->name;
@@ -283,7 +263,7 @@ class TweetFeed extends ControllerBase {
       );
       db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
     }
-  } }
+  }
 
 
   /**
@@ -526,13 +506,34 @@ class TweetFeed extends ControllerBase {
    * @param string url
    *   The twitte.com url of the image being retrieved
    * @param string type
-   *   The node type (feed item or user profile item)
-   * @param int tid
-   *   The tweet id associated with this image
+   *   The type of image. This affects the folder the image is placed in.
+   * @param int id
+   *   The id associated with this image
    * @return object file
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
-  public function process_twitter_image($url, $type, $tid = NULL) {
+  private function process_twitter_image($url, $type, $id) {
+    $image = file_get_contents($url);
+    if (!empty($image)) {
+      $file = FALSE;
+      list($width, $height) = getimagesize($url);
+      $this->check_path('public://tweet-feed-' . $type . '-images/' . date('Y-m'));
+      $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
+      if (is_object($file_temp)) {
+        $fid = $file_temp->fid->getValue()[0]['value'];
+        $file = [
+          'target_id' => $fid,
+          'alt' => '',
+          'title' => $id,
+          'width' => $width,
+          'height' => $height,
+        ];
+      }
+      return $file;
+    }
+    else {
+      return FALSE;
+    }
   }
 
   /**
@@ -574,7 +575,7 @@ class TweetFeed extends ControllerBase {
     $instance = \Drupal::service('stream_wrapper_manager')->getViaUri($uri);
     $real_path = $instance->realpath();
     if (!file_exists($real_path)) {
-      @mkdir($real_path, 0777, TRUE);
+      mkdir($real_path, 0777, TRUE);
     }
     return file_exists($real_path);
   }
