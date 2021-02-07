@@ -6,7 +6,7 @@ use Drupal\Core\Link;
 use Drush\Log;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\tweet_feed\Entity\TweetProfileEntity;
+use Drupal\tweet_feed\Entity\TwitterProfileEntity;
 use Drupal\tweet_feed\Entity\TweetEntity;
 use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Component\Utility\Html;
@@ -136,7 +136,7 @@ class TweetFeed extends ControllerBase {
     $entity->setTweetUserProfileId($tweet->user->id);
 
     $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
-    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'profile', $tweet->user->id_str);
+    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'profile', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -151,22 +151,33 @@ class TweetFeed extends ControllerBase {
       return;
     }
 
+    $entity = new TwitterProfileEntity([], 'twitter_profile');
+
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
     // the hash of the profile and see if it matches our data.
     
     $profile_hash = md5(serialize($tweet->user));
-    $query = new EntityFieldQuery();
-    $result = $query->entityCondition('entity_type', 'twitter_profile')
-      ->fieldCondition('twitter_user_id', 'value', $tweet->user->id, '=')
+    $query = \Drupal::entityQuery('twitter_profile')
+      ->condition('twitter_user_id', $tweet->user->id)
       ->execute();
+
 
     // If we have a result, then we have a profile! Then we need to check to see if the hash
     // of the profile is the same as the hash of the user data. If so, then update. If not,
     // then skip.
+    if (!empty($query)) {
+      $keys = array_keys($query);
+      $entity = $entity->load($keys[0]);
+      $entity_hash = $entity->getHash();
+      print $profile_hash ."- $entity_hash\n";
+      if ($profile_hash == $entity_hash) {
+        \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
+        return;
+      }
+    }
 
-    // Populate our node object with the data we will need to save
-    $entity = new TwitterProfileEntity([], 'twitter_profile');
+    // Populate our entity with the data we will need to save
     $entity->setOwnerId(1);
     $entity->setUuid($uuid_service->generate());
     $entity->setTwitterUserId($tweet->user->id_str);
@@ -175,13 +186,12 @@ class TweetFeed extends ControllerBase {
     $entity->setScreenName($tweet->user->screen_name);
     $entity->setLocation($tweet->user->location);
     $entity->setFollowersCount($tweet->user->followers_count);
-    $entity->setFriendsCount($tweet->user->friends_count);
-    $entity->setFavoritesCount($tweet->user->favourites_count);
     $entity->setVerified((int) $tweet->user->verified);
     $entity->setStatusesCount($tweet->user->statuses_count);
+    $entity->setHash($profile_hash);
   
     // Handle the user profile image obtained from twitter.com
-    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str);
+    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -189,7 +199,7 @@ class TweetFeed extends ControllerBase {
     }
 
     // Handle the user profile banner image obtained from twitter.com
-    $file = $this->process_twitter_image($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str);
+    $file = $this->process_twitter_image($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -199,9 +209,6 @@ class TweetFeed extends ControllerBase {
     \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
 
     $entity->save();
-
-    print "check";
-    exit();
   }
 
   /**
@@ -450,13 +457,18 @@ class TweetFeed extends ControllerBase {
    * @return object file
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
-  private function process_twitter_image($url, $type, $id) {
+  private function process_twitter_image($url, $type, $id, $add_date = FALSE) {
     $image = file_get_contents($url);
     if (!empty($image)) {
       $file = FALSE;
       list($width, $height) = getimagesize($url);
-      $this->check_path('public://tweet-feed-' . $type . '-images/' . date('Y-m'));
-      $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
+      $this->check_path('public://tweet-feed-' . $type . '-images/', $add_date);
+      if ($add_date == TRUE) {
+        $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
+      }
+      else {
+        $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . $id . '.jpg', 1);
+      }
       if (is_object($file_temp)) {
         $fid = $file_temp->fid->getValue()[0]['value'];
         $file = [
@@ -510,8 +522,7 @@ class TweetFeed extends ControllerBase {
    *   The URI location of the path to be created.
    */
   private function check_path($uri) {
-    $instance = \Drupal::service('stream_wrapper_manager')->getViaUri($uri);
-    $real_path = $instance->realpath();
+    $real_path = \Drupal::service('file_system')->realpath($uri);
     if (!file_exists($real_path)) {
       mkdir($real_path, 0777, TRUE);
     }

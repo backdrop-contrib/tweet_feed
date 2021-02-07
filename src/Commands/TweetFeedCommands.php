@@ -43,7 +43,7 @@ class TweetFeedCommands extends DrushCommands {
     $this->db->truncate('tweet_entity__linked_images')->execute();
     $this->db->truncate('tweet_entity__user_mentions')->execute();
     $this->db->truncate('tweet_entity__user_mentions_tags')->execute();
-    $this->db->truncate('tweet_profile_entity')->execute();
+    $this->db->truncate('twitter_profiles')->execute();
   }
 
   /**

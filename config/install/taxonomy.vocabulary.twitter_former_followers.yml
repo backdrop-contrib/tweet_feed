@@ -1,8 +1,0 @@
-uuid: 97f4538f-4f37-49a7-8857-b681c7fbcb6d
-langcode: en
-status: true
-dependencies: {  }
-name: 'Twitter Former Followers'
-vid: twitter_former_followers
-description: 'People who used to follow you but don''t anymore.'
-weight: 0

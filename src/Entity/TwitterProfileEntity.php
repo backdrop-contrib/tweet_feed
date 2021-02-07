@@ -41,11 +41,11 @@ use Drupal\user\UserInterface;
  *     "uuid" = "uuid",
  *   },
  *   links = {
- *     "canonical" = "/admin/structure/twitter_profiles/{twitter_profiles}",
- *     "add-form" = "/admin/structure/twitter_profiles/add",
- *     "edit-form" = "/admin/structure/twitter_profiles/{twitter_profiles}/edit",
- *     "delete-form" = "/admin/structure/twitter_profiles/{twitter_profiles}/delete",
- *     "collection" = "/admin/structure/twitter_profiles",
+ *     "canonical" = "/admin/structure/twitter_profile/{twitter_profile}",
+ *     "add-form" = "/admin/structure/twitter_profile/add",
+ *     "edit-form" = "/admin/structure/twitter_profile/{twitter_profile}/edit",
+ *     "delete-form" = "/admin/structure/twitter_profile/{twitter_profile}/delete",
+ *     "collection" = "/admin/structure/twitter_profile",
  *   },
  *   field_ui_base_route = "twitter_profile.settings"
  * )
@@ -182,33 +182,6 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
     return $this;
   }
 
-  public function getFriendsCount() {
-    return $this->get('friends_count')->value;
-  }
-
-  public function setFriendsCount($friends_count) {
-    $this->set('friends_count', $friends_count);
-    return $this;
-  }
-
-  public function getListedCount() {
-    return $this->get('listed_count')->value;
-  }
-
-  public function setListedCount($listed_count) {
-    $this->set('listed_count', $listed_count);
-    return $this;
-  }
-
-  public function getFavoritesCount() {
-    return $this->get('favorites_count')->value;
-  }
-
-  public function setFavoritesCount($favorites_count) {
-    $this->set('favorites_count', $favorites_count);
-    return $this;
-  }
-
   public function getVerified() {
     return $this->get('verified')->value;
   }
@@ -222,7 +195,7 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
     return $this->get('statuses_count')->value;
   }
 
-  public function setStatusesCount($stauses_count) {
+  public function setStatusesCount($statuses_count) {
     $this->set('statuses_count', $statuses_count);
     return $this;
   }
@@ -278,48 +251,6 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
     return $images;
   }
 
-  public function setFollowers($followers) {
-    $tags = [];
-    foreach ($followers as $follower) {
-      $tags[]['target_id'] = $follower;
-    }
-    $this->set('followers', $tags);
-    return $this;
-  }
-
-  public function getFollowers() {
-    return $this->getTags('followers');
-  }
-
-  public function setFormerFollowers($former_followers) {
-    $tags = [];
-    foreach ($former_followers as $former_follower) {
-      $tags[]['target_id'] = $former_follower;
-    }
-    $this->set('former_followers', $tags);
-    return $this;
-  }
-
-  public function getFormerFollowers() {
-    return $this->getTags('former_followers');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  private function getTags($tags) {
-    $hashtags = $this->get($tags)->getValue();
-    $tags = [];
-    if (!empty($hashtags)) {
-      foreach($hashtags as $key => $term) {
-        $tag = $this->entityTypeManager()->getStorage('taxonomy_term')->load($term['target_id'])->values;
-        $tags[]['name'] = $tag['name']['x-default'];
-        $tags[]['tid'] = $tag['tid']['x-default'];
-      }
-    }
-    return $tags;
-  }
-
   /**
    * {@inheritdoc}
    */
@@ -373,10 +304,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 1,
+        'weight' => 5,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 1,
+        'weight' => 5,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -388,10 +319,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 2,
+        'weight' => 10,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 2,
+        'weight' => 10,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -403,10 +334,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 3,
+        'weight' => 15,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 3,
+        'weight' => 15,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -418,10 +349,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 4,
+        'weight' => 20,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 4,
+        'weight' => 20,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -433,55 +364,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 5,
+        'weight' => 25,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 5,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['friends_count'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Number of Friends'))
-      ->setDescription(t('The number of friends of this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 6,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 6,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['listed_count'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Listed Count'))
-      ->setDescription(t('Number of times this profile is listed?'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 7,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 7,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['favorites_count'] = BaseFieldDefinition::create('integer')
-      ->setLabel(t('Number of Favorites'))
-      ->setDescription(t('The number of favorites for this profile.'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 9,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 9,
+        'weight' => 25,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -493,10 +379,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'boolean',
-        'weight' => 10,
+        'weight' => 30,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 10,
+        'weight' => 30,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -508,24 +394,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'weight' => 11,
+        'weight' => 35,
       ])
       ->setDisplayOptions('form', [
-        'weight' => 11,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['hash'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Hash'))
-      ->setRevisionable(FALSE)
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'weight' => 4,
-      ])
-      ->setDisplayOptions('form', [
-        'weight' => 4,
+        'weight' => 35,
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -542,10 +414,10 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 12,
+        'weight' => 40,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 12,
+        'weight' => 40,
       ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -562,69 +434,25 @@ class TwitterProfileEntity extends ContentEntityBase implements TwitterProfileEn
       ->setDisplayOptions('view', array(
         'label' => 'hidden',
         'type' => 'default',
-        'weight' => 13,
+        'weight' => 45,
       ))
       ->setDisplayOptions('form', array(
-        'weight' => 13,
+        'weight' => 45,
       ))
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['followers'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Followers'))
-      ->setDescription(t('Current followers.'))
+    $fields['hash'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Hash'))
       ->setRevisionable(FALSE)
-      ->setSetting('target_type', 'taxonomy_term')
-      ->setSetting('handler', 'default:taxonomy_term')
-      ->setSetting('handler_settings', [
-        'target_bundles' => [
-          'twitter_followers' => 'twitter_followers',
-        ],
-      ])
       ->setTranslatable(FALSE)
       ->setDisplayOptions('view', [
-        'weight' => 14,
+        'label' => 'above',
+        'weight' => 50,
       ])
       ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 14,
-        'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => '60',
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
-        ],
+        'weight' => 50,
       ])
-      ->setCardinality(-1)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['former_followers'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Former Followers'))
-      ->setDescription(t('They were followers, but they are not anymore!'))
-      ->setRevisionable(FALSE)
-      ->setSetting('target_type', 'taxonomy_term')
-      ->setSetting('handler', 'default:taxonomy_term')
-      ->setSetting('handler_settings', [
-        'target_bundles' => [
-          'former_followers' => 'former_followers',
-        ],
-      ])
-      ->setTranslatable(FALSE)
-      ->setDisplayOptions('view', [
-        'weight' => 15,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 15,
-        'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => '60',
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
-        ],
-      ])
-      ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 

@@ -21,9 +21,6 @@ class TwitterProfileEntityAccessControlHandler extends EntityAccessControlHandle
     /** @var \Drupal\tweet_feed\Entity\TweetEntityInterface $entity */
     switch ($operation) {
       case 'view':
-        if (!$entity->isPublished()) {
-          return AccessResult::allowedIfHasPermission($account, 'view unpublished tweet entity entities');
-        }
         return AccessResult::allowedIfHasPermission($account, 'view published tweet entity entities');
 
       case 'update':

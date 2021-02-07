@@ -26,11 +26,11 @@ class TwitterProfileEntityListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    /* @var $entity \Drupal\tweet_feed\Entity\TweetEntity */
-    $row['id'] = $entity->id();
+    /* @var $entity \Drupal\tweet_feed\Entity\TwitterProfileEntity */
+    $row['id'] = $entity->getTwitterUserId();
     $row['name'] = Link::createFromRoute(
-      $entity->label(),
-      'entity.twitter_profile_entity.edit_form',
+      $entity->getName() . '/' . $entity->getScreenName(),
+      'entity.twitter_profile.edit_form',
       ['twitter_profile' => $entity->id()]
     );
     return $row + parent::buildRow($entity);
