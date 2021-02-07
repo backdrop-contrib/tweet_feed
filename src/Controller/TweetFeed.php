@@ -170,7 +170,6 @@ class TweetFeed extends ControllerBase {
       $keys = array_keys($query);
       $entity = $entity->load($keys[0]);
       $entity_hash = $entity->getHash();
-      print $profile_hash ."- $entity_hash\n";
       if ($profile_hash == $entity_hash) {
         \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
         return;
@@ -209,6 +208,7 @@ class TweetFeed extends ControllerBase {
     \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
 
     $entity->save();
+
   }
 
   /**
