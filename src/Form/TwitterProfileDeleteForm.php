@@ -9,7 +9,7 @@ use Drupal\Core\Entity\ContentEntityDeleteForm;
  *
  * @ingroup tweet_feed
  */
-class TweetEntityDeleteForm extends ContentEntityDeleteForm {
+class TwitterProfileDeleteForm extends ContentEntityDeleteForm {
 
 
 }

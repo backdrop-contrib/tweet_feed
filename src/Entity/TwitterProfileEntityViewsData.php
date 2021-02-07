@@ -7,7 +7,7 @@ use Drupal\views\EntityViewsData;
 /**
  * Provides Views data for Tweet entity entities.
  */
-class TweetProfileEntityViewsData extends EntityViewsData {
+class TwitterProfileEntityViewsData extends EntityViewsData {
 
   /**
    * {@inheritdoc}

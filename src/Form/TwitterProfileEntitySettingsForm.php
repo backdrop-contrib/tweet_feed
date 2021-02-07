@@ -10,7 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
  *
  * @ingroup tweet_feed
  */
-class TweetProfileEntitySettingsForm extends FormBase {
+class TwitterProfileEntitySettingsForm extends FormBase {
 
   /**
    * Returns a unique string identifying the form.

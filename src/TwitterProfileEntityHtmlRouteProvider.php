@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Route;
  * @see \Drupal\Core\Entity\Routing\AdminHtmlRouteProvider
  * @see \Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider
  */
-class TweetProfileEntityHtmlRouteProvider extends AdminHtmlRouteProvider {
+class TwitterProfileEntityHtmlRouteProvider extends AdminHtmlRouteProvider {
 
   /**
    * {@inheritdoc}
@@ -43,7 +43,7 @@ class TweetProfileEntityHtmlRouteProvider extends AdminHtmlRouteProvider {
       $route = new Route("/admin/structure/{$entity_type->id()}/settings");
       $route
         ->setDefaults([
-          '_form' => 'Drupal\tweet_feed\Form\TweetProfileEntitySettingsForm',
+          '_form' => 'Drupal\tweet_feed\Form\TwitterProfileEntitySettingsForm',
           '_title' => "{$entity_type->getLabel()} settings",
         ])
         ->setRequirement('_permission', $entity_type->getAdminPermission())

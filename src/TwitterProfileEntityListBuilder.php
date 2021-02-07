@@ -11,7 +11,7 @@ use Drupal\Core\Link;
  *
  * @ingroup tweet_feed
  */
-class TweetProfileEntityListBuilder extends EntityListBuilder {
+class TwitterProfileEntityListBuilder extends EntityListBuilder {
 
   /**
    * {@inheritdoc}
@@ -30,8 +30,8 @@ class TweetProfileEntityListBuilder extends EntityListBuilder {
     $row['id'] = $entity->id();
     $row['name'] = Link::createFromRoute(
       $entity->label(),
-      'entity.tweet_profile_entity.edit_form',
-      ['tweet_profile_entity' => $entity->id()]
+      'entity.twitter_profile_entity.edit_form',
+      ['twitter_profile' => $entity->id()]
     );
     return $row + parent::buildRow($entity);
   }

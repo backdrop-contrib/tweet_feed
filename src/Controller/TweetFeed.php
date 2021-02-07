@@ -151,120 +151,58 @@ class TweetFeed extends ControllerBase {
       return;
     }
 
-
-
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
-    // the hash of the profile id and see if it matches our data.
-    if (variable_get('tweet_feed_get_tweeter_profiles', FALSE) == TRUE) {
-      $user_hash = md5(serialize($tweet->user));
-      // See if we have a profile for the author if this tweet. If we do not then we do not
-      // need to do the rest of the checks
-      $query = new EntityFieldQuery();
-      $result = $query->entityCondition('entity_type', 'node')
-                      ->entityCondition('bundle', 'twitter_user_profile')
-                      ->fieldCondition('field_twitter_user_id', 'value', $tweet->user->id, '=')
-                      ->execute();
-      // If we have a result, then we have a profile! Then we need to check to see if the hash
-      // of the profile is the same as the hash of the user data. If so, then update. If not,
-      // then skip and on to the next
-      if (isset($result['node'])) {
-        $result = db_select('tweet_user_hashes', 'h')
-                  ->fields('h', array('nid', 'tuid', 'hash'))
-                  ->condition('h.tuid', $tweet->user->id)
-                  ->execute();
-        if ($result->rowCount() > 0) {
-          $tdata = $result->fetchObject();
-          // If our hashes are equal, we have nothing to update and can move along
-          if ($user_hash == $tdata->hash) {
-            return;
-          }
-          else {
-            $update_node_id = $tdata->nid;
-          }
-        }
-      }
+    // the hash of the profile and see if it matches our data.
+    
+    $profile_hash = md5(serialize($tweet->user));
+    $query = new EntityFieldQuery();
+    $result = $query->entityCondition('entity_type', 'twitter_profile')
+      ->fieldCondition('twitter_user_id', 'value', $tweet->user->id, '=')
+      ->execute();
 
-      // Populate our node object with the data we will need to save
-      $node = new stdClass();
+    // If we have a result, then we have a profile! Then we need to check to see if the hash
+    // of the profile is the same as the hash of the user data. If so, then update. If not,
+    // then skip.
 
-      // If we are being passed a node id for updating, then set it here so we update that
-      // node. (might be an edge case)
-      if ($update_node_id > 0) {
-        $node->nid = $update_node_id;
-      }
-
-      // Initialize the standard parts of our tweeting node.
-      $node->type = 'twitter_user_profile';
-      $node->uid = 1;
-      $node->created = $creation_timestamp;
-      $node->status = 1;
-      $node->comment = 0;
-      $node->promote = 0;
-      $node->moderate = 0;
-      $node->sticky = 0;
-
-      $node->field_twitter_user_id[$node->language][0]['value'] = $tweet->user->id_str;
-      $node->title = $tweet->user->name;
-
-      if ($utf8 == TRUE) {
-        $node->body[$node->language][0]['value'] = $tweet->user->description;
-        $node->field_twitter_a_screen_name[$node->language][0]['value'] = $tweet->user->screen_name;
-      }
-      else {
-        $node->body[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->description));
-        $node->field_twitter_a_screen_name[$node->language][0]['value'] = tweet_feed_filter_iconv_text(tweet_feed_filter_smart_quotes($tweet->user->screen_name));
-      }
-
-      $node->field_twitter_location[$node->language][0]['value'] = $tweet->user->location;
-      $node->field_twitter_a_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->url;
-      $node->field_twitter_profile_url[$node->language][0]['value'] = $tweet->user->entities->url->urls[0]->display_url;
-      $node->field_twitter_followers[$node->language][0]['value'] = $tweet->user->followers_count;
-      $node->field_twitter_following[$node->language][0]['value'] = $tweet->user->friends_count;
-      $node->field_twitter_favorites_count[$node->language][0]['value'] = $tweet->user->favourites_count;
-      $node->field_twitter_tweet_count[$node->language][0]['value'] = $tweet->user->statuses_count;
-      $node->field_tweet_author_verified[$node->language][0]['value'] = (int) $tweet->user->verified;
-
-      // Handle the profile background image obtained from twitter.com
-      $file = tweet_feed_process_twitter_image($tweet->user->profile_background_image_url, 'tweet-feed-profile-background-image', $tweet->user->id_str);
-      if ($file !== NULL) {
-        $node->field_background_image[$node->language][0] = (array)$file;
-      }
-
-      // Handle the user profile image obtained from twitter.com
-      $file = tweet_feed_process_twitter_image($tweet->user->profile_image_url, 'tweet-feed-profile-user-profile-image', $tweet->user->id_str);
-      if ($file !== NULL) {
-        $node->field_profile_image[$node->language][0] = (array)$file;
-      }
-
-      // Handle the user profile banner image obtained from twitter.com
-      $file = tweet_feed_process_twitter_image($tweet->user->profile_banner_url, 'tweet-feed-profile-banner-image', $tweet->user->id_str);
-      if ($file !== NULL) {
-        $node->field_banner_image[$node->language][0] = (array)$file;
-      }
-
-      $node->field_background_color[$node->language][0]['value'] = $tweet->user->profile_background_color;
-      $node->field_profile_text_color[$node->language][0]['value'] = $tweet->user->profile_text_color;
-      $node->field_link_color[$node->language][0]['value'] = $tweet->user->profile_link_color;
-      $node->field_sidebar_border_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_border_color;
-      $node->field_sidebar_fill_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_fill_color;
-
-      node_save($node);
-
-      // Make sure the hash in our tweet_hashes table is right by deleting what is there
-      // for this node and updating
-      db_delete('tweet_user_hashes')
-        ->condition('nid', $node->nid)
-        ->execute();
-      $hash_insert = array(
-        'tuid' => $tweet->user->id_str,
-        'nid' => $node->nid,
-        'hash' => $user_hash,
-      );
-      db_insert('tweet_user_hashes')->fields($hash_insert)->execute();
+    // Populate our node object with the data we will need to save
+    $entity = new TwitterProfileEntity([], 'twitter_profile');
+    $entity->setOwnerId(1);
+    $entity->setUuid($uuid_service->generate());
+    $entity->setTwitterUserId($tweet->user->id_str);
+    $entity->setName($tweet->user->name);
+    $entity->setDescription($tweet->user->description);
+    $entity->setScreenName($tweet->user->screen_name);
+    $entity->setLocation($tweet->user->location);
+    $entity->setFollowersCount($tweet->user->followers_count);
+    $entity->setFriendsCount($tweet->user->friends_count);
+    $entity->setFavoritesCount($tweet->user->favourites_count);
+    $entity->setVerified((int) $tweet->user->verified);
+    $entity->setStatusesCount($tweet->user->statuses_count);
+  
+    // Handle the user profile image obtained from twitter.com
+    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str);
+    if ($file !== FALSE) {
+      $file_array = [];
+      $file_array[] = $file;
+      $entity->setProfileImage($file_array);
     }
-  }
 
+    // Handle the user profile banner image obtained from twitter.com
+    $file = $this->process_twitter_image($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str);
+    if ($file !== FALSE) {
+      $file_array = [];
+      $file_array[] = $file;
+      $entity->setBannerImage($file_array);
+    }
+
+    \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
+
+    $entity->save();
+
+    print "check";
+    exit();
+  }
 
   /**
    * Get Twitter Data

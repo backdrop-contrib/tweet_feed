@@ -12,7 +12,7 @@ use Drupal\Core\Access\AccessResult;
  *
  * @see \Drupal\tweet_feed\Entity\TweetEntity.
  */
-class TweetProfileEntityAccessControlHandler extends EntityAccessControlHandler {
+class TwitterProfileEntityAccessControlHandler extends EntityAccessControlHandler {
 
   /**
    * {@inheritdoc}

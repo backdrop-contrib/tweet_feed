@@ -46,7 +46,7 @@ class TweetEntitySettingsForm extends FormBase {
    *   Form definition array.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['tweetentity_settings']['#markup'] = 'Settings form for Tweet entity entities. Manage field settings here.';
+    $form['tweet_entity_settings']['#markup'] = 'Settings form for Tweet entity entities. Manage field settings here.';
     return $form;
   }
 

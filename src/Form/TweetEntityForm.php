@@ -55,5 +55,4 @@ class TweetEntityForm extends ContentEntityForm {
     }
     $form_state->setRedirect('entity.tweet_entity.canonical', ['tweet_entity' => $entity->id()]);
   }
-
 }

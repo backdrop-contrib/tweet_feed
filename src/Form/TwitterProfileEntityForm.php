@@ -10,13 +10,13 @@ use Drupal\Core\Form\FormStateInterface;
  *
  * @ingroup tweet_feed
  */
-class TweetProfileEntityForm extends ContentEntityForm {
+class TwitterProfileEntityForm extends ContentEntityForm {
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /* @var $entity \Drupal\tweet_feed\Entity\TweetEntity */
+    /* @var $entity \Drupal\tweet_feed\Entity\TwitterProfile */
     $form = parent::buildForm($form, $form_state);
 
     $entity = $this->entity;
@@ -34,17 +34,24 @@ class TweetProfileEntityForm extends ContentEntityForm {
 
     switch ($status) {
       case SAVED_NEW:
-        drupal_set_message($this->t('Created the %label Tweet entity.', [
-          '%label' => $entity->label(),
-        ]));
+        $this->message->addMessage(
+          t('Created the %label Twitter profile entity.', [
+            '%label' => $entity->label(),
+            ]
+          )
+        );
         break;
 
       default:
-        drupal_set_message($this->t('Saved the %label Tweet entity.', [
-          '%label' => $entity->label(),
-        ]));
+        $this->message->addMessage(
+          t('Saved the %label Twitter profile entity.', [
+            '%label' => $entity->label(),
+            ]
+          )
+        );
+        break;
     }
-    $form_state->setRedirect('entity.tweet_entity.canonical', ['tweet_entity' => $entity->id()]);
+    $form_state->setRedirect('entity.twitter_profile.canonical', ['twitter_profile' => $entity->id()]);
   }
 
 }

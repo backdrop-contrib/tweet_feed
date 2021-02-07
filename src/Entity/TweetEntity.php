@@ -77,11 +77,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
    * {@inheritdoc}
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
-
     parent::preCreate($storage_controller, $values);
-    // $values += [
-    //   'user_id' => \Drupal::currentUser()->id(),
-    // ];
   }
 
   /**
@@ -113,7 +109,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $this->set('user_id', $uid);
     return $this;
   }
-
 
   /**
    * {@inheritdoc}
@@ -441,7 +436,6 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
   public function setProfileImage($image) {
     $this->set('profile_image', $image);
     return $this;
-
   }
 
   /**

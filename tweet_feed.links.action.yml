@@ -4,11 +4,11 @@ entity.tweet_entity.add_form:
   appears_on:
     - entity.tweet_entity.collection
 
-entity.tweet_profile_entity.add_form:
-  route_name: entity.tweet_profile_entity.add_form
+entity.twitter_profile.add_form:
+  route_name: entity.twitter_profile.add_form
   title: 'Add Twitter Profile'
   appears_on:
-    - entity.tweet_profile_entity.collection
+    - entity.twitter_profile.collection
 
 tweet_feed.twitter_accounts:
   route_name: tweet_feed.twitter_accounts_add
