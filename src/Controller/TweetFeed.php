@@ -90,7 +90,7 @@ class TweetFeed extends ControllerBase {
           /** alternative ways of doing this. */
           $image = file_get_contents($media->media_url . ':large');
           if (!empty($image)) {
-            $this->check_path('public://tweet-feed-tweet-images');
+            $this->check_path('public://tweet-feed-tweet-images', TRUE);
             $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', 1);
             if (is_object($file_temp)) {
               $fid = $file_temp->fid->getvalue()[$key]['value'];
@@ -417,13 +417,13 @@ class TweetFeed extends ControllerBase {
           break;
       }
 
-      $tid = NULL;
+      $tid = [];
       $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($taxonomy);
 
       if (!empty($terms)) {
         foreach ($terms as $term) {
           if ($term->name == $taxonomy_name) {
-            $tid = $term->tid;
+            $tid[0]['value'] = $term->tid;
             break;
           }
         }
@@ -433,10 +433,10 @@ class TweetFeed extends ControllerBase {
           'vid' => $taxonomy,
           'name' => $taxonomy_name,
         ]);
-        $tid = $new_term->tid;
         $new_term->save();
+        $tid = $new_term->tid->getValue();
       }
-      $tids[] = $tid;
+      $tids[] = $tid[0]['value'];
     }
     return $tids;
   }
@@ -521,8 +521,9 @@ class TweetFeed extends ControllerBase {
    * @param string $uri
    *   The URI location of the path to be created.
    */
-  private function check_path($uri) {
-    $real_path = \Drupal::service('file_system')->realpath($uri);
+  private function check_path($uri, $add_date = FALSE) {
+    $date = (!empty($add_date)) ? '/' . date('Y-m') : NULL;
+    $real_path = \Drupal::service('file_system')->realpath($uri) . $date;
     if (!file_exists($real_path)) {
       mkdir($real_path, 0777, TRUE);
     }
