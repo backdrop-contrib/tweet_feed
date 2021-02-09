@@ -156,12 +156,10 @@ class TweetFeed extends ControllerBase {
     // If we are creating a user profile for the person who made this tweet, then we need
     // to either create it or update it here. To determine create/update we need to check
     // the hash of the profile and see if it matches our data.
-    
     $profile_hash = md5(serialize($tweet->user));
     $query = \Drupal::entityQuery('twitter_profile')
       ->condition('twitter_user_id', $tweet->user->id)
       ->execute();
-
 
     // If we have a result, then we have a profile! Then we need to check to see if the hash
     // of the profile is the same as the hash of the user data. If so, then update. If not,
@@ -233,22 +231,18 @@ class TweetFeed extends ControllerBase {
 
       /** I do not want to replicate this data in the settings for feeds so we will just */
       /** assign it ad-hoc to the array here. */
-      $feed->machine_name = $feed_machine_name;
+      $feed['machine_name'] = $feed_machine_name;
 
       /** Get the account of the feed we are processing */
       $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
       $accounts = $accounts_config->get('accounts');
-      if (!empty($accounts[$feeds[$feed]['aid']])) {
-        $account = $accounts[$feeds[$feed]['aid']];
+      if (!empty($accounts[$feed['aid']])) {
+        $account = $accounts[$feed['aid']];
       }
 
       // If we have selected to clear our prior tweets for this particular feed, then we need
       // to do that here.
       if (!empty($feed['clear_prior'])) {
-        // All tweets are entities, so we do an entity query to get the entity id's for the tweets
-        // belonging to this feed and delete them. It's conceivable that this could take some
-        // time.
-        //tweet_feed_set_message('Clearing Previous Tweets', 'ok');
         $query = new EntityFieldQuery();
         $entities = $query->entityCondition('entity_type', 'tweet_feed')
           ->condition('feed_machine_name', $feed_machine_name, '=')
@@ -259,26 +253,38 @@ class TweetFeed extends ControllerBase {
             $tweet->delete();
           }
         }
-        //tweet_feed_set_message('All previous tweets for this feed are deleted.', 'ok', $web_interface);
       }
 
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
 
-      // Get the number of tweets to pull from our list
-      $number_to_get = $feed['pull_count'];
-      $number_of_pages = intval(ceil(($feed['pull_count'] % 2)));
-
-      $run_count = 0;
-      $current_page = 0;
+      // Get the high water mark for this feed. Get the highest id_str from the tweet_feed entity
+      // with the current feed_name and add 1, set lowest_id to this value. If we have no tweets
+      // for this feed, start at -1 (not zero since that is our trigger case)
       $lowest_id = -1;
+      $since_id = 1;
+      $entities = \Drupal::entityQuery('tweet_entity')
+        ->condition('feed_machine_name', $feed_machine_name, '=')
+        ->sort('id', 'ASC')
+        ->range(0, 1)
+        ->execute();
+      if (!empty($entities)) {
+        $tweet_entity = new TweetEntity([], 'tweet_entity');
+        $high_water_entity_id = array_pop($entities);
+        $high_water_entity = $tweet_entity->load($high_water_entity_id);
+        $since_id = $high_water_entity->getTweetId() + 1;
+      }
+      
+      // Get the number of tweets to pull from our list & variable init.
       $tweets = [];
-      $params = ($feed->query_type == QUERY_TIMELINE) ?
-        array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended') :
-        array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended');
+      $tweet_count = 0;
+      $number_to_get = $feed['pull_count'];
+
+      $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
+        array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended', 'since_id' => $since_id) :
+        array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended', 'since_id' => $since_id);
 
       while ($tweet_count < $number_to_get && $lowest_id != 0) {
-        //tweet_feed_set_message('Tweets Imported: ' . count($tweets) . ', Total To Import: ' . $number_to_get, 'ok');
         if (!empty($tdata->search_metadata->next_results)) {
           $next = substr($tdata->search_metadata->next_results, 1);
           $parts = explode('&', $next);
@@ -288,19 +294,25 @@ class TweetFeed extends ControllerBase {
               $lowest_id = $value;
             }
             $params[$key] = $value;
+            unset($params['since_id']);
           }
         }
 
-        $data = new stdClass();
         switch ($feed['query_type']) {
-          case QUERY_TIMELINE:
-            if ($lowest_id > 0) {
-              $params['max_id'] = $lowest_id;
+          case 2:
+            $response = $con->get("statuses/user_timeline", $params);
+            if (!empty($response)) {
+              if (empty($response->errors)) {
+
+                $tdata = $response;
+              }
             }
-            $tdata = json_decode($con->get("statuses/user_timeline", $params));
+            else {
+              $lowest_id = 0;
+            }
             break;
 
-          case QUERY_LIST:
+          case 3:
             $params = [
               'slug' => $feed['list_name'],
               'owner_screen_name' => $feed['timeline_id'],
@@ -311,10 +323,12 @@ class TweetFeed extends ControllerBase {
             if ($lowest_id > 0) {
               $params['max_id'] = $lowest_id;
             }
-            $tdata = json_decode($con->get("list/statuses", $params));
+
+            $response = $con->get("lists/statuses", $params);
+            $tdata = json_decode($response);
             break;
 
-          case QUERY_SEARCH:
+          case 1:
           default:
             $tdata = json_decode($con->get("search/tweets", $params));
             if (empty($tdata->search_metadata->next_results)) {
@@ -326,14 +340,14 @@ class TweetFeed extends ControllerBase {
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
             foreach($tdata->errors as $error) {
-              //tweet_feed_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error', $web_interface);
               $lowest_id = 0;
               $tweets = [];
             }
           }
           else {
-            if ($feed->query_type == QUERY_TIMELINE || $feed->query_type == QUERY_LIST) {
-              /** Get the lowest ID from the last element in the timeline. Inconsistent from feed type to feed type. Normalize. */
+            if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
+              // Get the lowest ID from the last element in the timeline. Inconsistent 
+              // from feed type to feed type. Normalize.xxw
               $end_of_the_line = array_pop($tdata);
               array_push($tdata, $end_of_the_line);
               $lowest_id = $end_of_the_line->id_str;
@@ -349,7 +363,7 @@ class TweetFeed extends ControllerBase {
             }
 
             foreach ($tweet_data as $key => $tweet) {
-              $this->save_tweet($tweet, $feed);
+              $this->saveTweet($tweet, $feed);
             }
 
             if (count($tweet_data) == 0) {
@@ -359,7 +373,6 @@ class TweetFeed extends ControllerBase {
               $tweet_count += count($tweet_data);
             }
           }
-          $run_count++;
         }
         else {
           //tweet_feed_set_message('No tweets available for this criteria.', 'ok', $web_interface);
@@ -492,28 +505,28 @@ class TweetFeed extends ControllerBase {
    * @param string feed_machine_name
    *   The machine name of the feed that we are going to process. If empty, then process them all.
    */
-  public function process_feed($feed_machine_name = NULL) {
-    /** Get a list of all the available feeds. */
-    $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
-    $feeds = $config->get('feeds');
+  // public function process_feed($feed_machine_name = NULL) {
+  //   /** Get a list of all the available feeds. */
+  //   $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
+  //   $feeds = $config->get('feeds');
 
-    $feeds_to_process = [];
-    if ($feed_machine_name === NULL) {
-      $feeds_to_process = array_keys($feeds);
-    }
-    else {
-      /** Make sure the field specified exists. */
-      if (!empty($feeds[$field_machine_name])) {
-        $feeds_to_process[] = $feed_machine_name;
-      }
-    }
-    if (!empty($fields_to_process)) {
-      foreach ($feeds_to_process as $feed_to_process => $feed) {
-        $drush = \Drush\Log\Logger::log('ok', 'Processing Feed: ' . $feed['name']);
-        $tweets = $this->pull_data_from_feed($feed_to_process);
-      }
-    }
-  }
+  //   $feeds_to_process = [];
+  //   if ($feed_machine_name === NULL) {
+  //     $feeds_to_process = array_keys($feeds);
+  //   }
+  //   else {
+  //     /** Make sure the field specified exists. */
+  //     if (!empty($feeds[$field_machine_name])) {
+  //       $feeds_to_process[] = $feed_machine_name;
+  //     }
+  //   }
+  //   if (!empty($fields_to_process)) {
+  //     foreach ($feeds_to_process as $feed_to_process => $feed) {
+  //       $drush = \Drush\Log\Logger::log('ok', 'Processing Feed: ' . $feed['name']);
+  //       $tweets = $this->pull_data_from_feed($feed_to_process);
+  //     }
+  //   }
+  // }
 
   /**
    * Make sure the directory exists. If not, create it
