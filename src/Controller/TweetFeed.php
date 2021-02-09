@@ -274,7 +274,7 @@ class TweetFeed extends ControllerBase {
         $high_water_entity = $tweet_entity->load($high_water_entity_id);
         $since_id = $high_water_entity->getTweetId() + 1;
       }
-      
+
       // Get the number of tweets to pull from our list & variable init.
       $tweets = [];
       $tweet_count = 0;
@@ -498,35 +498,6 @@ class TweetFeed extends ControllerBase {
       return FALSE;
     }
   }
-
-  /**
-   * Iterate through the feeds and import
-   *
-   * @param string feed_machine_name
-   *   The machine name of the feed that we are going to process. If empty, then process them all.
-   */
-  // public function process_feed($feed_machine_name = NULL) {
-  //   /** Get a list of all the available feeds. */
-  //   $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
-  //   $feeds = $config->get('feeds');
-
-  //   $feeds_to_process = [];
-  //   if ($feed_machine_name === NULL) {
-  //     $feeds_to_process = array_keys($feeds);
-  //   }
-  //   else {
-  //     /** Make sure the field specified exists. */
-  //     if (!empty($feeds[$field_machine_name])) {
-  //       $feeds_to_process[] = $feed_machine_name;
-  //     }
-  //   }
-  //   if (!empty($fields_to_process)) {
-  //     foreach ($feeds_to_process as $feed_to_process => $feed) {
-  //       $drush = \Drush\Log\Logger::log('ok', 'Processing Feed: ' . $feed['name']);
-  //       $tweets = $this->pull_data_from_feed($feed_to_process);
-  //     }
-  //   }
-  // }
 
   /**
    * Make sure the directory exists. If not, create it
