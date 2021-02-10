@@ -30,6 +30,15 @@ class TweetFeed extends ControllerBase {
   public function saveTweet($tweet, $feed) {
     $language = Language::LANGCODE_DEFAULT;
 
+    // Check to see if we already have this tweet in play.
+    // If so, don't reimport it.
+    $entities = \Drupal::entityQuery('tweet_entity')
+      ->condition('tweet_id', $tweet->id_str, '=')
+      ->execute();
+    if (!empty($entities)) {
+      return FALSE;
+    }
+
     // Get the creation time of the tweet and store it.
     $creation_timestamp = strtotime($tweet->created_at);
 
@@ -149,7 +158,7 @@ class TweetFeed extends ControllerBase {
     $entity->save();
 
     if (empty($entity)) {
-      return;
+      return TRUE;
     }
 
     $entity = new TwitterProfileEntity([], 'twitter_profile');
@@ -171,7 +180,7 @@ class TweetFeed extends ControllerBase {
       $entity_hash = $entity->getHash();
       if ($profile_hash == $entity_hash) {
         \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
-        return;
+        return TRUE;
       }
     }
 
@@ -207,6 +216,7 @@ class TweetFeed extends ControllerBase {
     \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
 
     $entity->save();
+    return TRUE;
 
   }
 
@@ -259,24 +269,19 @@ class TweetFeed extends ControllerBase {
 
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth2($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
-
-      // Get the high water mark for this feed. Get the highest id_str from the tweet_feed entity
-      // with the current feed_name and add 1, set lowest_id to this value. If we have no tweets
-      // for this feed, start at -1 (not zero since that is our trigger case)
-      $lowest_id = -1;
-      $since_id = NULL;
-      $entities = \Drupal::entityQuery('tweet_entity')
-        ->condition('feed_machine_name', $feed_machine_name, '=')
-        ->sort('id', 'ASC')
-        ->range(0, 1)
-        ->execute();
-      if (!empty($entities)) {
-        $tweet_entity = new TweetEntity([], 'tweet_entity');
-        $high_water_entity_id = array_pop($entities);
-        $high_water_entity = $tweet_entity->load($high_water_entity_id);
-        $since_id = $high_water_entity->getTweetId() + 1;
-        //\Drupal::logger("tweet_feed")->notice("High Water: $since_id");
-      }
+  
+      // $since_id = NULL;
+      // $entities = \Drupal::entityQuery('tweet_entity')
+      //   ->condition('feed_machine_name', $feed_machine_name, '=')
+      //   ->sort('id', 'DESC')
+      //   ->range(0, 1)
+      //   ->execute();
+      // if (!empty($entities)) {
+      //   $tweet_entity = new TweetEntity([], 'tweet_entity');
+      //   $high_water_entity_id = array_pop($entities);
+      //   $high_water_entity = $tweet_entity->load($high_water_entity_id);
+      //   $since_id = $high_water_entity->getTweetId() + 1;
+      // }
 
       // Get the number of tweets to pull from our list & variable init.
       $tweets = [];
@@ -287,10 +292,14 @@ class TweetFeed extends ControllerBase {
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
         array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended') :
         array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended');
-
-      if (!empty($since_id)) {
-        $params['since_id'] = $since_id;
+      
+      // $max_id overrides $since_id
+      if (!empty($max_id)) {
+        $params['max_id'] = $max_id;
       }
+
+      //\Drupal::logger("tweet_feed")->warning(dt('Since ID: ' . $since_id));
+
       while ($process === TRUE) {
         switch ($feed['query_type']) {
           case 2:
@@ -312,10 +321,6 @@ class TweetFeed extends ControllerBase {
               'count' => 100,
               'tweet_mode' => 'extended',
             ];
-
-            if (!empty($lowest_id)) {
-              $params['max_id'] = $lowest_id;
-            }
 
             $response = $con->get("lists/statuses", $params);
             $tdata = json_decode($response);
@@ -341,52 +346,59 @@ class TweetFeed extends ControllerBase {
           }
           else {
             if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
-              // Get the lowest ID from the last element in the timeline. Inconsistent 
-              // from feed type to feed type. Normalize.
               $end_of_the_line = array_pop($tdata);
-              array_push($tdata, $end_of_the_line);
-              $lowest_id = $end_of_the_line->id_str;
+              array_unshift($tdata, $end_of_the_line);
+              $max_id = $end_of_the_line->id_str;
               $tweet_data = $tdata;
             }
             else {
               $tweet_data = $tdata->statuses;
             }
 
-
             // If this is FALSE, then we have hit an error and need to stop processing
             if (isset($tweet_data['tweets']) && $tweet_data['tweets'] === FALSE) {
-              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
               $process = FALSE;
               break;
             }
             
             if (count($tweet_data) > 0) {
+              $duplicate = 0;
               foreach ($tweet_data as $key => $tweet) {
                 if ($tweet_count >= $number_to_get) {
                   $process = FALSE;
                   continue;
                 }
-                $this->saveTweet($tweet, $feed);
+                $saved = $this->saveTweet($tweet, $feed);
+                // If we have three duplicates in a row, assume we've reached the last imported
+                // tweets and stop here.
+                if ($saved == FALSE) {
+                  $duplicate++;
+                  if ($duplicate >= 3) {
+                    $process = FALSE;
+                    break 2;
+                  }
+                  continue;
+                }
+                else {
+                  $duplicate = 0;
+                }
                 $tweet_count++;
-                if (!($tweet_count % 50)) {
-                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
+                if (($tweet_count % 50) == 0) {
+                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get . ": $tweet->id");
                 }
               }
             }
             else {
-              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
               $process = FALSE;
             }
           }
         }
+        
         if ($process == TRUE) {
-          $params['max_id'] = $lowest_id;
-          //\Drupal::logger("tweet_feed")->error("new max: $lowest_id");
-        }
-        else {
-          \Drupal::logger("tweet_feed")->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed.'));
+          $params['max_id'] = $max_id-1;
         }
       }
+      \Drupal::logger("tweet_feed")->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed. ' . $tweet_count . ' Tweets imported.'));
     }
   }
 
