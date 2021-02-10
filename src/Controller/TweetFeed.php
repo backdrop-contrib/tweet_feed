@@ -8,9 +8,10 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\tweet_feed\Entity\TwitterProfileEntity;
 use Drupal\tweet_feed\Entity\TweetEntity;
-use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Language\Language;
+use Abraham\TwitterOAuth\TwitterOAuth;
+use Drupal\tweet_feed\Controller\TwitterOAuth2;
 
 /**
  * Class TweetFeed.
@@ -90,7 +91,7 @@ class TweetFeed extends ControllerBase {
           /** alternative ways of doing this. */
           $image = file_get_contents($media->media_url . ':large');
           if (!empty($image)) {
-            $this->check_path('public://tweet-feed-tweet-images', TRUE);
+            $this->checkPath('public://tweet-feed-tweet-images', TRUE);
             $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', 1);
             if (is_object($file_temp)) {
               $fid = $file_temp->fid->getvalue()[$key]['value'];
@@ -136,7 +137,7 @@ class TweetFeed extends ControllerBase {
     $entity->setTweetUserProfileId($tweet->user->id);
 
     $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
-    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'profile', $tweet->user->id_str, FALSE);
+    $file = $this->processTwitterImage($tweet->user->profile_image_url, 'profile', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -188,7 +189,7 @@ class TweetFeed extends ControllerBase {
     $entity->setHash($profile_hash);
   
     // Handle the user profile image obtained from twitter.com
-    $file = $this->process_twitter_image($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
+    $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -196,7 +197,7 @@ class TweetFeed extends ControllerBase {
     }
 
     // Handle the user profile banner image obtained from twitter.com
-    $file = $this->process_twitter_image($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
+    $file = $this->processTwitterImage($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
       $file_array = [];
       $file_array[] = $file;
@@ -221,8 +222,8 @@ class TweetFeed extends ControllerBase {
    * @return array tweets
    *   An array of all the tweets for this feed. FALSE if there are problems.
    */
-  public function pull_data_from_feed($feed_machine_name) {
-
+  public function pullDataFromFeed($feed_machine_name) {
+    \Drupal::logger("tweet_feed")->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
     /** Get a list of all the available feeds. */
     $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
     $feeds = $config->get('feeds');
@@ -243,6 +244,7 @@ class TweetFeed extends ControllerBase {
       // If we have selected to clear our prior tweets for this particular feed, then we need
       // to do that here.
       if (!empty($feed['clear_prior'])) {
+        \Drupal::logger("tweet_feed")->notice(dt('Clearing existing tweet entities'));
         $query = new EntityFieldQuery();
         $entities = $query->entityCondition('entity_type', 'tweet_feed')
           ->condition('feed_machine_name', $feed_machine_name, '=')
@@ -256,13 +258,13 @@ class TweetFeed extends ControllerBase {
       }
 
       // Build TwitterOAuth object with client credentials
-      $con = new TwitterOAuth($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
+      $con = new TwitterOAuth2($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
 
       // Get the high water mark for this feed. Get the highest id_str from the tweet_feed entity
       // with the current feed_name and add 1, set lowest_id to this value. If we have no tweets
       // for this feed, start at -1 (not zero since that is our trigger case)
       $lowest_id = -1;
-      $since_id = 1;
+      $since_id = NULL;
       $entities = \Drupal::entityQuery('tweet_entity')
         ->condition('feed_machine_name', $feed_machine_name, '=')
         ->sort('id', 'ASC')
@@ -273,42 +275,33 @@ class TweetFeed extends ControllerBase {
         $high_water_entity_id = array_pop($entities);
         $high_water_entity = $tweet_entity->load($high_water_entity_id);
         $since_id = $high_water_entity->getTweetId() + 1;
+        //\Drupal::logger("tweet_feed")->notice("High Water: $since_id");
       }
 
       // Get the number of tweets to pull from our list & variable init.
       $tweets = [];
       $tweet_count = 0;
+      $process = TRUE;
       $number_to_get = $feed['pull_count'];
 
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
-        array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended', 'since_id' => $since_id) :
-        array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended', 'since_id' => $since_id);
+        array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended') :
+        array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended');
 
-      while ($tweet_count < $number_to_get && $lowest_id != 0) {
-        if (!empty($tdata->search_metadata->next_results)) {
-          $next = substr($tdata->search_metadata->next_results, 1);
-          $parts = explode('&', $next);
-          foreach($parts as $part) {
-            list($key, $value) = explode('=', $part);
-            if ($key == 'max_id') {
-              $lowest_id = $value;
-            }
-            $params[$key] = $value;
-            unset($params['since_id']);
-          }
-        }
-
+      if (!empty($since_id)) {
+        $params['since_id'] = $since_id;
+      }
+      while ($process === TRUE) {
         switch ($feed['query_type']) {
           case 2:
             $response = $con->get("statuses/user_timeline", $params);
             if (!empty($response)) {
               if (empty($response->errors)) {
-
                 $tdata = $response;
               }
             }
             else {
-              $lowest_id = 0;
+              $process = FALSE;
             }
             break;
 
@@ -320,7 +313,7 @@ class TweetFeed extends ControllerBase {
               'tweet_mode' => 'extended',
             ];
 
-            if ($lowest_id > 0) {
+            if (!empty($lowest_id)) {
               $params['max_id'] = $lowest_id;
             }
 
@@ -332,7 +325,8 @@ class TweetFeed extends ControllerBase {
           default:
             $tdata = json_decode($con->get("search/tweets", $params));
             if (empty($tdata->search_metadata->next_results)) {
-              $lowest_id = 0;
+              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
+              $process = FALSE;
             }
             break;
         }
@@ -340,14 +334,15 @@ class TweetFeed extends ControllerBase {
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
             foreach($tdata->errors as $error) {
-              $lowest_id = 0;
+              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
+              $process = FALSE;
               $tweets = [];
             }
           }
           else {
             if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
               // Get the lowest ID from the last element in the timeline. Inconsistent 
-              // from feed type to feed type. Normalize.xxw
+              // from feed type to feed type. Normalize.
               $end_of_the_line = array_pop($tdata);
               array_push($tdata, $end_of_the_line);
               $lowest_id = $end_of_the_line->id_str;
@@ -357,26 +352,39 @@ class TweetFeed extends ControllerBase {
               $tweet_data = $tdata->statuses;
             }
 
+
             // If this is FALSE, then we have hit an error and need to stop processing
             if (isset($tweet_data['tweets']) && $tweet_data['tweets'] === FALSE) {
+              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
+              $process = FALSE;
               break;
             }
-
-            foreach ($tweet_data as $key => $tweet) {
-              $this->saveTweet($tweet, $feed);
-            }
-
-            if (count($tweet_data) == 0) {
-              $lowest_id = 0;
+            
+            if (count($tweet_data) > 0) {
+              foreach ($tweet_data as $key => $tweet) {
+                if ($tweet_count >= $number_to_get) {
+                  $process = FALSE;
+                  continue;
+                }
+                $this->saveTweet($tweet, $feed);
+                $tweet_count++;
+                if (!($tweet_count % 50)) {
+                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
+                }
+              }
             }
             else {
-              $tweet_count += count($tweet_data);
+              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
+              $process = FALSE;
             }
           }
         }
+        if ($process == TRUE) {
+          $params['max_id'] = $lowest_id;
+          //\Drupal::logger("tweet_feed")->error("new max: $lowest_id");
+        }
         else {
-          //tweet_feed_set_message('No tweets available for this criteria.', 'ok', $web_interface);
-          break;
+          \Drupal::logger("tweet_feed")->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed.'));
         }
       }
     }
@@ -467,15 +475,17 @@ class TweetFeed extends ControllerBase {
    *   The type of image. This affects the folder the image is placed in.
    * @param int id
    *   The id associated with this image
+   * @param bool $add_date
+   *   Do we add the year and month on to the end of the path?
    * @return object file
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
-  private function process_twitter_image($url, $type, $id, $add_date = FALSE) {
+  private function processTwitterImage($url, $type, $id, $add_date = FALSE) {
     $image = file_get_contents($url);
     if (!empty($image)) {
       $file = FALSE;
       list($width, $height) = getimagesize($url);
-      $this->check_path('public://tweet-feed-' . $type . '-images/', $add_date);
+      $this->checkPath('public://tweet-feed-' . $type . '-images/', $add_date);
       if ($add_date == TRUE) {
         $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
       }
@@ -504,8 +514,12 @@ class TweetFeed extends ControllerBase {
    *
    * @param string $uri
    *   The URI location of the path to be created.
+   * @param bool $add_date
+   *   Do we add the year and month on to the end of the path?
+   * @return bool $exists
+   *   If the real_path exists, then return TRUE
    */
-  private function check_path($uri, $add_date = FALSE) {
+  private function checkPath($uri, $add_date = FALSE) {
     $date = (!empty($add_date)) ? '/' . date('Y-m') : NULL;
     $real_path = \Drupal::service('file_system')->realpath($uri) . $date;
     if (!file_exists($real_path)) {

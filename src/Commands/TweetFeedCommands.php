@@ -62,12 +62,9 @@ class TweetFeedCommands extends DrushCommands {
     $feed_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_feeds');
     $feeds = $feed_config->get('feeds');
     if (!empty($feeds[$feed])) {
-      $this->logger()->warning("Tweet Feed: No tweets to process");
-      exit();
-
       $tf = new TweetFeed();
-      $tf->pull_data_from_feed($feed);
-      
+      $tf->pullDataFromFeed($feed);
+      return TRUE;
     }
   }
 }

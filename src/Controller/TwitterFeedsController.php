@@ -41,7 +41,7 @@ class TwitterFeedsController extends ControllerBase {
         ['data' => $feed['feed_name']],
         ['data' => $key],
         ['data' => $types[$feed['query_type']]],
-        ['data' => $feed['pull_count'] * 100],
+        ['data' => $feed['pull_count']],
         ['data' => $edit_link],
         ['data' => $delete_link],
       ];
