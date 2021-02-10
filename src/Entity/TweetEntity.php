@@ -529,7 +529,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['tweet_full_text'] = BaseFieldDefinition::create('string_long')
+    $fields['tweet_full_text'] = BaseFieldDefinition::create('text_long')
       ->setLabel(t('Tweet Full Text'))
       ->setDescription(t('The contents of the tweet. Untruncated.'))
       ->setDisplayOptions('view', [

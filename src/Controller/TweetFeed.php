@@ -130,7 +130,7 @@ class TweetFeed extends ControllerBase {
 
     if (!empty($tweet->place) && is_object($tweet->place)) {
       $bb = json_encode($tweet->place->bounding_box->coordinates[0]);
-      $entity->setGeographicCoordites($bb);
+      $entity->setGeographicCoordinates($bb);
     }
 
     if (!empty($tweet->place->full_name)) {
@@ -196,7 +196,7 @@ class TweetFeed extends ControllerBase {
     $entity->setVerified((int) $tweet->user->verified);
     $entity->setStatusesCount($tweet->user->statuses_count);
     $entity->setHash($profile_hash);
-  
+
     // Handle the user profile image obtained from twitter.com
     $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
     if ($file !== FALSE) {
@@ -206,18 +206,19 @@ class TweetFeed extends ControllerBase {
     }
 
     // Handle the user profile banner image obtained from twitter.com
-    $file = $this->processTwitterImage($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
-    if ($file !== FALSE) {
-      $file_array = [];
-      $file_array[] = $file;
-      $entity->setBannerImage($file_array);
+    if (!empty($tweet->user->profile_banner_url)) {
+      $file = $this->processTwitterImage($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
+      if ($file !== FALSE) {
+        $file_array = [];
+        $file_array[] = $file;
+        $entity->setBannerImage($file_array);
+      }
     }
 
     \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
 
     $entity->save();
     return TRUE;
-
   }
 
   /**
@@ -229,8 +230,6 @@ class TweetFeed extends ControllerBase {
    *
    * @param string feed_machine_name
    *   The machine name of the feed with which we wish to procure the data
-   * @return array tweets
-   *   An array of all the tweets for this feed. FALSE if there are problems.
    */
   public function pullDataFromFeed($feed_machine_name) {
     \Drupal::logger("tweet_feed")->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
@@ -269,36 +268,22 @@ class TweetFeed extends ControllerBase {
 
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth2($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
-  
-      // $since_id = NULL;
-      // $entities = \Drupal::entityQuery('tweet_entity')
-      //   ->condition('feed_machine_name', $feed_machine_name, '=')
-      //   ->sort('id', 'DESC')
-      //   ->range(0, 1)
-      //   ->execute();
-      // if (!empty($entities)) {
-      //   $tweet_entity = new TweetEntity([], 'tweet_entity');
-      //   $high_water_entity_id = array_pop($entities);
-      //   $high_water_entity = $tweet_entity->load($high_water_entity_id);
-      //   $since_id = $high_water_entity->getTweetId() + 1;
-      // }
 
       // Get the number of tweets to pull from our list & variable init.
       $tweets = [];
       $tweet_count = 0;
+      $max_id = 0;
       $process = TRUE;
       $number_to_get = $feed['pull_count'];
 
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
-        array('screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended') :
-        array('q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended');
-      
+        array('screen_name' => $feed['timeline_id'], 'count' => 200, 'tweet_mode' => 'extended') :
+        array('q' => $feed['search_term'], 'count' => 200, 'tweet_mode' => 'extended');
+
       // $max_id overrides $since_id
       if (!empty($max_id)) {
         $params['max_id'] = $max_id;
       }
-
-      //\Drupal::logger("tweet_feed")->warning(dt('Since ID: ' . $since_id));
 
       while ($process === TRUE) {
         switch ($feed['query_type']) {
@@ -315,31 +300,24 @@ class TweetFeed extends ControllerBase {
             break;
 
           case 3:
-            $params = [
+            $params += [
               'slug' => $feed['list_name'],
               'owner_screen_name' => $feed['timeline_id'],
-              'count' => 100,
+              'count' => 200,
               'tweet_mode' => 'extended',
             ];
-
-            $response = $con->get("lists/statuses", $params);
-            $tdata = json_decode($response);
+            $tdata = $con->get("lists/statuses", $params);
             break;
 
           case 1:
           default:
-            $tdata = json_decode($con->get("search/tweets", $params));
-            if (empty($tdata->search_metadata->next_results)) {
-              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
-              $process = FALSE;
-            }
+            $tdata = $con->get("search/tweets", $params);
             break;
         }
 
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
             foreach($tdata->errors as $error) {
-              //\Drupal::logger("tweet_feed")->error(dt('STOP PROCESSING: ' . __LINE__));
               $process = FALSE;
               $tweets = [];
             }
@@ -399,27 +377,6 @@ class TweetFeed extends ControllerBase {
         }
       }
       \Drupal::logger("tweet_feed")->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed. ' . $tweet_count . ' Tweets imported.'));
-    }
-  }
-
-  /**
-   * Checks to see if the provided tweet_id is currently in our entity.
-   *
-   * @param string $tweet_id
-   *   The id of the tweet. This is the Twitter id, so it is a string.
-   *
-   * @return bool $exists
-   *   Returns TRUE if an entity exists with Twitter ID, FALSE if not.
-   */
-  public function tweet_exists($tweet_id) {
-    $query = \Drupal::entityQuery('tweet_feed');
-    $query->condition('tweet_id', $tweet_id);
-    $tweets = $query->execute();
-    if (!empty($tweets)) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
     }
   }
 
@@ -493,7 +450,8 @@ class TweetFeed extends ControllerBase {
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
   private function processTwitterImage($url, $type, $id, $add_date = FALSE) {
-    $image = file_get_contents($url);
+    // I hate myself for this next line.
+    $image = @file_get_contents($url);
     if (!empty($image)) {
       $file = FALSE;
       list($width, $height) = getimagesize($url);
