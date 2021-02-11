@@ -27,7 +27,7 @@ class TweetFeed extends ControllerBase {
    * @param array $feed
    *  The information on the feed from which this feed is being fetched.
    */
-  public function saveTweet($tweet, $feed) {
+  public function saveTweet($tweet, $feed, $process_specific_tweet = FALSE) {
     $language = Language::LANGCODE_DEFAULT;
 
     // Check to see if we already have this tweet in play.
@@ -161,64 +161,99 @@ class TweetFeed extends ControllerBase {
       return TRUE;
     }
 
-    $entity = new TwitterProfileEntity([], 'twitter_profile');
-
-    // If we are creating a user profile for the person who made this tweet, then we need
-    // to either create it or update it here. To determine create/update we need to check
-    // the hash of the profile and see if it matches our data.
-    $profile_hash = md5(serialize($tweet->user));
-    $query = \Drupal::entityQuery('twitter_profile')
-      ->condition('twitter_user_id', $tweet->user->id)
-      ->execute();
-
-    // If we have a result, then we have a profile! Then we need to check to see if the hash
-    // of the profile is the same as the hash of the user data. If so, then update. If not,
-    // then skip.
-    if (!empty($query)) {
-      $keys = array_keys($query);
-      $entity = $entity->load($keys[0]);
-      $entity_hash = $entity->getHash();
-      if ($profile_hash == $entity_hash) {
-        \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
-        return TRUE;
+    if ($process_specific_tweet == FALSE) {
+      if (!empty($specific_tweets)) {
+        $this->checkSpecificTweets($specific_tweets, $feed);
       }
-    }
 
-    // Populate our entity with the data we will need to save
-    $entity->setOwnerId(1);
-    $entity->setUuid($uuid_service->generate());
-    $entity->setTwitterUserId($tweet->user->id_str);
-    $entity->setName($tweet->user->name);
-    $entity->setDescription($tweet->user->description);
-    $entity->setScreenName($tweet->user->screen_name);
-    $entity->setLocation($tweet->user->location);
-    $entity->setFollowersCount($tweet->user->followers_count);
-    $entity->setVerified((int) $tweet->user->verified);
-    $entity->setStatusesCount($tweet->user->statuses_count);
-    $entity->setHash($profile_hash);
+      $entity = new TwitterProfileEntity([], 'twitter_profile');
 
-    // Handle the user profile image obtained from twitter.com
-    $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
-    if ($file !== FALSE) {
-      $file_array = [];
-      $file_array[] = $file;
-      $entity->setProfileImage($file_array);
-    }
+      // If we are creating a user profile for the person who made this tweet, then we need
+      // to either create it or update it here. To determine create/update we need to check
+      // the hash of the profile and see if it matches our data.
+      $profile_hash = md5(serialize($tweet->user));
+      $query = \Drupal::entityQuery('twitter_profile')
+        ->condition('twitter_user_id', $tweet->user->id)
+        ->execute();
 
-    // Handle the user profile banner image obtained from twitter.com
-    if (!empty($tweet->user->profile_banner_url)) {
-      $file = $this->processTwitterImage($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
+      // If we have a result, then we have a profile! Then we need to check to see if the hash
+      // of the profile is the same as the hash of the user data. If so, then update. If not,
+      // then skip.
+      if (!empty($query)) {
+        $keys = array_keys($query);
+        $entity = $entity->load($keys[0]);
+        $entity_hash = $entity->getHash();
+        if ($profile_hash == $entity_hash) {
+          \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
+          return TRUE;
+        }
+      }
+
+      // Populate our entity with the data we will need to save
+      $entity->setOwnerId(1);
+      $entity->setUuid($uuid_service->generate());
+      $entity->setTwitterUserId($tweet->user->id_str);
+      $entity->setName($tweet->user->name);
+      $entity->setDescription($tweet->user->description);
+      $entity->setScreenName($tweet->user->screen_name);
+      $entity->setLocation($tweet->user->location);
+      $entity->setFollowersCount($tweet->user->followers_count);
+      $entity->setVerified((int) $tweet->user->verified);
+      $entity->setStatusesCount($tweet->user->statuses_count);
+      $entity->setHash($profile_hash);
+
+      // Handle the user profile image obtained from twitter.com
+      $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
       if ($file !== FALSE) {
         $file_array = [];
         $file_array[] = $file;
-        $entity->setBannerImage($file_array);
+        $entity->setProfileImage($file_array);
       }
+
+      // Handle the user profile banner image obtained from twitter.com
+      if (!empty($tweet->user->profile_banner_url)) {
+        $file = $this->processTwitterImage($tweet->user->profile_banner_url, 'banner-image', $tweet->user->id_str, FALSE);
+        if ($file !== FALSE) {
+          $file_array = [];
+          $file_array[] = $file;
+          $entity->setBannerImage($file_array);
+        }
+      }
+
+      \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
+
+      $entity->save();
     }
 
-    \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
-
-    $entity->save();
     return TRUE;
+  }
+
+  private function checkSpecificTweets($specific_tweets, $feed) {
+    /** Get the account of the feed we are processing */
+    $accounts_config = \Drupal::service('config.factory')->get('tweet_feed.twitter_accounts');
+    $accounts = $accounts_config->get('accounts');
+    if (!empty($accounts[$feed['aid']])) {
+      $account = $accounts[$feed['aid']];
+    }
+    $tweet_count = 0;
+    foreach($specific_tweets as $tweet_id) {
+      // Build TwitterOAuth object with client credentials
+      $con = new TwitterOAuth2(
+        $account['consumer_key'],
+        $account['consumer_secret'],
+        $account['oauth_token'],
+        $account['oauth_token_secret']
+      );
+      $tweet = $con->get("statuses/show", ['id' => $tweet_id, 'tweet_mode' => 'extended']);
+      if (!empty($tweet->errors)) {
+        continue;
+      }
+      else {
+        $this->saveTweet($tweet, $feed, TRUE);
+        $tweet_count++;
+      }
+    }
+    return $tweet_count;
   }
 
   /**
@@ -362,7 +397,7 @@ class TweetFeed extends ControllerBase {
                 }
                 $tweet_count++;
                 if (($tweet_count % 50) == 0) {
-                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get . ": $tweet->id");
+                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
                 }
               }
             }

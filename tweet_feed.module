@@ -5,13 +5,7 @@
  * Contains tweet_feed.module.
  */
 
-use Drupal\tweet_feed\Entity\TweetEntity;
-use Drupal\tweet_feed\Entity\TweetProfileEntity;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\Core\Queue\QueueFactory;
-use Drupal\Core\Queue\QueueInterface;
-//use Drupal\tweet_feed\Controller\TweetFeed;
 
 /**
  * Implements hook_help().
@@ -21,32 +15,12 @@ function tweet_feed_help($route_name, RouteMatchInterface $route_match) {
     // Main module help for the tweet_feed module.
     case 'help.page.tweet_feed':
       $output  = '<h4>' . t('Overview') . '</h4>';
-      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://developer.twitter.com/en/docs/basics/rate-limiting">' . t('Twitter\'s REST API') . '.</a></p>';
+      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://developer.twitter.com/en/docs/rate-limits">' . t('Twitter\'s REST API') . '.</a></p>';
       $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
-      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Twitter Settings') . '</h4>';
-      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Twitter-Settings">' . t('Configuring account and feed settings.') . '</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Views Integration') . '</h4>';
-      $output .= '<p>'  . t('Tweet Feed has full views integration. A basic view of tweets can be created at Administer -> Structure -> Views -> Add New View by selecting Twitter Tweet Feed as the content type to show in the view.') . '</p>';
-      $output .= '<p>'  . t('Further filtering can be accomplished using either the standard filters or the contextual filters available in the collapsed advanced fieldset. An example use case of when contextual features would be helpful is to add a block of dynamically filtered tweets based on matching a hashtag entered in a given field on any node.') . '</p>';
-      $output .= '<p>'  . t('Look on the Advanced Use Cases page for information on using the Tweet Feed module in powerful ways to display node specific Tweets, Tweets related to node content and some other more simplistic use cases.') . '</p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Ways to Run the Import.') . '</h4>';
-      $output .= '<ol><li>' . t('They can be periodically imported using Drupal\'s build in cron system. This requires the run cron option on the Tweet Feed Settings page be enabled. Also make sure PHP has enough memory allocated to it in order to run the process along with all of the other tasks it needs to run.') . '</li>';
-      $output .= '<li>' . t('They can be manually imported by clicking the **Import** link on the right hand side of each feed in the feed information table.') . '</li>';
-      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Drush Commands') . '</h4>';
-      $output .= '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; padding-top: 15px; width: 100%; font-size: 8pt; line-height: 1.3em;">';
-      $output .= '<img src="/' . drupal_get_path('module', 'tweet_feed') . '/images/flyingflip-logo.png" width="151" height="50" alt="FlyingFlip Studios" align="right" /><br />';
-      $output .= '2019-2020 - v8.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbags17<br clear="right">';
-      $output .= '<style>.item-list, hr { display: none; }</style></div>';
       return $output;
-
+      break;
     default:
+      break;
   }
 }
 
@@ -59,77 +33,6 @@ function tweet_feed_theme() {
       'render element' => 'children',
     ],
   ];
-}
-
-/**
- * Implements hook_cron().
- */
-function tweet_feed_cron() {
-  /** Get a list of all the available feeds. */
-  $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
-  $feeds = $config->get('feeds');
-
-  /** If we have configured feeds, then we iteratre through them. */
-  if (0 && !empty($feeds)) {
-    // Iterate through the feeds. We do all the feeds here instead of one at
-    // a time like we did in the Drupal 7 module. Just makes more sense.
-    foreach ($feeds as $feed) {
-      // Get all of the tweets to be imported
-      $tweets = $this->tweet_feed_pull_data_from_feed($feed);
-      // If we have no tweets, we can stop here.
-      if (!is_array($tweets) || count($tweets) < 1) {
-        continue;
-      }
-      /** Get the current tweet feed queue */
-      /** @var QueueFactory $queue_factory */
-      $queue_factory = \Drupal::service('queue');
-      /** @var QueueInterface $queue */
-      $queue = $queue_factory->get('tweet_feed_queue');
-
-      /** We are not doing updates, only inserts. So we only need to exclude existing */
-      /** tweets. This is the only reason for that query. To keep queue size down. */
-      foreach ($tweets as $key => $tweet) {
-        if ($this->tweet_feed_tweet_exists($tweet->id_str) === TRUE) {
-          continue;
-        }
-        /** Insert the item into the queue */
-        $item = new \stdClass();
-        $item->tweet = $tweet;
-        $item->feed = $feed;
-        $queue->createItem($item);
-      }
-
-      if ($queue->numberOfItems() > 0) {
-        // Run through items in the queue
-        for ($i = 0; $i < $queue_size; $i++) {
-          if ($item = $queue->claimItem($i)) {
-            $this->tweet_feed_save_tweet($item->data['tweet'], $feed);
-            $queue->deleteItem($item);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Determine if the cron is running. We do this by checking for a semaphore.
-   *
-   * @return bool $exists
-   *   Returns TRUE if there is a cron semaphore item, FALSE if not.
-   */
-  function tweet_feed_is_cron_running() {
-    $query = \Drupal::database()->select('semaphore', 's');
-    $query->fields('s', ['name']);
-    $query->condition('s.name', 'cron', '=');
-    $query->orderBy('pr.owner', 'ASC');
-    $rows = $query->countQuery()->fetchField();
-    if (!empty($rows)) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
-    }
-  }
 }
 
 /**
@@ -163,7 +66,6 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
   return $tweet;
 }
-
 
 /**
  * Filter iconv from text.
