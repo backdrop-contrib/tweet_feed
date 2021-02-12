@@ -43,8 +43,6 @@ use Drupal\Core\Url;
  *
  *     "form" = {
  *       "default" = "Drupal\tweet_feed\Form\TweetEntityForm",
- *       "add" = "Drupal\tweet_feed\Form\TweetEntityForm",
- *       "edit" = "Drupal\tweet_feed\Form\TweetEntityForm",
  *       "delete" = "Drupal\tweet_feed\Form\TweetEntityDeleteForm",
  *     },
  *     "access" = "Drupal\tweet_feed\TweetEntityAccessControlHandler",
@@ -61,8 +59,6 @@ use Drupal\Core\Url;
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/tweet_entity/{tweet_entity}",
- *     "add-form" = "/admin/structure/tweet_entity/add",
- *     "edit-form" = "/admin/structure/tweet_entity/{tweet_entity}/edit",
  *     "delete-form" = "/admin/structure/tweet_entity/{tweet_entity}/delete",
  *     "collection" = "/admin/structure/tweet_entity",
  *   },

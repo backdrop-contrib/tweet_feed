@@ -49,46 +49,10 @@ tweet_entity.admin.structure.tweets:
   route_name: entity.tweet_entity.collection
   parent: tweet_feed.general
   weight: 10
-tweet_entity.admin.structure.settings.fields:
-  title: Manage fields
-  description: 'Manage the custom fields for tweets.'
-  route_name: entity.tweet_entity.field_ui_fields
-  parent: tweet_entity.admin.structure.tweets
-  weight: 0
-tweet_entity.admin.structure.settings.form_display:
-  title: Manage form display
-  description: 'Manage the display order for the tweets form.'
-  route_name: entity.entity_form_display.tweet_entity.default
-  parent: tweet_entity.admin.structure.tweets
-  weight: 10
-tweet_entity.admin.structure.settings.display:
-  title: Manage display
-  description: 'Manage the display of tweet fields.'
-  route_name: entity.entity_view_display.tweet_entity.default
-  parent: tweet_entity.admin.structure.tweets
-  weight: 20
 
 twitter_profile.admin.structure.tweets:
   title: 'Tweet Profiles'
   description: 'Profiles for users of imported tweets.'
   route_name: entity.twitter_profile.collection
   parent: tweet_feed.general
-  weight: 20
-twitter_profile.admin.structure.settings.fields:
-  title: Manage fields
-  description: 'Manage the custom fields for Twitter profiles.'
-  route_name: entity.twitter_profile.field_ui_fields
-  parent: twitter_profile.admin.structure.tweets
-  weight: 0
-twitter_profile.admin.structure.settings.form_display:
-  title: Manage form display
-  description: 'Manage the form display settings for Twitter profiles.'
-  route_name: entity.entity_form_display.twitter_profile.default
-  parent: twitter_profile.admin.structure.tweets
-  weight: 10
-twitter_profile.admin.structure.settings.display:
-  title: Manage display
-  description: 'Manage the display of fields on a Twitter profile.'
-  route_name: entity.entity_view_display.twitter_profile.default
-  parent: twitter_profile.admin.structure.tweets
   weight: 20

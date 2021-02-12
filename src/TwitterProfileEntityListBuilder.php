@@ -30,7 +30,7 @@ class TwitterProfileEntityListBuilder extends EntityListBuilder {
     $row['id'] = $entity->getTwitterUserId();
     $row['name'] = Link::createFromRoute(
       $entity->getName() . '/' . $entity->getScreenName(),
-      'entity.twitter_profile.edit_form',
+      'entity.twitter_profile.canonical',
       ['twitter_profile' => $entity->id()]
     );
     return $row + parent::buildRow($entity);

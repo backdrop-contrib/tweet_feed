@@ -1,34 +1,17 @@
-# Tweet Feed entity routing definition
-# tweet_entity.settings_tab:
-#   route_name: tweet_entity.settings
-#   title: 'Settings'
-#   base_route: tweet_entity.settings
 entity.tweet_entity.canonical:
   route_name: entity.tweet_entity.canonical
   base_route: entity.tweet_entity.canonical
   title: 'View'
-entity.tweet_entity.edit_form:
-  route_name: entity.tweet_entity.edit_form
-  base_route: entity.tweet_entity.canonical
-  title: 'Edit'
 entity.tweet_entity.delete_form:
   route_name:  entity.tweet_entity.delete_form
   base_route:  entity.tweet_entity.canonical
   title: Delete
   weight: 10
 
-# twitter_profile.settings_tab:
-#   route_name: twitter_profile.settings
-#   title: 'Settings'
-#   base_route: twitter_profile.settings
 entity.twitter_profile.canonical:
   route_name: entity.twitter_profile.canonical
   base_route: entity.twitter_profile.canonical
   title: 'View'
-entity.twitter_profile.edit_form:
-  route_name: entity.twitter_profile.edit_form
-  base_route: entity.twitter_profile.canonical
-  title: 'Edit'
 entity.twitter_profile.delete_form:
   route_name:  entity.twitter_profile.delete_form
   base_route:  entity.twitter_profile.canonical

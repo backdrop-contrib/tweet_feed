@@ -1,15 +1,3 @@
-entity.tweet_entity.add_form:
-  route_name: entity.tweet_entity.add_form
-  title: 'Add Tweet'
-  appears_on:
-    - entity.tweet_entity.collection
-
-entity.twitter_profile.add_form:
-  route_name: entity.twitter_profile.add_form
-  title: 'Add Twitter Profile'
-  appears_on:
-    - entity.twitter_profile.collection
-
 tweet_feed.twitter_accounts:
   route_name: tweet_feed.twitter_accounts_add
   title: 'Add Twitter API Account'

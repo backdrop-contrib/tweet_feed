@@ -24,9 +24,7 @@ use Drupal\user\UserInterface;
  *
  *     "form" = {
  *       "default" = "Drupal\tweet_feed\Form\TwitterProfileEntityForm",
- *       "add" = "Drupal\tweet_feed\Form\TwitterProfileEntityForm",
- *       "edit" = "Drupal\tweet_feed\Form\TwitterProfileEntityForm",
- *       "delete" = "Drupal\tweet_feed\Form\TwitterProfiletEntityDeleteForm",
+ *       "delete" = "Drupal\tweet_feed\Form\TwitterProfileDeleteForm",
  *     },
  *     "access" = "Drupal\tweet_feed\TwitterProfileEntityAccessControlHandler",
  *     "route_provider" = {
@@ -42,8 +40,6 @@ use Drupal\user\UserInterface;
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/twitter_profile/{twitter_profile}",
- *     "add-form" = "/admin/structure/twitter_profile/add",
- *     "edit-form" = "/admin/structure/twitter_profile/{twitter_profile}/edit",
  *     "delete-form" = "/admin/structure/twitter_profile/{twitter_profile}/delete",
  *     "collection" = "/admin/structure/twitter_profile",
  *   },
