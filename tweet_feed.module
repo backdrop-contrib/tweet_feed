@@ -755,11 +755,16 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   }
 
   // Lists have a different object than timelines or searches. Nice twitter.
-  if ($feed->query_type == QUERY_LIST) {
-    $tweet_text = $tweet->text;
+  if (!empty($tweet->retweeted_status)) {
+    $tweet_text = 'RT @' . $tweet->retweeted_status->user->screen_name . ': ' . $tweet->retweeted_status->full_text;
   }
-  else{
-    $tweet_text = $tweet->full_text;
+  else {
+    if ($feed->query_type == QUERY_LIST) {
+      $tweet_text = $tweet->text;
+    }
+    else {
+      $tweet_text = $tweet->full_text;
+    }
   }
 
   // Process the tweet. This linkes our twitter names, hash tags and converts any
