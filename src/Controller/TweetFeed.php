@@ -83,7 +83,7 @@ class TweetFeed extends ControllerBase {
       $entity->setReferencedTweetId($tweet->in_reply_to_status_id_str);
       $specific_tweets[] = $tweet->in_reply_to_status_id_str;
     }
-    
+
     /** Quoted Tweet w/Comment */
     if (!empty($tweet->is_quote_status)) {
       $entity->setTypeOfTweetReference('quoted');
@@ -288,19 +288,19 @@ class TweetFeed extends ControllerBase {
       // If we have selected to clear our prior tweets for this particular feed, then we need
       // to do that here.
       if (!empty($feed['clear_prior'])) {
-        \Drupal::logger("tweet_feed")->notice(dt('Clearing existing tweet entities'));
-        $query = new EntityFieldQuery();
-        $entities = $query->entityCondition('entity_type', 'tweet_feed')
+        \Drupal::logger('tweet_feed')->notice(dt('Clearing existing tweet entities'));
+        $entities = \Drupal::entityQuery('tweet_entity')
           ->condition('feed_machine_name', $feed_machine_name, '=')
           ->execute();
-        if (isset($entities['tweet_feed'])) {
-          foreach ($result['tweet_feed'] as $entity_id => $entity) {
-            $tweet = Drupal\tweet_feed\Entity\TweetEntity::load($entity_id);
-            $tweet->delete();
+        if (isset($entities)) {
+          foreach ($entities as $entity_id) {
+            $entity = \Drupal::entityTypeManager()->getStorage('tweet_entity')->load($entity_id);
+            $entity->deleteLinkedImages();
+            $entity->deleteProfileImage();
+            $entity->delete();
           }
         }
       }
-
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth2($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
 
@@ -373,7 +373,7 @@ class TweetFeed extends ControllerBase {
               $process = FALSE;
               break;
             }
-            
+
             if (count($tweet_data) > 0) {
               $duplicate = 0;
               foreach ($tweet_data as $key => $tweet) {
@@ -406,7 +406,7 @@ class TweetFeed extends ControllerBase {
             }
           }
         }
-        
+
         if ($process == TRUE) {
           $params['max_id'] = $max_id-1;
         }

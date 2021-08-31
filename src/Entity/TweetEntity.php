@@ -276,6 +276,15 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $urls;
   }
 
+  public function deleteLinkedImages() : void {
+    $files = $this->getLinkedImages();
+    foreach ($files as $file) {
+      if (!empty($file)) {
+        $file->delete();
+      }
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -445,6 +454,18 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
       $images[] = $fo;
     }
     return $images;
+  }
+
+  public function deleteProfileImage(): void {
+    $files = $this->get('profile_image')->getValue();
+    if (!empty($files)) {
+      foreach ($files as $file) {
+        $fo = File::load($file['target_id']);
+        if (!empty($fo)) {
+          $fo->delete();
+        }
+      }
+    }
   }
 
   /**
