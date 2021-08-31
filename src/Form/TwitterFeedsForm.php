@@ -6,7 +6,8 @@ use Drupal\Core\Url;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\Messenger;
 
 /**
  * Form controller for Tweet entity edit forms.
@@ -84,8 +85,8 @@ class TwitterFeedsForm extends ConfigFormBase {
     else {
       // You must have an account to add a feed. If you don't then everything falls apart.
       // Warn the user here if they are trying to add a feed without an account.
-      drupal_set_message('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.', 'error');
-      $response = new RedirectResponse(\Drupal::url('tweet_feed.twitter_accounts'));
+      \Drupal::messenger()->addError($this->t('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.'));
+      $response = new RedirectResponse(Url::fromRoute('tweet_feed.twitter_accounts')->toString());
       $response->send();
     }
 

@@ -4,7 +4,8 @@ namespace Drupal\tweet_feed\Form;
 
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\Messenger;
 
 /**
  * Confirmation of Twitter API deletion.
@@ -37,9 +38,7 @@ class TwitterFeedsDeleteForm extends ConfirmFormBase {
     $feeds = $config->get('feeds');
     unset($feeds[$this->feed_machine_name]);
     $config->set('feeds', $feeds)->save();
-    drupal_set_message($this->t('The Twitter Feed %feed was deleted.', [
-      '%feed' => $this->feed_machine_name,
-    ]));
+    \Drupal::messenger()->addStatus($this->t('The Twitter Feed %feed was deleted.', ['%feed' => $this->feed_machine_name]));
     $form_state->setRedirect('tweet_feed.twitter_feeds');
     return;
   }

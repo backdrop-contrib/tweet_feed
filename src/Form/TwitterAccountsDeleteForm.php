@@ -5,6 +5,8 @@ namespace Drupal\tweet_feed\Form;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\Messenger;
 
 /**
  * Confirmation of Twitter API deletion.
@@ -37,9 +39,7 @@ class TwitterAccountsDeleteForm extends ConfirmFormBase {
     $accounts = $config->get('accounts');
     unset($accounts[$this->account_machine_name]);
     $config->set('accounts', $accounts)->save();
-    drupal_set_message($this->t('The Twitter API account %account was deleted.', [
-      '%account' => $this->account_machine_name,
-    ]));
+    \Drupal::messenger()->addStatus($this->t('The Twitter API account %account was deleted.', ['%account' => $this->account_machine_name]));
     $form_state->setRedirect('tweet_feed.twitter_accounts');
     return;
   }
