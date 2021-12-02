@@ -34,3 +34,63 @@ function tweet_feed_uninstall() {
     }
   }
 }
+
+/**
+ * Remove orphaned images from tweets that no longer exist.
+ */
+function tweet_feed_update_9401() {
+  $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
+  $feeds = $config->get('feeds');
+  $tweet_image_titles = [];
+  // go through all feeds and get their images
+  foreach ($feeds as $key => $feed) {
+    $entities = \Drupal::entityQuery('tweet_entity')
+      ->condition('feed_machine_name', $key, '=')
+      ->execute();
+    if (isset($entities)) {
+      foreach ($entities as $entity_id) {
+        $entity = \Drupal::entityTypeManager()->getStorage('tweet_entity')->load($entity_id);
+        $files = $entity->get('linked_images')->getValue();
+        foreach ($files as $file) {
+          $fid = $file['target_id'];
+          $file_image = \Drupal\file\Entity\File::load($fid);
+          if ($file_image) {
+            $imageSRC = file_create_url($file_image->getFileUri());
+            $filename = basename($imageSRC);
+            if (empty($tweet_image_titles[$filename])) {
+              $tweet_image_titles[$filename] = $entity_id;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // get all the images in the directory
+  $default_scheme = \Drupal::config('system.file')->get('default_scheme');
+  $directory = \Drupal::service('file_system')->realpath($default_scheme . "://") . '/tweet-feed-tweet-images/';
+  if (is_dir($directory)) {
+    $options = ['recurse' => 'TRUE'];
+    $existing_files = \Drupal::service('file_system')->scanDirectory($directory, "/.*\.jpg$/", $options);
+  }
+
+  $images_in_directory = [];
+  foreach ($existing_files as $existing) {
+    $images_in_directory[] = [
+      'uri' => $existing->uri,
+      'filename' => $existing->filename,
+    ];
+  }
+
+  $file_only_deleted = 0;
+  \Drupal::logger('tweet_feed')->notice(t('Tweet Feed Update 9001: Number of images found in tweet images directory: @images', ['@images' => count($images_in_directory)]));
+  foreach ($images_in_directory as $existing_file) {
+    $uri = $existing_file['uri'];
+    $filename = $existing_file['filename'];
+    if (empty($tweet_image_titles[$filename])) {
+      $file_only_deleted++;
+      \Drupal::service('file_system')->unlink($uri);
+    }
+  }
+  \Drupal::logger('tweet_feed')->notice(t('Tweet Feed Update 9001: Number of orphaned files deleted: @file_only_deleted', ['@file_only_deleted' => $file_only_deleted]));
+}
