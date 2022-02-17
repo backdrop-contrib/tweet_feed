@@ -1,5 +1,4 @@
 <?php
-
 namespace Drupal\tweet_feed\Controller;
 
 use Drupal\Core\Link;
@@ -17,7 +16,6 @@ use Drupal\tweet_feed\Controller\TwitterOAuth2;
  * Class TweetFeed.
  */
 class TweetFeed extends ControllerBase {
-
   /**
    * Save the tweet to our tweet entity.
    *
@@ -112,8 +110,7 @@ class TweetFeed extends ControllerBase {
                 'height' => $media->sizes->large->h,
               ];
             }
-            unset($file_temp);
-            unset($image);
+            unset($file_temp, $image);
           }
         }
       }
@@ -236,7 +233,7 @@ class TweetFeed extends ControllerBase {
       $account = $accounts[$feed['aid']];
     }
     $tweet_count = 0;
-    foreach($specific_tweets as $tweet_id) {
+    foreach ($specific_tweets as $tweet_id) {
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth2(
         $account['consumer_key'],
@@ -244,11 +241,10 @@ class TweetFeed extends ControllerBase {
         $account['oauth_token'],
         $account['oauth_token_secret']
       );
-      $tweet = $con->get("statuses/show", ['id' => $tweet_id, 'tweet_mode' => 'extended']);
+      $tweet = $con->get('statuses/show', ['id' => $tweet_id, 'tweet_mode' => 'extended']);
       if (!empty($tweet->errors)) {
         continue;
-      }
-      else {
+      } else {
         $this->saveTweet($tweet, $feed, TRUE);
         $tweet_count++;
       }
@@ -267,7 +263,7 @@ class TweetFeed extends ControllerBase {
    *   The machine name of the feed with which we wish to procure the data
    */
   public function pullDataFromFeed($feed_machine_name) {
-    \Drupal::logger("tweet_feed")->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
+    \Drupal::logger('tweet_feed')->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
     /** Get a list of all the available feeds. */
     $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
     $feeds = $config->get('feeds');
@@ -312,8 +308,8 @@ class TweetFeed extends ControllerBase {
       $number_to_get = $feed['pull_count'];
 
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
-        array('screen_name' => $feed['timeline_id'], 'count' => 200, 'tweet_mode' => 'extended') :
-        array('q' => $feed['search_term'], 'count' => 200, 'tweet_mode' => 'extended');
+        ['screen_name' => $feed['timeline_id'], 'count' => 200, 'tweet_mode' => 'extended'] :
+        ['q' => $feed['search_term'], 'count' => 200, 'tweet_mode' => 'extended'];
 
       // $max_id overrides $since_id
       if (!empty($max_id)) {
@@ -323,13 +319,12 @@ class TweetFeed extends ControllerBase {
       while ($process === TRUE) {
         switch ($feed['query_type']) {
           case 2:
-            $response = $con->get("statuses/user_timeline", $params);
+            $response = $con->get('statuses/user_timeline', $params);
             if (!empty($response)) {
               if (empty($response->errors)) {
                 $tdata = $response;
               }
-            }
-            else {
+            } else {
               $process = FALSE;
             }
             break;
@@ -341,30 +336,28 @@ class TweetFeed extends ControllerBase {
               'count' => 200,
               'tweet_mode' => 'extended',
             ];
-            $tdata = $con->get("lists/statuses", $params);
+            $tdata = $con->get('lists/statuses', $params);
             break;
 
           case 1:
           default:
-            $tdata = $con->get("search/tweets", $params);
+            $tdata = $con->get('search/tweets', $params);
             break;
         }
 
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
-            foreach($tdata->errors as $error) {
+            foreach ($tdata->errors as $error) {
               $process = FALSE;
               $tweets = [];
             }
-          }
-          else {
+          } else {
             if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
               $end_of_the_line = array_pop($tdata);
               array_unshift($tdata, $end_of_the_line);
               $max_id = $end_of_the_line->id_str;
               $tweet_data = $tdata;
-            }
-            else {
+            } else {
               $tweet_data = $tdata->statuses;
             }
 
@@ -391,27 +384,25 @@ class TweetFeed extends ControllerBase {
                     break 2;
                   }
                   continue;
-                }
-                else {
+                } else {
                   $duplicate = 0;
                 }
                 $tweet_count++;
                 if (($tweet_count % 50) == 0) {
-                  \Drupal::logger("tweet_feed")->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
+                  \Drupal::logger('tweet_feed')->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
                 }
               }
-            }
-            else {
+            } else {
               $process = FALSE;
             }
           }
         }
 
         if ($process == TRUE) {
-          $params['max_id'] = $max_id-1;
+          $params['max_id'] = $max_id - 1;
         }
       }
-      \Drupal::logger("tweet_feed")->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed. ' . $tweet_count . ' Tweets imported.'));
+      \Drupal::logger('tweet_feed')->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed. ' . $tweet_count . ' Tweets imported.'));
     }
   }
 
@@ -430,8 +421,8 @@ class TweetFeed extends ControllerBase {
    */
   public function processTaxonomy($entities, $taxonomy) {
     $tids = [];
-    foreach($entities as $entity) {
-      switch($taxonomy) {
+    foreach ($entities as $entity) {
+      switch ($taxonomy) {
         case 'twitter_hashtag_terms':
           $taxonomy_name = $entity->text;
           break;
@@ -493,8 +484,7 @@ class TweetFeed extends ControllerBase {
       $this->checkPath('public://tweet-feed-' . $type . '-images/', $add_date);
       if ($add_date == TRUE) {
         $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
-      }
-      else {
+      } else {
         $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . $id . '.jpg', 1);
       }
       if (is_object($file_temp)) {
@@ -508,8 +498,7 @@ class TweetFeed extends ControllerBase {
         ];
       }
       return $file;
-    }
-    else {
+    } else {
       return FALSE;
     }
   }

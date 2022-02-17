@@ -1,11 +1,11 @@
 tweet_feed.twitter_accounts:
   route_name: tweet_feed.twitter_accounts_add
-  title: 'Add Twitter API Account'
+  title: "Add Twitter API Account"
   appears_on:
     - tweet_feed.twitter_accounts
 
 tweet_feed.twitter_feeds:
   route_name: tweet_feed.add_feed
-  title: 'Add Twitter Feed'
+  title: "Add Twitter Feed"
   appears_on:
     - tweet_feed.twitter_feeds

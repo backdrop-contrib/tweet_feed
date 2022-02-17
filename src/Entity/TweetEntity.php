@@ -14,7 +14,6 @@
  * Note that the quoted or replied-to tweet is kept individually but is not displayed outside
  * the context of the quoted re-tweet or reply.
  */
-
 namespace Drupal\tweet_feed\Entity;
 
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -66,7 +65,6 @@ use Drupal\Core\Url;
  * )
  */
 class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
-
   use EntityChangedTrait;
 
   /**
@@ -292,7 +290,7 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     $hashtags = $this->get($tags)->getValue();
     $tags = [];
     if (!empty($hashtags)) {
-      foreach($hashtags as $key => $term) {
+      foreach ($hashtags as $key => $term) {
         $tag = $this->entityTypeManager()->getStorage('taxonomy_term')->load($term['target_id'])->values;
         $tags[]['name'] = $tag['name']['x-default'];
         $tags[]['tid'] = $tag['tid']['x-default'];
@@ -308,9 +306,9 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
     return $this->getTags('hashtags');
   }
 
-   /**
-   * {@inheritdoc}
-   */
+  /**
+  * {@inheritdoc}
+  */
   public function setHashtags($hashtags) {
     $tags = [];
     foreach ($hashtags as $hashtag) {
@@ -597,14 +595,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
         'alt_field_required' => FALSE,
         'file_extensions' => 'png jpg jpeg gif',
       ])
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'default',
         'weight' => 30,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'weight' => 30,
-      ))
+      ])
       ->setCardinality(-1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -749,8 +747,8 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
         'allowed_values' => [
           'replied' => t('Reply'),
           'retweeted' => t('Re-Tweet'),
-          'quoted' => t('Quoted Re-Tweet')
-        ]
+          'quoted' => t('Quoted Re-Tweet'),
+        ],
       ])
       ->setDefaultValue([
         ['value' => 'standard'],
@@ -794,14 +792,14 @@ class TweetEntity extends ContentEntityBase implements TweetEntityInterface {
         'alt_field_required' => FALSE,
         'file_extensions' => 'png jpg jpeg gif',
       ])
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'default',
         'weight' => 85,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'weight' => 85,
-      ))
+      ])
       ->setCardinality(1)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

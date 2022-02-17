@@ -1,4 +1,4 @@
-name: 'Tweet Feed'
+name: "Tweet Feed"
 type: module
 description: A flexible and data-oriented Twitter data retrieval tool for displaying Tweet content in configurable ways.
 core_version_requirement: ^8 || ^9

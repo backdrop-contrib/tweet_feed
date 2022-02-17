@@ -1,5 +1,4 @@
 <?php
-
 namespace Drupal\tweet_feed\Controller;
 
 use Drupal\Core\Link;
@@ -10,7 +9,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  * Class TwitterAccountsController.
  */
 class TwitterAccountsController extends ControllerBase {
-
   /**
    * display_accounts().
    *
@@ -21,7 +19,7 @@ class TwitterAccountsController extends ControllerBase {
    */
   public function display_accounts() {
     $config = $this->config('tweet_feed.twitter_accounts');
-    
+
     $header = [
       ['data' => $this->t('Account Name')],
       ['data' => $this->t('Account Machine Name')],

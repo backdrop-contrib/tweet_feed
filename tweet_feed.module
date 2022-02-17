@@ -14,9 +14,9 @@ function tweet_feed_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     // Main module help for the tweet_feed module.
     case 'help.page.tweet_feed':
-      $output  = '<h4>' . t('Overview') . '</h4>';
-      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://developer.twitter.com/en/docs/rate-limits">' . t('Twitter\'s REST API') . '.</a></p>';
-      $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
+      $output = '<h4>' . t('Overview') . '</h4>';
+      $output .= '<p>' . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://developer.twitter.com/en/docs/rate-limits">' . t('Twitter\'s REST API') . '.</a></p>';
+      $output .= '<p>' . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
       return $output;
       break;
     default:
@@ -40,7 +40,7 @@ function tweet_feed_theme() {
  *
  * Makes links, hash tags, and usernames clickable.
  */
-function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $hashtags = array()) {
+function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $hashtags = []) {
   /* based on our preference, assign all links to new windows or to the same window */
   $target = ($new_window == 1) ? '_blank' : '_self';
 
@@ -57,8 +57,8 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   // Look for twitter handles and make them clickable
   // Modified so that slashes in the twitter handle are counted
   $pattern = '/@([A-Za-z0-9_]{1,15})(?![.A-Za-z])/';
-  $replace  = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
-  $tweet   = preg_replace($pattern, $replace, $tweet);
+  $replace = '<a target="' . $target . '" href="http://twitter.com/' . strtolower('\1') . '">@\1</a>';
+  $tweet = preg_replace($pattern, $replace, $tweet);
 
   // Look for twitter hash tags and make them clickable
   // Modified so that slashes in the twitter handle are counted
@@ -100,23 +100,23 @@ function tweet_feed_filter_iconv_text($text, $replace = '--') {
  */
 function tweet_feed_filter_smart_quotes($text) {
   // Convert varieties of smart quotes to ACSII equivalent.
-  $search = array(
+  $search = [
     chr(0xe2) . chr(0x80) . chr(0x98),
     chr(0xe2) . chr(0x80) . chr(0x99),
     chr(0xe2) . chr(0x80) . chr(0x9c),
     chr(0xe2) . chr(0x80) . chr(0x9d),
     chr(0xe2) . chr(0x80) . chr(0x93),
     chr(0xe2) . chr(0x80) . chr(0x94),
-  );
+  ];
 
-  $ascii_replace = array(
+  $ascii_replace = [
     "'",
     "'",
     '"',
     '"',
     '-',
     '&mdash;',
-  );
+  ];
 
   return str_replace($search, $ascii_replace, $text);
 }

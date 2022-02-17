@@ -1,5 +1,4 @@
 <?php
-
 namespace Drupal\tweet_feed\Controller;
 
 use Drupal\Core\Link;
@@ -10,7 +9,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  * Class TwitterFeedsController.
  */
 class TwitterFeedsController extends ControllerBase {
-
   /**
    * display_feeds().
    *
@@ -21,7 +19,7 @@ class TwitterFeedsController extends ControllerBase {
    */
   public function display_feeds() {
     $config = $this->config('tweet_feed.twitter_feeds');
-    
+
     $header = [
       ['data' => 'Feed Name'],
       ['data' => 'Type'],
@@ -32,7 +30,7 @@ class TwitterFeedsController extends ControllerBase {
     ];
 
     $rows = [];
-    $types = ['','Search','Timeline', 'List'];
+    $types = ['', 'Search', 'Timeline', 'List'];
     $feeds = $config->get('feeds');
     foreach ($feeds as $key => $feed) {
       $edit_link = Link::createFromRoute($this->t('Edit'), 'tweet_feed.edit_feed', ['feed_machine_name' => $key]);
@@ -56,5 +54,4 @@ class TwitterFeedsController extends ControllerBase {
       '#empty' => 'THERE ARE NO TWITTER FEEDS CURRENTLY CREATED.',
     ];
   }
-
 }

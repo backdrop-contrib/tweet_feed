@@ -22,7 +22,7 @@ function tweet_feed_uninstall() {
       if ($vid->id() == $vocabulary_id) {
         $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid->id());
         if (!empty($terms)) {
-          foreach($terms as $term) {
+          foreach ($terms as $term) {
             $term = \Drupal\taxonomy\Entity\Term::load($term->tid);
             $term->delete();
           }
@@ -68,7 +68,7 @@ function tweet_feed_update_9401() {
 
   // get all the images in the directory
   $default_scheme = \Drupal::config('system.file')->get('default_scheme');
-  $directory = \Drupal::service('file_system')->realpath($default_scheme . "://") . '/tweet-feed-tweet-images/';
+  $directory = \Drupal::service('file_system')->realpath($default_scheme . '://') . '/tweet-feed-tweet-images/';
   if (is_dir($directory)) {
     $options = ['recurse' => 'TRUE'];
     $existing_files = \Drupal::service('file_system')->scanDirectory($directory, "/.*\.jpg$/", $options);

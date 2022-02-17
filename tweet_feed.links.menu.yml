@@ -1,58 +1,58 @@
 tweet_feed.general:
-  title: 'Tweet Feed'
-  description: 'General settings for Tweet Feed server.'
+  title: "Tweet Feed"
+  description: "General settings for Tweet Feed server."
   route_name: tweet_feed.general
   menu_name: tweet_feed.general
   parent: system.admin_structure
 
 tweet_feed.twitter_accounts:
-  title: 'Twitter API Accounts'
+  title: "Twitter API Accounts"
   route_name: tweet_feed.twitter_accounts
-  description: 'Add, edit or remove Twitter API accounts that can be used to access tweets.'
+  description: "Add, edit or remove Twitter API accounts that can be used to access tweets."
   parent: tweet_feed.general
   weight: 30
 tweet_feed.twitter_accounts_add:
-  title: 'Add'
+  title: "Add"
   route_name: tweet_feed.twitter_accounts_add
-  description: 'Add a Twitter API account.'
+  description: "Add a Twitter API account."
   parent: tweet_feed.twitter_accounts
   weight: 10
 tweet_feed.twitter_accounts_view:
-  title: 'View'
+  title: "View"
   route_name: tweet_feed.twitter_accounts
-  description: 'View existing Twitter API accounts.'
+  description: "View existing Twitter API accounts."
   parent: tweet_feed.twitter_accounts
   weight: 20
 
 tweet_feed.twitter_feeds:
-  title: 'Twitter Feeds'
+  title: "Twitter Feeds"
   route_name: tweet_feed.twitter_feeds
-  description: 'Add, edit or remove Twitter feeds to pull down tweets.'
+  description: "Add, edit or remove Twitter feeds to pull down tweets."
   parent: tweet_feed.general
   weight: 40
 tweet_feed.feeds_add:
-  title: 'Add'
+  title: "Add"
   route_name: tweet_feed.add_feed
-  description: 'Add a Twitter feed.'
+  description: "Add a Twitter feed."
   parent: tweet_feed.twitter_feeds
   weight: 10
 tweet_feed.twitter_feeds_view:
-  title: 'View'
+  title: "View"
   route_name: tweet_feed.twitter_feeds
-  description: 'View existing Twitter feeds.'
+  description: "View existing Twitter feeds."
   parent: tweet_feed.twitter_feeds
   weight: 20
 
 tweet_entity.admin.structure.tweets:
-  title: 'Tweets'
-  description: 'Tweets imported from the Tweet Feed module.'
+  title: "Tweets"
+  description: "Tweets imported from the Tweet Feed module."
   route_name: entity.tweet_entity.collection
   parent: tweet_feed.general
   weight: 10
 
 twitter_profile.admin.structure.tweets:
-  title: 'Tweet Profiles'
-  description: 'Profiles for users of imported tweets.'
+  title: "Tweet Profiles"
+  description: "Profiles for users of imported tweets."
   route_name: entity.twitter_profile.collection
   parent: tweet_feed.general
   weight: 20
