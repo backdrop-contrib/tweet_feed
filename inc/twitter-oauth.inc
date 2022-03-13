@@ -7,6 +7,7 @@
  */
 
 /* Load OAuth lib. You can find it at http://oauth.net */
+/* We get this from oauth_common. Not required here. */
 //require_once('OAuth.php');
 
 /**

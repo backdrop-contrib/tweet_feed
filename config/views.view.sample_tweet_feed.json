@@ -1,0 +1,207 @@
+{
+    "_config_name": "views.view.sample_tweet_feed",
+    "name": "sample_tweet_feed",
+    "description": "Sample views utilizing the functionality of the Tweet Feed module.",
+    "tag": "default",
+    "disabled": true,
+    "base_table": "node",
+    "human_name": "Sample Tweet Feed",
+    "core": 7,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "title": "Sample Tweet Feed",
+                "use_more_always": false,
+                "access": {
+                    "type": "perm"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "15"
+                    }
+                },
+                "style_plugin": "default",
+                "row_plugin": "fields",
+                "fields": {
+                    "field_profile_image": {
+                        "id": "field_profile_image",
+                        "table": "field_data_field_profile_image",
+                        "field": "field_profile_image",
+                        "label": "",
+                        "element_label_colon": false,
+                        "click_sort_column": "fid"
+                    },
+                    "field_tweet_author": {
+                        "id": "field_tweet_author",
+                        "table": "field_data_field_tweet_author",
+                        "field": "field_tweet_author",
+                        "label": "",
+                        "element_label_colon": false
+                    },
+                    "field_tweet_contents": {
+                        "id": "field_tweet_contents",
+                        "table": "field_data_field_tweet_contents",
+                        "field": "field_tweet_contents",
+                        "label": "",
+                        "element_label_colon": false,
+                        "type": "emoji_formatter"
+                    },
+                    "field_tweet_creation_date": {
+                        "id": "field_tweet_creation_date",
+                        "table": "field_data_field_tweet_creation_date",
+                        "field": "field_tweet_creation_date",
+                        "label": "",
+                        "element_label_colon": false,
+                        "type": "format_interval",
+                        "settings": {
+                            "interval": "2",
+                            "interval_display": "time ago"
+                        }
+                    }
+                },
+                "sorts": {
+                    "created": {
+                        "id": "created",
+                        "table": "node",
+                        "field": "created",
+                        "order": "DESC"
+                    }
+                },
+                "arguments": {
+                    "field_tweet_feed_id_value": {
+                        "id": "field_tweet_feed_id_value",
+                        "table": "field_data_field_tweet_feed_id",
+                        "field": "field_tweet_feed_id_value",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "status": {
+                        "id": "status",
+                        "table": "node",
+                        "field": "status",
+                        "value": 1,
+                        "group": 1,
+                        "expose": {
+                            "operator": false
+                        }
+                    },
+                    "type": {
+                        "id": "type",
+                        "table": "node",
+                        "field": "type",
+                        "value": {
+                            "twitter_tweet_feed": "twitter_tweet_feed"
+                        }
+                    }
+                }
+            }
+        },
+        "page": {
+            "display_title": "By Feed ID",
+            "display_plugin": "page",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "path": "by-feed-id/%"
+            }
+        },
+        "page_1": {
+            "display_title": "By User ID",
+            "display_plugin": "page",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Searches by user id across all imported feeds",
+                "defaults": {
+                    "arguments": false
+                },
+                "arguments": {
+                    "field_tweet_author_value": {
+                        "id": "field_tweet_author_value",
+                        "table": "field_data_field_tweet_author",
+                        "field": "field_tweet_author_value",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    }
+                },
+                "path": "tweet-feed-by-user/%"
+            }
+        },
+        "page_2": {
+            "display_title": "By Feed By User Id",
+            "display_plugin": "page",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Searches by user id across all specified feed ID",
+                "defaults": {
+                    "arguments": false
+                },
+                "arguments": {
+                    "field_tweet_feed_id_value": {
+                        "id": "field_tweet_feed_id_value",
+                        "table": "field_data_field_tweet_feed_id",
+                        "field": "field_tweet_feed_id_value",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    },
+                    "field_tweet_author_value": {
+                        "id": "field_tweet_author_value",
+                        "table": "field_data_field_tweet_author",
+                        "field": "field_tweet_author_value",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    }
+                },
+                "path": "tweet-feed-by-user/%/%"
+            }
+        }
+    }
+}

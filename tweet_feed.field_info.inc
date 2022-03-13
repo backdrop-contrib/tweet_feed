@@ -83,10 +83,8 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
   $element = $mentions = array();
 
   $connection = Database::getConnection();
-  $utf8mb4_configurable = $connection->utf8mb4IsConfigurable();
-  $utf8mb4_active = $connection->utf8mb4IsActive();
   $utf8mb4_supported = $connection->utf8mb4IsSupported();
-  $utf8 = ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) ? TRUE : FALSE;
+  $utf8 = (!empty($utf8mb4_supported)) ? TRUE : FALSE;
 
   switch ($display['type']) {
     // Override check plain

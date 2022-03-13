@@ -46,19 +46,19 @@ function tweet_feed_create_entities_and_bundles() {
   }
   
   if (taxonomy_vocabulary_machine_name_load('hashtag_terms') == FALSE) {
-    taxonomy_vocabulary_save((object) array(
-      'name' => 'Hashtag Terms',
-      'description' => '',
-      'machine_name' => 'hashtag_terms'
-    ));
+    $vocabulary = new TaxonomyVocabulary();
+    $vocabulary->name = 'Hashtag Terms';
+    $vocabulary->description = '';
+    $vocabulary->machine_name = 'hashtag_terms';
+    $vocabulary->save();
   }
 
   if (taxonomy_vocabulary_machine_name_load('user_mention_terms') == FALSE) {
-    taxonomy_vocabulary_save((object) array(
-      'name' => 'User Mention Terms',
-      'description' => 'All of the users\'s mentioned in tweets.',
-      'machine_name' => 'user_mention_terms'
-    ));
+    $vocabulary = new TaxonomyVocabulary();
+    $vocabulary->name = 'User Mention Terms';
+    $vocabulary->description = 'All of the users\'s mentioned in tweets';
+    $vocabulary->machine_name = 'user_mention_terms';
+    $vocabulary->save();
   }
 
   $node = node_type_load('twitter_user_profile');

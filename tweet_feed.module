@@ -12,13 +12,6 @@ define('QUERY_TIMELINE', 2);
 define('QUERY_LIST', 3);
 
 /**
- * Implements hook_views_api().
- */
-function tweet_feed_views_api($module = NULL, $api = NULL) {
-  return array("api" => "3.0");
-}
-
-/**
  * Implements hook_menu().
  */
 function tweet_feed_menu() {
@@ -340,7 +333,9 @@ function tweet_feed_get_feed_object($fid) {
   // have only one API source.
   $query = db_select('tweet_feeds', 'f');
   $query->join('tweet_accounts', 'a', 'a.aid = f.aid');
-  $query->fields('f', array('fid', 'query_type', 'timeline_id', 'search_term', 'list_name', 'pull_count', 'clear_prior', 'new_window', 'hash_taxonomy'));
+  $query->fields('f', array(
+      'fid', 'query_type', 'timeline_id', 'search_term', 'list_name', 'pull_count', 
+      'clear_prior', 'new_window', 'hash_taxonomy', 'mentions_taxonomy'));
   $query->fields('a', array('consumer_key', 'consumer_secret', 'oauth_token', 'oauth_token_secret'));
   $query->condition('f.fid', $fid);
   $result = $query->execute();
@@ -617,16 +612,16 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
   foreach($entities as $entity) {
     switch($taxonomy) {
       case 'hashtag_terms':
-        $taxonomy_name = $entity->text;
+        $term_name = $entity->text;
         break;
       case 'user_mention_terms':
-        $taxonomy_name = $entity->screen_name;
+        $term_name = $entity->screen_name;
         break;
       default:
         break;
     }
     // Check to see if this entity is in our hashtag taxonomy
-    $vocabulary = taxonomy_vocabulary_machine_name_load($taxonomy);
+    $vocabulary = taxonomy_vocabulary_load($taxonomy);
     // if the taxonomy doesn't exist for some reason, then we need to fataly error
     if ($vocabulary == FALSE) {
       tweet_feed_set_message('The ' . $taxonomy . ' taxonomy vocabulary could not be found. Please uninstall and re-install Tweet Feed', 'fatal', $web_interface);
@@ -635,23 +630,34 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
     // Now that we have the vocabulary information, see if this term already
     // exists and if it does, give us the tid
     $result = db_select('taxonomy_term_data', 'td')
-                ->fields('td', array('tid'))
-                ->condition('td.vid', $vocabulary->vid)
-                ->condition('td.name', $taxonomy_name)
-                ->execute();
+      ->fields('td', array('tid'))
+      ->condition('td.vocabulary', $vocabulary->machine_name)
+      ->condition('td.name', $term_name)
+      ->execute();
+
     // If we have one, great! If we don't, we need to create one and then get the tid
     // that way.
     if ($result->rowCount() > 0) {
-      $tid = $result->fetchField();
+      $term = new stdClass();
+      $term->tid = $result->fetchField();
     }
     else {
-      $term = new stdClass();
-      $term->vid = $vocabulary->vid;
-      $term->name = $taxonomy_name;
-      taxonomy_term_save($term);
-      $tid = $term->tid;
+      $term = new TaxonomyTerm();
+      $term->vocabulary = $vocabulary->machine_name;
+      $term->name = $term_name;
+      $term->parent = 0;
+      $term->save();
+
+      // When doing a TaxonomyTerm save, it does not put the parent id
+      // assigned to the term in the hierarchy. So we have to do it here.
+      db_merge('taxonomy_term_hierarchy')
+        ->key(array('tid' => $term->tid))
+        ->fields(array(
+          'parent' => 0,
+        ))
+        ->execute();
     }
-    $terms[] = $tid;
+    $terms[] = $term->tid;
   }
   return $terms;
 }
@@ -661,7 +667,7 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
  *
  * Makes links, hash tags, and usernames clickable.
  */
-function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $hashtags = array()) {
+function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $mentions_taxonomy = FALSE, $hashtags = array()) {
   /* based on our preference, assign all links to new windows or to the same window */
   $target = ($new_window == 1) ? '_blank' : '_self';
 
@@ -678,13 +684,23 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   // Look for twitter handles and make them clickable
   // Modified so that slashes in the twitter handle are counted
   $pattern = '/@([A-Za-z0-9_]{1,15})(?![.A-Za-z])/';
-  $replace  = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
-  $tweet   = preg_replace($pattern, $replace, $tweet);
+  if ($mentions_taxonomy == TRUE) {
+    $replace = '<a target="' . $target . '" href="/tweets/mentions/'.strtolower('\1').'">@\1</a>';
+  }
+  else {
+    $replace = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+  }
+  $tweet = preg_replace($pattern, $replace, $tweet);
 
   // Look for twitter hash tags and make them clickable
   // Modified so that slashes in the twitter handle are counted
   // Modified to link to taxonomy term if that checkbox is selected for this feed.
-  $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  if ($hash_taxonomy == TRUE) {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="/tweets/hashtags/\2">#\2</a>', $tweet);
+  }
+  else {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  }
   return $tweet;
 }
 
@@ -769,10 +785,10 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Process the tweet. This linkes our twitter names, hash tags and converts any
   // URL's into HTML.
-  $tweet_html = tweet_feed_format_output($tweet_text, $feed->new_window, $feed->hash_taxonomy, $hashtags);
+  $tweet_html = tweet_feed_format_output($tweet_text, $feed->new_window, $feed->hash_taxonomy, $feed->mentions_taxonomy, $hashtags);
 
   // Populate our node object with the data we will need to save
-  $node = new stdClass();
+  $node = new Node();
   $node->created = $creation_timestamp;
 
   // If we are being passed a node id for updating, then set it here so we update that
@@ -814,15 +830,14 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
 
   // Check to see if utf8mb4 is available and configured.
   $connection = Database::getConnection();
-  $utf8mb4_configurable = $connection->utf8mb4IsConfigurable();
   $utf8mb4_active = $connection->utf8mb4IsActive();
   $utf8mb4_supported = $connection->utf8mb4IsSupported();
-  $utf8 = ($utf8mb4_configurable && $utf8mb4_active && $utf8mb4_supported) ? TRUE : FALSE;
+  $utf8 = ($utf8mb4_active && $utf8mb4_supported) ? TRUE : FALSE;
 
   // NOTE: Support for non Multibyte-extended UTF-8 tables is deprecated. Support for them is likely to go away
   // sooner rather than later.
   if ($utf8 === TRUE) {
-    $node->title = mb_substr(check_plain($tweet->user->screen_name) . ': ' . check_plain($tweet_text), 0, 255);
+    $node->title = mb_substr(check_plain($tweet->user->screen_name) . ': ' . $tweet_text, 0, 255);
 
     // The tweet itself goes into the tweet contents field
     $node->field_tweet_contents[$node->language][0] = array(
@@ -1006,7 +1021,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
   }
 
   // Save the node
-  node_save($node);
+  $node->save();
   $nid = $node->nid;
 
   // Make sure the hash in our tweet_hashes table is right by deleting what is there
@@ -1057,7 +1072,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     }
 
     // Populate our node object with the data we will need to save
-    $node = new stdClass();
+    $node = new tweet_feed_node_presave();
 
     // If we are being passed a node id for updating, then set it here so we update that
     // node. (might be an edge case)
@@ -1121,7 +1136,7 @@ function tweet_feed_save_tweet($tweet, $feed, $update_node_id = 0, $hash = NULL,
     $node->field_sidebar_border_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_border_color;
     $node->field_sidebar_fill_color[$node->language][0]['value'] = $tweet->user->profile_sidebar_fill_color;
 
-    node_save($node);
+    $node->save();
 
     // Make sure the hash in our tweet_hashes table is right by deleting what is there
     // for this node and updating
@@ -1328,39 +1343,4 @@ function tweet_feed_check_path($uri) {
     @mkdir($real_path, 0777, TRUE);
   }
   return file_exists($real_path);
-}
-
-/**
- * Implements hook_help().
- */
-function tweet_feed_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#tweet_feed':
-      module_load_include('inc', 'pathauto');
-      $output  = '<h4>' . t('Overview') . '</h4>';
-      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://dev.twitter.com/rest/public/rate-limiting">' . t('Twitter\'s REST API') . '.</a></p>';
-      $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
-      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Twitter Settings') . '</h4>';
-      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Twitter-Settings">' . t('Configuring account and feed settings.') . '</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Views Integration') . '</h4>';
-      $output .= '<p>'  . t('Tweet Feed has full views integration. A basic view of tweets can be created at Administer -> Structure -> Views -> Add New View by selecting Twitter Tweet Feed as the content type to show in the view.') . '</p>';
-      $output .= '<p>'  . t('Further filtering can be accomplished using either the standard filters or the contextual filters available in the collapsed advanced fieldset. An example use case of when contextual features would be helpful is to add a block of dynamically filtered tweets based on matching a hashtag entered in a given field on any node.') . '</p>';
-      $output .= '<p>'  . t('Look on the Advanced Use Cases page for information on using the Tweet Feed module in powerful ways to display node specific Tweets, Tweets related to node content and some other more simplistic use cases.') . '</p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Ways to Run the Import.') . '</h4>';
-      $output .= '<ol><li>' . t('They can be periodically imported using Drupal\'s build in cron system. This requires the run cron option on the Tweet Feed Settings page be enabled. Also make sure PHP has enough memory allocated to it in order to run the process along with all of the other tasks it needs to run.') . '</li>';
-      $output .= '<li>' . t('They can be manually imported by clicking the **Import** link on the right hand side of each feed in the feed information table.') . '</li>';
-      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Drush Commands') . '</h4>';
-      $output .= '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; padding-top: 15px; width: 100%; font-size: 8pt; line-height: 1.3em;">';
-      $output .= '<img src="/' . drupal_get_path('module', 'tweet_feed') . '/images/flyingflip-logo.png" width="151" height="50" alt="FlyingFlip Studios" align="right" /><br />';
-      $output .= 'Released 2016 - v7.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbagnall17<br clear="right">';
-      $output .= '<style>.item-list, hr { display: none; }</style></div>';
-      return $output;
-  }
 }
