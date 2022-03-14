@@ -295,17 +295,17 @@ function tweet_feed_process_feed($fid = NULL) {
     // Load in the fid's for active feeds and then run them through
     // tweet_feed_pull_data_from_feed
     $result = db_select('tweet_feeds', 'f')
-                ->fields('f', array('feed_name', 'fid'))
-                ->orderBy('feed_name', 'ASC')
-                ->execute();
+      ->fields('f', array('feed_name', 'fid'))
+      ->orderBy('feed_name', 'ASC')
+      ->execute();
   }
   else {
     // Otherwise, just load in the one specified
     $result = db_select('tweet_feeds', 'f')
-                ->fields('f', array('feed_name', 'fid'))
-                ->condition('f.fid', $fid)
-                ->orderBy('f.feed_name', 'ASC')
-                ->execute();
+      ->fields('f', array('feed_name', 'fid'))
+      ->condition('f.fid', $fid)
+      ->orderBy('f.feed_name', 'ASC')
+      ->execute();
   }
   while ($fdata = $result->fetchObject()) {
     tweet_feed_set_message('Processing Feed: ' . $fdata->feed_name, 'ok', FALSE);
@@ -497,6 +497,10 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         break;
     }
 
+    if (count($tdata) < $number_to_get) {
+      $number_to_get = count($tdata);
+    }
+
     if (!empty($tdata)) {
       tweet_feed_set_message('Processing Tweets', 'ok', $web_interface);
       // If we have errors, then we need to handle them accordingly
@@ -563,23 +567,25 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
  * for use with our drush command
  */
 function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_count = 0, $web_interface = FALSE) {
-
   $tweets = array();
-  $total_hashi = 0;
-  foreach($tweet_data as $key => $tweet) {
+  foreach ($tweet_data as $key => $tweet) {
     // Initialize our update_node_id
     $update_node_id = 0;
     // find out if we already have this tweet, if we do, add the update primary key (pk)
     $result = db_select('tweet_hashes', 'h')
-                ->fields('h', array('nid', 'tid', 'hash'))
-                ->condition('h.tid', $tweet->id_str)
-                ->execute();
+      ->fields('h', array('nid', 'tid', 'hash'))
+      ->condition('h.tid', $tweet->id_str)
+      ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
       $hash = md5(serialize($tweet->full_text));
       // If our hashes are equal, we have nothing to update and can move along
       $update = ($hash == $tdata->hash);
       continue;
+    }
+    else {
+      $tdata = new stdClass();
+      $tdata->hash = NULL;
     }
     // If we're using the web iterface, our batch processing will take care of tweet
     // saving as well as progress counting. This is purely for drushes entertainment
@@ -707,8 +713,8 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
 /**
  * Custom Set Message Function
  *
- * If drush exists, then we are running in drush and need to output our errors there.
- * We do not want drush errors going ot the screen. Will also only send messages if
+ * If bee exists, then we are running in bee and need to output our errors there.
+ * We do not want bee errors going ot the screen. Will also only send messages if
  * the user uid is 1.
  */
 function tweet_feed_set_message($message, $type = 'status', $web_interface = FALSE) {
@@ -718,17 +724,12 @@ function tweet_feed_set_message($message, $type = 'status', $web_interface = FAL
   }
   // Get our global user object to check for user id 1 on drupal set message
   global $user;
-  if (function_exists('drush_print')) {
+  if (function_exists('bee_message')) {
     if ($type != 'error' && $type  != 'warning' && $type != 'fatal') {
-      drush_log($message, 'ok');
+      bee_render_text(array('value' => $message, '#color' => 'green'));
     }
     else {
-      if ($type == 'fatal') {
-        drush_set_error($message);
-      }
-      else {
-        drush_log($message, $type);
-      }
+      bee_render_text(array('value' => $message, '#color' => 'red'));
     }
   }
   else {
@@ -1271,8 +1272,9 @@ function tweet_feed_process_twitter_image($url, $type, $tid = NULL) {
     drupal_mkdir('public://' . $type);
   }
 
+
   // Get the contents of the file for processing. I hate this (@)
-  $contents = @file_get_contents($url);
+  $contents = file_get_contents($url);
 
   // If there are no contents, then go back.
   if (empty($contents)) {
@@ -1281,6 +1283,7 @@ function tweet_feed_process_twitter_image($url, $type, $tid = NULL) {
 
   // Check the path and create the directory if it does not exist.
   tweet_feed_check_path('public://' . $type );
+
 
   // Save the contents of the file to the file system and create the filename and uri
   $file = file_save_data($contents, 'public://' . $type . '/' . md5($url) . '.jpg', FILE_EXISTS_REPLACE);
