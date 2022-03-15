@@ -39,9 +39,9 @@ use Drupal\user\UserInterface;
  *     "uuid" = "uuid",
  *   },
  *   links = {
- *     "canonical" = "/admin/structure/twitter_profile/{twitter_profile}",
- *     "delete-form" = "/admin/structure/twitter_profile/{twitter_profile}/delete",
- *     "collection" = "/admin/structure/twitter_profile",
+ *     "canonical" = "/admin/structure/tweet-feed/twitter-profile/{twitter_profile}",
+ *     "delete-form" = "/admin/structure/tweet-feed/twitter-profile/{twitter_profile}/delete",
+ *     "collection" = "/admin/structure/tweet-feed/twitter-profile",
  *   },
  *   field_ui_base_route = "twitter_profile.settings"
  * )

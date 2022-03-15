@@ -57,9 +57,9 @@ use Drupal\Core\Url;
  *     "uuid" = "uuid",
  *   },
  *   links = {
- *     "canonical" = "/admin/structure/tweet_entity/{tweet_entity}",
- *     "delete-form" = "/admin/structure/tweet_entity/{tweet_entity}/delete",
- *     "collection" = "/admin/structure/tweet_entity",
+ *     "canonical" = "/admin/structure/tweet-feed/tweet-entity/{tweet_entity}",
+ *     "delete-form" = "/admin/structure/tweet-feed/tweet-entity/{tweet_entity}/delete",
+ *     "collection" = "/admin/structure/tweet-feed/tweet-entity",
  *   },
  *   field_ui_base_route = "tweet_entity.settings"
  * )
