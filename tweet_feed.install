@@ -318,11 +318,10 @@ function tweet_feed_update_7302() {
  * Add the mentions_taxonomy field to our table.
  */
 function tweet_feed_update_7303() {
-  db_add_field('tweet_feeds','mentions_taxonomy', array(
+  db_add_field('tweet_feeds', 'mentions_taxonomy', array(
     'type' => 'int',
     'size' => 'tiny',
     'not null' => TRUE,
     'default' => 0,
   ));
 }
-
