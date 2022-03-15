@@ -40,7 +40,7 @@ function tweet_feed_theme() {
  *
  * Makes links, hash tags, and usernames clickable.
  */
-function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $hashtags = []) {
+function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $mentions_taxonomy = FALSE, $hashtags = array()) {
   /* based on our preference, assign all links to new windows or to the same window */
   $target = ($new_window == 1) ? '_blank' : '_self';
 
@@ -50,20 +50,30 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   $tweet = preg_replace('/(((f|ht){1}tps:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
     '<a target="' . $target . '" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/([[:space:]()[{}])(www.[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '\\1<a target="' . $target . '" href="http:\/\/\\2">\\2</a>', $tweet);
+    '\\1<a target="' . $target . '" href="https:\/\/\\2">\\2</a>', $tweet);
   $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
     '<a href="mailto:\\1">\\1</a>', $tweet);
 
   // Look for twitter handles and make them clickable
   // Modified so that slashes in the twitter handle are counted
   $pattern = '/@([A-Za-z0-9_]{1,15})(?![.A-Za-z])/';
-  $replace = '<a target="' . $target . '" href="http://twitter.com/' . strtolower('\1') . '">@\1</a>';
+  if ($mentions_taxonomy == TRUE) {
+    $replace = '<a target="' . $target . '" href="/tweets/mentions/'.strtolower('\1').'">@\1</a>';
+  }
+  else {
+    $replace = '<a target="' . $target . '" href="https://twitter.com/'.strtolower('\1').'">@\1</a>';
+  }
   $tweet = preg_replace($pattern, $replace, $tweet);
 
   // Look for twitter hash tags and make them clickable
   // Modified so that slashes in the twitter handle are counted
   // Modified to link to taxonomy term if that checkbox is selected for this feed.
-  $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  if ($hash_taxonomy == TRUE) {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="/tweets/hashtags/\2">#\2</a>', $tweet);
+  }
+  else {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="https://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  }
   return $tweet;
 }
 
@@ -119,4 +129,25 @@ function tweet_feed_filter_smart_quotes($text) {
   ];
 
   return str_replace($search, $ascii_replace, $text);
+}
+
+/**
+ * Implement hook_views_data().
+ */
+function tweet_feed_views_data() {
+  return [
+    'tweet_entity' => [
+      'tweet_user_profile_id' => [
+        'title' => t('Twitter Users'),
+        'help' => t('Relate users to the tweets they have made.'),
+        'relationship' => [
+          'base' => 'twitter_profiles',
+          'base field' => 'twitter_user_id',
+          'relationship field' => 'tweet_user_profile_id',
+          'id' => 'standard',
+          'label' => t('Tweets to Profiles'),
+        ],
+      ]
+    ],
+  ];
 }

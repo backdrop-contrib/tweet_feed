@@ -61,6 +61,7 @@ class TwitterFeedsForm extends ConfigFormBase {
       $pull_count = $feed['pull_count'];
       $new_window = $feed['new_window'];
       $hash_taxonomy = $feed['hash_taxonomy'];
+      $mentions_taxonomy = $feed['mentions_taxonomy'];
       $clear_prior = $feed['clear_prior'];
       $twitter_feed_name_disabled = TRUE;
     }
@@ -196,6 +197,11 @@ class TwitterFeedsForm extends ConfigFormBase {
       '#default_value' => $hash_taxonomy,
       '#weight' => 9,
     );
+    $form['tweet_feed_query_settings']['mentions_taxonomy'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Link user mentions to taxonomy terms instead of Twitter.'),
+      '#default_value' => $mentions_taxonomy,
+    );
     $form['tweet_feed_query_settings']['clear_prior'] = array(
       '#type' => 'checkbox',
       '#title' => t('Remove all tweets in this feed prior to import.'),
@@ -256,6 +262,7 @@ class TwitterFeedsForm extends ConfigFormBase {
     $feeds[$feed_machine_name]['pull_count'] = $values['pull_count'];
     $feeds[$feed_machine_name]['new_window'] = $values['new_window'];
     $feeds[$feed_machine_name]['hash_taxonomy'] = $values['hash_taxonomy'];
+    $feeds[$feed_machine_name]['mentions_taxonomy'] = $values['mentions_taxonomy'];
     $feeds[$feed_machine_name]['clear_prior'] = $values['clear_prior'];
 
     $this->config('tweet_feed.twitter_feeds')

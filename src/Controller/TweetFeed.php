@@ -244,7 +244,8 @@ class TweetFeed extends ControllerBase {
       $tweet = $con->get('statuses/show', ['id' => $tweet_id, 'tweet_mode' => 'extended']);
       if (!empty($tweet->errors)) {
         continue;
-      } else {
+      }
+      else {
         $this->saveTweet($tweet, $feed, TRUE);
         $tweet_count++;
       }
@@ -290,6 +291,8 @@ class TweetFeed extends ControllerBase {
           ->execute();
         if (isset($entities)) {
           foreach ($entities as $entity_id) {
+            // We need to concern ourselves with hashtags. If a hashtag is not used by any other
+            // tweet, then we need to remove the hashtag to do taxonomy cleanups.
             $entity = \Drupal::entityTypeManager()->getStorage('tweet_entity')->load($entity_id);
             $entity->deleteLinkedImages();
             $entity->deleteProfileImage();
@@ -324,7 +327,8 @@ class TweetFeed extends ControllerBase {
               if (empty($response->errors)) {
                 $tdata = $response;
               }
-            } else {
+            }
+            else {
               $process = FALSE;
             }
             break;
@@ -351,13 +355,15 @@ class TweetFeed extends ControllerBase {
               $process = FALSE;
               $tweets = [];
             }
-          } else {
+          }
+          else {
             if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
               $end_of_the_line = array_pop($tdata);
               array_unshift($tdata, $end_of_the_line);
               $max_id = $end_of_the_line->id_str;
               $tweet_data = $tdata;
-            } else {
+            }
+            else {
               $tweet_data = $tdata->statuses;
             }
 
@@ -384,7 +390,8 @@ class TweetFeed extends ControllerBase {
                     break 2;
                   }
                   continue;
-                } else {
+                }
+                else {
                   $duplicate = 0;
                 }
                 $tweet_count++;
@@ -392,7 +399,8 @@ class TweetFeed extends ControllerBase {
                   \Drupal::logger('tweet_feed')->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
                 }
               }
-            } else {
+            }
+            else {
               $process = FALSE;
             }
           }
@@ -484,7 +492,8 @@ class TweetFeed extends ControllerBase {
       $this->checkPath('public://tweet-feed-' . $type . '-images/', $add_date);
       if ($add_date == TRUE) {
         $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
-      } else {
+      }
+      else {
         $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . $id . '.jpg', 1);
       }
       if (is_object($file_temp)) {
