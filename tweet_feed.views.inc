@@ -136,7 +136,6 @@ function tweet_feed_views_data() {
   );
 }
 
-
 class views_handler_filter_hashtag_string extends views_handler_filter_string {
   function op_contains($field) {
     $this->query->add_where($this->options['group'], $field, array($this->value), 'IN');
@@ -157,12 +156,12 @@ class views_handler_tweet_field extends views_handler_field {
     /* look for twitter handles and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
     $pattern = '/@([A-Za-z0-9_]{1,15})(?![.A-Za-z])/';
-    $replace  = '<a target="'.$target.'" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+    $replace  = '<a target="'.$target.'" href="https://twitter.com/'.strtolower('\1').'">@\1</a>';
     $tweet   = preg_replace($pattern,$replace,$tweet);
 
     /* look for twitter hash tags and make them clickable */
     /* modified so that slashes in the twitter handle are counted */
-    $tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a target="'.$target.'" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+    $tweet = preg_replace('/(^|\s)#(\w*+\w*)/', '\1<a target="'.$target.'" href="https://twitter.com/search?q=%23\2">#\2</a>', $tweet);
     
     $tweet = utf8_decode($tweet);
     return htmlspecialchars_decode($tweet);
