@@ -299,12 +299,13 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     $clear_prior = $result->clear_prior;
     $new_window = $result->new_window;
     $hash_taxonomy = $result->hash_taxonomy;
+    $mentions_taxonomy = $result->mentions_taxonomy;
   }
   else {
     // Otherwise just initialize the form so we do not have a swath of errors
     $fid = $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
     $twitter_user_id = $pull_count = $new_window = $clear_prior = $timeline_id = NULL;
-    $hash_taxonomy = NULL;
+    $hash_taxonomy = $mentions_taxonomy = NULL;
   }
 
   // Set up our settings for this particular feed (or update if it already exists)
@@ -418,13 +419,16 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#title' => t('Open tweeted links, hashtags and mentions in a new window.'),
     '#default_value' => $new_window,
   );
-  /*
   $form['tweet_feed_query_settings']['hash_taxonomy'] = array(
     '#type' => 'checkbox',
     '#title' => t('Link hashtags to taxonomy terms instead of Twitter.'),
     '#default_value' => $hash_taxonomy,
   );
-  */
+  $form['tweet_feed_query_settings']['mentions_taxonomy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Link user mentions to taxonomy terms instead of Twitter.'),
+    '#default_value' => $mentions_taxonomy,
+  ); 
   $form['tweet_feed_query_settings']['clear_prior'] = array(
     '#type' => 'checkbox',
     '#title' => t('Remove all tweets in this feed prior to import.'),
@@ -482,7 +486,8 @@ function tweet_feed_feeds_form_submit($form, &$form_state) {
     'pull_count' => $values['pull_count'],
     'clear_prior' => $values['clear_prior'],
     'new_window' => $values['new_window'],
-    'hash_taxonomy' => 0,
+    'hash_taxonomy' => $values['hash_taxonomy'],
+    'mentions_taxonomy' => $values['mentions_taxonomy'],
   );
 
   // If aid is empty then we're creating a new record. Otherwise we are updating an
@@ -773,7 +778,8 @@ function tweet_feed_import_form_submit($form, &$form_state) {
           'pull_count' => $feed->pull_count,
           'clear_prior' => $feed->clear_prior,
           'new_window' => $feed->new_window,
-          'hash_taxonomy' => 0,
+          'hash_taxonomy' => $feed->hash_taxonomy,
+          'mentions_taxonomy' => $feed->mentions_taxonomy,
         );
         $status = drupal_write_record('tweet_feeds', $data);
       }

@@ -502,6 +502,10 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
         break;
     }
 
+    if (count($tdata) < $number_to_get) {
+      $number_to_get = count($tdata);
+    }
+
     if (!empty($tdata)) {
       tweet_feed_set_message('Processing Tweets', 'ok', $web_interface);
       // If we have errors, then we need to handle them accordingly
@@ -576,9 +580,9 @@ function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_
     $update_node_id = 0;
     // find out if we already have this tweet, if we do, add the update primary key (pk)
     $result = db_select('tweet_hashes', 'h')
-                ->fields('h', array('nid', 'tid', 'hash'))
-                ->condition('h.tid', $tweet->id_str)
-                ->execute();
+      ->fields('h', array('nid', 'tid', 'hash'))
+      ->condition('h.tid', $tweet->id_str)
+      ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
       $hash = md5(serialize($tweet->full_text));
@@ -635,10 +639,10 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
     // Now that we have the vocabulary information, see if this term already
     // exists and if it does, give us the tid
     $result = db_select('taxonomy_term_data', 'td')
-                ->fields('td', array('tid'))
-                ->condition('td.vid', $vocabulary->vid)
-                ->condition('td.name', $taxonomy_name)
-                ->execute();
+      ->fields('td', array('tid'))
+      ->condition('td.vid', $vocabulary->vid)
+      ->condition('td.name', $taxonomy_name)
+      ->execute();
     // If we have one, great! If we don't, we need to create one and then get the tid
     // that way.
     if ($result->rowCount() > 0) {
@@ -661,7 +665,7 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
  *
  * Makes links, hash tags, and usernames clickable.
  */
-function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $hashtags = array()) {
+function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = FALSE, $mentions_taxonomy = FALSE, $hashtags = array()) {
   /* based on our preference, assign all links to new windows or to the same window */
   $target = ($new_window == 1) ? '_blank' : '_self';
 
@@ -678,13 +682,23 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   // Look for twitter handles and make them clickable
   // Modified so that slashes in the twitter handle are counted
   $pattern = '/@([A-Za-z0-9_]{1,15})(?![.A-Za-z])/';
-  $replace  = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
-  $tweet   = preg_replace($pattern, $replace, $tweet);
+  if ($mentions_taxonomy == TRUE) {
+    $replace = '<a target="' . $target . '" href="/tweets/mentions/'.strtolower('\1').'">@\1</a>';
+  }
+  else {
+    $replace = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+  }
+  $tweet = preg_replace($pattern, $replace, $tweet);
 
   // Look for twitter hash tags and make them clickable
   // Modified so that slashes in the twitter handle are counted
   // Modified to link to taxonomy term if that checkbox is selected for this feed.
-  $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  if ($hash_taxonomy == TRUE) {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="/tweets/hashtags/\2">#\2</a>', $tweet);
+  }
+  else {
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+  }
   return $tweet;
 }
 
