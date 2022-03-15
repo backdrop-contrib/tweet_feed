@@ -407,7 +407,7 @@ function tweet_feed_format_output($tweet) {
   $tweet = preg_replace('/(((f|ht){1}tps:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
     '<a target="'.$target.'" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/([[:space:]()[{}])(www.[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '\\1<a target="'.$target.'" href="http:\/\/\\2">\\2</a>', $tweet);
+    '\\1<a target="'.$target.'" href="https:\/\/\\2">\\2</a>', $tweet);
   $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
     '<a href="mailto:\\1">\\1</a>', $tweet);
   return $tweet;
