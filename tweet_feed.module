@@ -675,7 +675,7 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
   $tweet = preg_replace('/(((f|ht){1}tps:\/\/)[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
     '<a target="' . $target . '" href="\\1">\\1</a>', $tweet);
   $tweet = preg_replace('/([[:space:]()[{}])(www.[-a-zA-Z0-9@:%_\+.~#?&\/\/=]+)/i',
-    '\\1<a target="' . $target . '" href="http:\/\/\\2">\\2</a>', $tweet);
+    '\\1<a target="' . $target . '" href="https:\/\/\\2">\\2</a>', $tweet);
   $tweet = preg_replace('/([_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,3})/i',
     '<a href="mailto:\\1">\\1</a>', $tweet);
 
@@ -686,7 +686,7 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
     $replace = '<a target="' . $target . '" href="/tweets/mentions/'.strtolower('\1').'">@\1</a>';
   }
   else {
-    $replace = '<a target="' . $target . '" href="http://twitter.com/'.strtolower('\1').'">@\1</a>';
+    $replace = '<a target="' . $target . '" href="https://twitter.com/'.strtolower('\1').'">@\1</a>';
   }
   $tweet = preg_replace($pattern, $replace, $tweet);
 
@@ -697,7 +697,7 @@ function tweet_feed_format_output($tweet, $new_window = FALSE, $hash_taxonomy = 
     $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="/tweets/hashtags/\2">#\2</a>', $tweet);
   }
   else {
-    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="http://twitter.com/search?q=%23\2">#\2</a>', $tweet);
+    $tweet = preg_replace('/(^|\s)#(\w*+)/u', '\1<a target="' . $target . '" href="https://twitter.com/search?q=%23\2">#\2</a>', $tweet);
   }
   return $tweet;
 }
