@@ -19,7 +19,7 @@ function tweet_feed_create_entities_and_bundles() {
       'orig_type' => 'twitter_tweet_feed',
       'disabled_changed' => '',
     );
-  
+
   $types[] =
     array(
       'type' => 'twitter_user_profile',
@@ -37,14 +37,14 @@ function tweet_feed_create_entities_and_bundles() {
       'orig_type' => 'twitter_user_profile',
       'disabled_changed' => '',
     );
-  
+
   foreach ($types as $type) {
     if (node_type_load($type['type']) == FALSE) {
       $type = node_type_set_defaults($type);
       node_type_save($type);
     }
   }
-  
+
   if (taxonomy_vocabulary_machine_name_load('hashtag_terms') == FALSE) {
     $vocabulary = new TaxonomyVocabulary();
     $vocabulary->name = 'Hashtag Terms';
@@ -172,7 +172,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_hashtags', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Hashtags Used','required' => '0','widget' => array('weight' => '12','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','weight' => '12','settings' => array('link' => '',),'module' => 'entityreference',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_hashtags','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Hashtags Used','required' => '0','widget' => array('weight' => '12','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','weight' => '12','settings' => array('link' => '',),'module' => 'entityreference',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_hashtags','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 
@@ -208,7 +208,7 @@ function tweet_feed_create_entities_and_bundles() {
     $field = field_create_field($field);
   }
   if (field_info_instance('node', 'field_twitter_mentions_in_tweet', 'twitter_tweet_feed') == NULL) {
-    $instance = array('label' => 'Mentions In Tweet','widget' => array('weight' => '13','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy-index' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','settings' => array('link' => '',),'module' => 'entityreference','weight' => '16',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_mentions_in_tweet','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
+    $instance = array('label' => 'Mentions In Tweet','widget' => array('weight' => '13','type' => 'entityreference_autocomplete_tags','module' => 'entityreference','active' => '1','settings' => array('match_operator' => 'CONTAINS','size' => '60','path' => '',),),'settings' => array('behaviors' => array('taxonomy' => array('status' => '1',),'prepopulate' => array('status' => '0',),),'user_register_form' => '',),'display' => array('default' => array('label' => 'above','type' => 'entityreference_label','settings' => array('link' => '',),'module' => 'entityreference','weight' => '16',),'teaser' => array('type' => 'hidden','label' => 'above','settings' => array(),'weight' => '0',),),'required' => '0','description' => '','default_value' => '','default_value_function' => '','field_name' => 'field_twitter_mentions_in_tweet','entity_type' => 'node','bundle' => 'twitter_tweet_feed','deleted' => '0',);
     field_create_instance($instance);
   }
 

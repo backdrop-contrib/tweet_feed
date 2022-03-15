@@ -651,17 +651,8 @@ function tweet_feed_process_taxonomy($entities, $taxonomy) {
       $term = new TaxonomyTerm();
       $term->vocabulary = $vocabulary->machine_name;
       $term->name = $term_name;
-      $term->parent = 0;
+      $term->parent = array(0);
       $term->save();
-
-      // When doing a TaxonomyTerm save, it does not put the parent id
-      // assigned to the term in the hierarchy. So we have to do it here.
-      db_merge('taxonomy_term_hierarchy')
-        ->key(array('tid' => $term->tid))
-        ->fields(array(
-          'parent' => 0,
-        ))
-        ->execute();
     }
     $terms[] = $term->tid;
   }
