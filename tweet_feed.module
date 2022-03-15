@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\tweet_feed\Controller\TweetFeed;
 
 /**
  * Implements hook_help().
@@ -150,4 +151,34 @@ function tweet_feed_views_data() {
       ]
     ],
   ];
+}
+
+/**
+ * Batch process save function. Saves a single tweet as part of our
+ * batch operations.
+ */
+function save_tweet($tweet, $feed, &$context) {
+  $message = 'Importing Tweets ...';
+  $results = [];
+
+  $tweetFeed = new TweetFeed();
+  $results[] = $tweetFeed->saveTweet($tweet, $feed);
+
+  $context['message'] = $message;
+  $context['results'] = $result;
+} 
+
+/**
+ * When we're finished with the batch process, we close out here.
+ */
+function save_tweet_batch_finished($success, $results, $operations) {
+  // The 'success' parameter means no fatal PHP errors were detected. All
+  // other error management should be handled using 'results'.
+  if ($success) {
+    $message = t('Tweets have been successfully imported.');
+  }
+  else {
+    $message = t('There was an error importing tweets.');
+  }
+  \Drupal::messenger()->addStatus($message);
 }

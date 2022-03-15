@@ -63,7 +63,7 @@ class TweetFeedCommands extends DrushCommands {
     $feeds = $feed_config->get('feeds');
     if (!empty($feeds[$feed])) {
       $tf = new TweetFeed();
-      $tf->pullDataFromFeed($feed);
+      $tf->pullDataFromFeed($feed, FALSE);
       return TRUE;
     }
   }

@@ -9,7 +9,7 @@ use Drupal\tweet_feed\Entity\TwitterProfileEntity;
 use Drupal\tweet_feed\Entity\TweetEntity;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Language\Language;
-//use Abraham\TwitterOAuth\TwitterOAuth;
+
 use Drupal\tweet_feed\Controller\TwitterOAuth2;
 
 /**
@@ -50,7 +50,6 @@ class TweetFeed extends ControllerBase {
     // Process the tweet. This linkes our twitter names, hash tags and converts any
     // URL's into HTML.
     $tweet_text = $tweet->full_text;
-    $tweet_html = tweet_feed_format_output($tweet_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags);
 
     $specific_tweets = [];
     $uuid_service = \Drupal::service('uuid');
@@ -63,7 +62,7 @@ class TweetFeed extends ControllerBase {
     $entity->setFeedMachineName($feed['machine_name']);
     $entity->setTweetId($tweet->id_str);
     $entity->setTweetTitle(mb_substr(Html::decodeEntities($tweet->user->screen_name) . ': ' . Html::decodeEntities($tweet_text), 0, 255));
-    $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $hashtags));
+    $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $feed['mentions_taxonomy'], $hashtags));
     $entity->setTweetUserProfileId($tweet->user->id);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
     $entity->setUserMentions($tweet->entities->user_mentions);
@@ -263,8 +262,10 @@ class TweetFeed extends ControllerBase {
    * @param string feed_machine_name
    *   The machine name of the feed with which we wish to procure the data
    */
-  public function pullDataFromFeed($feed_machine_name) {
-    \Drupal::logger('tweet_feed')->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
+  public function pullDataFromFeed($feed_machine_name, $batch = TRUE) {
+    if ($batch == FALSE) {
+      \Drupal::logger('tweet_feed')->notice(dt('Beginning Twitter import of ') . $feed_machine_name);
+    }
     /** Get a list of all the available feeds. */
     $config = \Drupal::service('config.factory')->getEditable('tweet_feed.twitter_feeds');
     $feeds = $config->get('feeds');
@@ -285,7 +286,9 @@ class TweetFeed extends ControllerBase {
       // If we have selected to clear our prior tweets for this particular feed, then we need
       // to do that here.
       if (!empty($feed['clear_prior'])) {
-        \Drupal::logger('tweet_feed')->notice(dt('Clearing existing tweet entities'));
+        if ($batch == FALSE) {
+          \Drupal::logger('tweet_feed')->notice(dt('Clearing existing tweet entities'));
+        }
         $entities = \Drupal::entityQuery('tweet_entity')
           ->condition('feed_machine_name', $feed_machine_name, '=')
           ->execute();
@@ -309,6 +312,7 @@ class TweetFeed extends ControllerBase {
       $max_id = 0;
       $process = TRUE;
       $number_to_get = $feed['pull_count'];
+      $iterations = ceil($number_to_get / 200);
 
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
         ['screen_name' => $feed['timeline_id'], 'count' => 200, 'tweet_mode' => 'extended'] :
@@ -319,7 +323,7 @@ class TweetFeed extends ControllerBase {
         $params['max_id'] = $max_id;
       }
 
-      while ($process === TRUE) {
+      for ($i = 0; $i < $iterations; $i++) {
         switch ($feed['query_type']) {
           case 2:
             $response = $con->get('statuses/user_timeline', $params);
@@ -328,11 +332,7 @@ class TweetFeed extends ControllerBase {
                 $tdata = $response;
               }
             }
-            else {
-              $process = FALSE;
-            }
             break;
-
           case 3:
             $params += [
               'slug' => $feed['list_name'],
@@ -342,12 +342,12 @@ class TweetFeed extends ControllerBase {
             ];
             $tdata = $con->get('lists/statuses', $params);
             break;
-
           case 1:
           default:
             $tdata = $con->get('search/tweets', $params);
             break;
         }
+
 
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
@@ -374,43 +374,34 @@ class TweetFeed extends ControllerBase {
             }
 
             if (count($tweet_data) > 0) {
-              $duplicate = 0;
-              foreach ($tweet_data as $key => $tweet) {
-                if ($tweet_count >= $number_to_get) {
-                  $process = FALSE;
-                  continue;
-                }
-                $saved = $this->saveTweet($tweet, $feed);
-                // If we have three duplicates in a row, assume we've reached the last imported
-                // tweets and stop here.
-                if ($saved == FALSE) {
-                  $duplicate++;
-                  if ($duplicate >= 3) {
-                    $process = FALSE;
-                    break 2;
-                  }
-                  continue;
-                }
-                else {
-                  $duplicate = 0;
-                }
-                $tweet_count++;
-                if (($tweet_count % 50) == 0) {
-                  \Drupal::logger('tweet_feed')->notice(dt('Total Tweets Processed: ') . $tweet_count . dt('. Max to Import: ') . $number_to_get);
-                }
-              }
-            }
-            else {
-              $process = FALSE;
+              $tweets = array_merge($tweets, $tweet_data);
             }
           }
         }
-
-        if ($process == TRUE) {
-          $params['max_id'] = $max_id - 1;
-        }
       }
-      \Drupal::logger('tweet_feed')->notice(dt('Tweet Feed import of the feed: ') . $feed_machine_name . dt(' completed. ' . $tweet_count . ' Tweets imported.'));
+
+      if ($batch == TRUE) {
+        $operations = [];
+        for ($i = 0; $i < $number_to_get; $i++) {
+          $operations[] = ['save_tweet', [$tweets[$i], $feed]];
+        }
+        $batch = [
+          'title' => $this->t('Importing Tweets ...'),
+          'operations' => $operations,
+          'finished' => 'save_tweet_batch_finished',
+        ];
+        batch_set($batch);
+        return batch_process('admin/structure/tweet_entity/twitter_feeds');
+      }
+      else {
+        for ($i = 0; $i < $number_to_get; $i++) {
+          $this->saveTweet($tweets[$i], $feed);
+          if (($i % 50) == 0) {
+            \Drupal::logger('tweet_feed')->notice(dt('Total Tweets Processed: ') . $i . dt('. Max to Import: ') . $number_to_get);
+          }
+        }
+        \Drupal::logger('tweet_feed')->notice(dt('Total Tweets Processed: ') . $number_to_get);
+      }
     }
   }
 

@@ -201,12 +201,13 @@ class TwitterFeedsForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => t('Link user mentions to taxonomy terms instead of Twitter.'),
       '#default_value' => $mentions_taxonomy,
+      '#weight' => 15,
     );
     $form['tweet_feed_query_settings']['clear_prior'] = array(
       '#type' => 'checkbox',
       '#title' => t('Remove all tweets in this feed prior to import.'),
       '#default_value' => $clear_prior,
-      '#weight' => 10,
+      '#weight' => 20,
     );
     $form = parent::buildForm($form, $form_state);
     return $form;
