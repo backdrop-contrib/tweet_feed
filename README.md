@@ -1,30 +1,65 @@
-# Tweet Feeed 4.x
+# Tweet Feed 4.x - Overview
 
-## Advanced Twitter Data Management and Display in Drupal
+The Tweet Feed module is an advanced importing, displaying and data association
+module that allows you to pull in tweets by search, user, or list. The
+parameters of what is pulled in falls under the guidelines of
+[Twitter's REST API](https://dev.twitter.com/rest/public/rate-limiting)
 
-### INTRODUCTION
+Tweets and Twitter profiles are stored as entities that can be viewed and deleted,
+but not modified via the Drupal UI. This is by design as editing tweets is not a
+feature currently supported by Twitter and can lead to an artificial representation
+of Twitter content. Tweets can be deleted for the purposes of curating the content
+on the site. Through the use of views and feed configuration, Tweets can be viewed
+and grouped by hashtag or user mention. All hash tags and user mentions are stored
+as references in Tweet entities to their corresponding taxonomy vocabulary. This
+gives you great power in terms of displaying tweets with specific content in specific
+places by leveraging the power of contextual filters and taxonomies.
 
----
+## Highlights include:
 
-The Tweet Feed module is an advanced importing, displaying and data association tool that allows you to pull in tweets by search criteria, user timeline, or user curated list. The parameters and limits of what is pulled in falls under the guidelines of Twitter's REST API.
+- The ability to import multiple tweet feeds
+- Tweets and tweet data are saved as entities outside of node types.
+- Option to delete existing data when new tweets are imported
+- Option to import a the profiles of Twitter users whose tweets are imported.
+- Creates linked URLs from URLs, hash tags, and usernames inside the feed itself
+- Views integration
+- Contextual filters integration for views
 
-Tweets and Twitter Profiles are stored as their own entities but can be displayed via Views and any other contributed module that hooks into the entity API. All hash tags and user mentions are stored as references in the ewntities to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.
+This module exists thanks to the generous support of HighWire Press and
+Stanford University.
 
-To install this module and it's corresponding dependencies, you will use composer:
+Contextual views inspiration and refinement compliments of Ashley Hall in
+conjunction with the development of the Symposiac conference platform, supported
+by the Institute for the Arts and Humanities and UNC.
 
-composer require drupal/tweet_feed
+## Requirements
 
-Once installed you can configure things accordingly. For illustrated documentation on how to configure tweet feed, please see the GitHub WIKI for this project by [clicking here](https://github.com/ElusiveMind/tweet_feed/wiki "GitHub Wiki for Tweet Feed")
+The following access tokens from Twitter are also required:
 
-Pre-requisites:  
- 1. Drupal 7 for versions 7.1+ and 7.3+  
- 2. Drupal 8.8+ or Drupal 9+ for version 4.x  
- 3. PHP 7.3 Or Higher  
- 4. A Twitter developers account for version 2 of the Twitter API.  
- 5. [Twitter OAuth Rest API SDK For PHP](https://github.com/abraham/twitteroauth)
+- API Key
+- API Secret Key
+- Access Token
+- Access Token Secret
 
-Complete documentation is on the Drupal.org site or the [GitHub Wiki for Tweet Feed](https://github.com/ElusiveMind/tweet_feed/wiki "GitHub Wiki for Tweet Feed"). Code contributions should be made on the GitHub project site:
+You can get additional information on this by visiting these links in the Twitter
+API documentation. An API/Developer account is required to be able to access the
+Twitter API.
 
-https://github.com/ElusiveMind/tweet_feed
+[Developer Portal](https://developer.twitter.com/en/portal/dashboard)  
+[Developer Portal Add New App](https://developer.twitter.com/en/portal/apps/new)
 
-Issues can be filed there or on the Tweet Feed Issue Queue on Drupal.org.
+## Current Maintainers
+
+- [Michael Bagnall](https://www.drupal.org/u/elusivemind)
+
+## Credits
+
+- Originally written by [Michael Bagnall](https://github.com/ElusiveMind)
+- Initial development sponsored by [Highwire Press](https://highwirepress.com)
+- Continuing development sponsored by [ITCON Services, LLC](https://itcon-inc.com)
+
+## License
+
+This project is GPL v2 software.
+See the LICENSE.txt file in this directory for complete text.
+The TwitterOauth is licensed under the MIT license.
