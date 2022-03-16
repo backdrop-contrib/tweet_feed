@@ -423,12 +423,10 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
       $params['max_id'] = $max_id;
     }
 
-    //tweet_feed_set_message('Tweets Imported: ' . count($tweets) . ', Total To Import: ' . $number_to_get, 'ok', $web_interface);
-
     switch ($feed->query_type) {
       case QUERY_TIMELINE:
         if ($i == 0) {
-          //tweet_feed_set_message('Retrieving Timeline Status Messages For ID: ' . $feed->timeline_id, 'ok', $web_interface);
+          tweet_feed_set_message('Retrieving Timeline Status Messages For ID: ' . $feed->timeline_id, 'ok', $web_interface);
         }
         $tdata = json_decode(
           $con->oAuthRequest(
