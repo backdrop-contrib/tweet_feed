@@ -194,9 +194,9 @@ function tweet_feed_cron() {
   // Get a list of all the available feeds
   $feed = array();
   $result = db_select('tweet_feeds', 'f')
-              ->fields('f', array('fid'))
-              ->orderBy('fid', 'ASC')
-              ->execute();
+    ->fields('f', array('fid'))
+    ->orderBy('fid', 'ASC')
+    ->execute();
   while ($fdata = $result->fetchObject()) {
     $feed[] = $fdata->fid;
   }
@@ -255,9 +255,9 @@ function tweet_feed_cron() {
       $hash = NULL;
       // find out if we already have this tweet, if we do, add the update primary key (pk).
       $result = db_select('tweet_hashes', 'h')
-                  ->fields('h', array('nid', 'tid', 'hash'))
-                  ->condition('h.tid', $tweet->id_str)
-                  ->execute();
+        ->fields('h', array('nid', 'tid', 'hash'))
+        ->condition('h.tid', $tweet->id_str)
+        ->execute();
       if ($result->rowCount() > 0) {
         $tdata = $result->fetchObject();
         $hash = md5(serialize($tweet->text));
@@ -302,21 +302,22 @@ function tweet_feed_process_feed($fid = NULL) {
     // Load in the fid's for active feeds and then run them through
     // tweet_feed_pull_data_from_feed
     $result = db_select('tweet_feeds', 'f')
-                ->fields('f', array('feed_name', 'fid'))
-                ->orderBy('feed_name', 'ASC')
-                ->execute();
+      ->fields('f', array('feed_name', 'fid'))
+      ->orderBy('feed_name', 'ASC')
+      ->execute();
   }
   else {
     // Otherwise, just load in the one specified
     $result = db_select('tweet_feeds', 'f')
-                ->fields('f', array('feed_name', 'fid'))
-                ->condition('f.fid', $fid)
-                ->orderBy('f.feed_name', 'ASC')
-                ->execute();
+      ->fields('f', array('feed_name', 'fid'))
+      ->condition('f.fid', $fid)
+      ->orderBy('f.feed_name', 'ASC')
+      ->execute();
   }
   while ($fdata = $result->fetchObject()) {
     tweet_feed_set_message('Processing Feed: ' . $fdata->feed_name, 'ok', FALSE);
     $tweets = tweet_feed_pull_data_from_feed($fdata->fid, FALSE);
+    tweet_feed_process_tweets($tweets, $fdata, FALSE);
   }
 }
 
@@ -393,17 +394,15 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
     tweet_feed_set_message('Clearing Previous Tweets', 'ok', $web_interface);
     $query = new EntityFieldQuery();
     $result = $query->entityCondition('entity_type', 'node')
-                    ->entityCondition('bundle', 'twitter_tweet_feed')
-                    ->fieldCondition('field_tweet_feed_id', 'value', $fid, '=')
-                    ->execute();
+      ->entityCondition('bundle', 'twitter_tweet_feed')
+      ->fieldCondition('field_tweet_feed_id', 'value', $fid, '=')
+      ->execute();
     if (isset($result['node'])) {
       foreach ($result['node'] as $nid => $node) {
         // Removing the message that tells us the node is deleted. Loading the node just to
         // get the title is like using a nuclear weapon to light your cigarette. Will work on
         // a better way in a future version.
-        // $n = node_load($nid);
         node_delete($nid);
-        // tweet_feed_set_message($n->title . ': DELETED', 'ok', $web_interface);
       }
     }
     tweet_feed_set_message('All previous tweets for this feed are deleted.', 'ok', $web_interface);
@@ -412,44 +411,28 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
   // Build TwitterOAuth object with client credentials
   $con = new TwitterOAuth($feed->consumer_key, $feed->consumer_secret, $feed->oauth_token, $feed->oauth_token_secret);
 
-  // Get the number of tweets to pull from our list
-  $number_to_get = $feed->pull_count * 100;
-
-  $run_count = 0;
-  $lowest_id = -1;
   $tweets = array();
+  $tweet_count = 0;
+  $max_id = 0;
+  $number_to_get = $feed->pull_count;
+  $iterations = ceil($number_to_get / 100);
+
   $params = ($feed->query_type == QUERY_TIMELINE) ?
     array('user_id' => $feed->timeline_id, 'count' => 100, 'tweet_mode' => 'extended') :
     array('q' => $feed->search_term, 'count' => 100, 'tweet_mode' => 'extended');
 
-  while (count($tweets) < $number_to_get && $lowest_id != 0) {
-    tweet_feed_set_message('Tweets Imported: ' . count($tweets) . ', Total To Import: ' . $number_to_get, 'ok', $web_interface);
-    if (!empty($tdata->search_metadata->next_results)) {
-      $next = substr($tdata->search_metadata->next_results, 1);
-      $parts = explode('&', $next);
-      foreach($parts as $part) {
-        list($key, $value) = explode('=', $part);
-        if ($key == 'max_id') {
-          $lowest_id = $value;
-        }
-        $params[$key] = $value;
-      }
+  for ($i = 0; $i < $iterations; $i++) {
+
+    // $max_id overrides $since_id
+    if (!empty($max_id)) {
+      $params['max_id'] = $max_id;
     }
 
-    $data = new stdClass();
     switch ($feed->query_type) {
       case QUERY_TIMELINE:
-        // Only display this the first time. No need for each trip down the line.
-        if (count($tweets) < 1) {
+        if ($i == 0) {
           tweet_feed_set_message('Retrieving Timeline Status Messages For ID: ' . $feed->timeline_id, 'ok', $web_interface);
         }
-
-        // Set the max id to one lower than the lowest tweet we've imported so we do not
-        // get duplicates
-        if ($lowest_id > 0) {
-          $params['max_id'] = $lowest_id;
-        }
-
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/statuses/user_timeline.json',
@@ -461,20 +444,15 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
 
       case QUERY_LIST:
         // Only display this the first time. No need for each trip down the line.
-        if (count($tweets) < 1) {
+        if ($i == 0) {
           tweet_feed_set_message('Retrieving List Status Messages For List Name: ' . $feed->list_name, 'ok', $web_interface);
         }
-
         $params = array(
           'slug' => $feed->list_name,
           'owner_id' => $feed->timeline_id,
           'count' => 100,
+          'tweet_mode' => 'extended',
         );
-
-        if ($lowest_id > 0) {
-          $params['max_id'] = $lowest_id;
-        }
-
         $tdata = json_decode(
           $con->oAuthRequest(
             'https://api.twitter.com/1.1/lists/statuses.json',
@@ -487,7 +465,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
       case QUERY_SEARCH:
       default:
         // Only display this the first time. No need for each trip down the line.
-        if (count($tweets) < 1) {
+        if ($i == 0) {
           tweet_feed_set_message('Retrieving Status Messages For Search Term: ' . $feed->search_term, 'ok', $web_interface);
         }
         $tdata = json_decode(
@@ -496,26 +474,36 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
             $params
           )
         );
+
         if (empty($tdata->search_metadata->next_results)) {
-          $lowest_id = 0;
+          $iterations = $i; 
+        }
+        else {
+          $string = substr($tdata->search_metadata->next_results, 1);
+          $pairs = explode('&', $string);
+          foreach ($pairs as $value) {
+            list($k, $v) = explode('=', $value);
+            if ($k == "max_id") {
+              $v--;
+            }
+            $params[$k] = $v;
+          }
         }
         break;
     }
 
-    if (count($tdata) < $number_to_get) {
-      $number_to_get = count($tdata);
-    }
-
     if (!empty($tdata)) {
-      tweet_feed_set_message('Processing Tweets', 'ok', $web_interface);
+      if ($i == 0) {
+        tweet_feed_set_message('Processing Tweets', 'ok', $web_interface);
+      }
       // If we have errors, then we need to handle them accordingly
       if (!empty($tdata->errors)) {
         foreach($tdata->errors as $error) {
           tweet_feed_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error', $web_interface);
-          $lowest_id = 0;
+          $iterations = $i;
           $tweets = array();
           // If we're handling through the web interface and we're having an issue, then
-          // we need to spit the error to the screen
+          // we need to output the error to the screen
           if ($web_interface == TRUE) {
             drupal_set_message(t('Tweet Feed Fail: ') . $error->message . ': ' . $error->code,  'error');
           }
@@ -526,9 +514,7 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
           // Get the lowest ID from the last element in the timeline
           $end_of_the_line = array_pop($tdata);
           array_push($tdata, $end_of_the_line);
-          $lowest_id = $end_of_the_line->id_str;
-
-          // Proceed with our processing
+          $max_id = $end_of_the_line->id_str;
           $tweet_data = $tdata;
         }
         else {
@@ -540,29 +526,18 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
           break;
         }
 
-        // merge the total tweets so we know how many we have. If we have none, trigger
-        // the script to proceed on to the next feed.
-        $tweet_data = tweet_feed_process_tweets($tweet_data, $feed, $number_to_get, $run_count, $web_interface);
-        if (count($tweet_data) == 0) {
-          $lowest_id = 0;
-        }
-        else {
+        if (count($tweet_data) > 0) {
           $tweets = array_merge($tweets, $tweet_data);
         }
       }
-      $run_count++;
-    }
-    else {
-      tweet_feed_set_message('No tweets available for this criteria.', 'ok', $web_interface);
-      break;
     }
   }
 
-  // If we are processing through cron or the web interface, then hand back all of our
-  // tweets so that they may be processed.
-  if ($web_interface == TRUE) {
-    return $tweets;
+  if (count($tweets) > $number_to_get) {
+    $tweets = array_slice($tweets, 0, $number_to_get);
   }
+
+  return $tweets;
 }
 
 /**
@@ -571,10 +546,8 @@ function tweet_feed_pull_data_from_feed($fid, $web_interface = FALSE) {
  * Iterate through our array of tweets and process them one at a time. This is designed
  * for use with our drush command
  */
-function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_count = 0, $web_interface = FALSE) {
-
+function tweet_feed_process_tweets($tweet_data, $feed, $web_interface = FALSE) {
   $tweets = array();
-  $total_hashi = 0;
   foreach($tweet_data as $key => $tweet) {
     // Initialize our update_node_id
     $update_node_id = 0;
@@ -590,12 +563,16 @@ function tweet_feed_process_tweets($tweet_data, $feed, $number_to_get = 0, $run_
       $update = ($hash == $tdata->hash);
       continue;
     }
+    else {
+      $tdata = new stdClass();
+      $tdata->hash = NULL;
+    }
     // If we're using the web iterface, our batch processing will take care of tweet
     // saving as well as progress counting. This is purely for drushes entertainment
     if ($web_interface == FALSE) {
       tweet_feed_save_tweet($tweet, $feed, $update_node_id, $tdata->hash);
-      if (($key > 1 && (!($key % 20))) || (($key+1) == count($tweet_data))) {
-        tweet_feed_set_message('Loaded ' . ($key + ($run_count * 100)) . ' out of ' . $number_to_get . ' (' . number_format((($key + ($run_count * 100)) / $number_to_get) * 100) . '%)', 'ok', $web_interface);
+      if (($key > 1 && (!($key % 20))) || (($key +1 ) == count($tweet_data))) {
+        tweet_feed_set_message('Loaded ' . $key . ' out of ' . count($tweet_data) . ' (' . number_format(($key / count($tweet_data)) * 100) . '%)', 'ok', $web_interface);
       }
     }
     $tweets[] = $tweet;
@@ -1342,39 +1319,4 @@ function tweet_feed_check_path($uri) {
     @mkdir($real_path, 0777, TRUE);
   }
   return file_exists($real_path);
-}
-
-/**
- * Implements hook_help().
- */
-function tweet_feed_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#tweet_feed':
-      module_load_include('inc', 'pathauto');
-      $output  = '<h4>' . t('Overview') . '</h4>';
-      $output .= '<p>'  . t('The Tweet Feed module is an advanced importing, displaying and data association module that allows you to pull in tweets by search, user, or list. The parameters of what is pulled in falls under the guidelines of ') . '<a href="https://dev.twitter.com/rest/public/rate-limiting">' . t('Twitter\'s REST API') . '.</a></p>';
-      $output .= '<p>'  . t('Tweets can be displayed as nodes or in views as well as displayed by hash tag or user mention. All hash tags and user mentions are stored as references im the tweet nodes to their corresponding taxonomy term. This gives you great power in terms of displaying tweets with specific content in specific places by leveraging the power of contextual filters and taxonomies.</p>');
-      $output .= '<p>'  . t('Additional documentation and example use cases can be found on the ') . '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Tweet-Feed-v2.0-Drupal-Module-Introduction">' . t('Tweet Feed WIKI Documentation Page') . '</a>. This help document will basically link you to places where you can get detailed information on the various help topics.</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Twitter Settings') . '</h4>';
-      $output .= '<p><a href="https://github.com/ElusiveMind/tweet_feed/wiki/Twitter-Settings">' . t('Configuring account and feed settings.') . '</a></p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Views Integration') . '</h4>';
-      $output .= '<p>'  . t('Tweet Feed has full views integration. A basic view of tweets can be created at Administer -> Structure -> Views -> Add New View by selecting Twitter Tweet Feed as the content type to show in the view.') . '</p>';
-      $output .= '<p>'  . t('Further filtering can be accomplished using either the standard filters or the contextual filters available in the collapsed advanced fieldset. An example use case of when contextual features would be helpful is to add a block of dynamically filtered tweets based on matching a hashtag entered in a given field on any node.') . '</p>';
-      $output .= '<p>'  . t('Look on the Advanced Use Cases page for information on using the Tweet Feed module in powerful ways to display node specific Tweets, Tweets related to node content and some other more simplistic use cases.') . '</p>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Ways to Run the Import.') . '</h4>';
-      $output .= '<ol><li>' . t('They can be periodically imported using Drupal\'s build in cron system. This requires the run cron option on the Tweet Feed Settings page be enabled. Also make sure PHP has enough memory allocated to it in order to run the process along with all of the other tasks it needs to run.') . '</li>';
-      $output .= '<li>' . t('They can be manually imported by clicking the **Import** link on the right hand side of each feed in the feed information table.') . '</li>';
-      $output .= '<li>' . t('They can be brought in by <a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">Drush</a> commands.') . '</li></ol>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; width: 100%"></div>';
-      $output .= '<h4>' . t('Drush Commands') . '</h4>';
-      $output .= '<a href="https://github.com/ElusiveMind/tweet_feed/wiki/Drush-Commands">' . t('Learning how to use Tweet Feed drush commands.') . '</a>';
-      $output .= '<div style="border-top: 2px solid #f8981d; margin: 15px 0px; padding-top: 15px; width: 100%; font-size: 8pt; line-height: 1.3em;">';
-      $output .= '<img src="/' . drupal_get_path('module', 'tweet_feed') . '/images/flyingflip-logo.png" width="151" height="50" alt="FlyingFlip Studios" align="right" /><br />';
-      $output .= 'Released 2016 - v7.x-3.x - FlyingFlip Studios, LLC. - Released under GNU GENERAL PUBLIC LICENSE - Version 2, June 1991<br />http://www.flyingflip.com - @flyingflip - @mbagnall17<br clear="right">';
-      $output .= '<style>.item-list, hr { display: none; }</style></div>';
-      return $output;
-  }
 }

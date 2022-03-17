@@ -325,3 +325,11 @@ function tweet_feed_update_7303() {
     'default' => 0,
   ));
 }
+
+/**
+ * Change our pull count variable to the number of pulls times 100. We're now
+ * allowing "to-the-tweet" number of imports instead of by the pull.
+ */
+function tweet_feed_update_7304() {
+  db_query("UPDATE {tweet_feeds} SET pull_count = pull_count * 100 WHERE pull_count <= 15");
+}

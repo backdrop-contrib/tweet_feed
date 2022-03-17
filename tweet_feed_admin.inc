@@ -87,17 +87,16 @@ function tweet_feed_feeds_table() {
     'number_per_pull' => array('data' => t('# Per Pull'), 'style' => 'text-align: center;'),
     'new_window' => array('data' => t('New Window'), 'style' => 'text-align: center;'),
     'truncate' => array('data' => t('Truncate'), 'style' => 'text-align: center;'),
+    'import' => array('data' => t('Import'), 'style' => 'text-align: center;'),
     'edit' => array('data' => t('Edit'), 'style' => 'text-align: center;'),
     'delete' => array('data' => t('Delete'), 'style' => 'text-align: center;'),
-    'import' => array('data' => t('Import'), 'style' => 'text-align: center;'),
   );
 
   $result = db_select('tweet_feeds', 'f')
-              ->fields('f')
-              ->orderBy('feed_name', 'ASC')
-              ->execute();
+    ->fields('f')
+    ->orderBy('feed_name', 'ASC')
+    ->execute();
   while ($data = $result->fetchObject()) {
-
     switch ($data->query_type) {
       case QUERY_SEARCH:
         $query_type = 'Timeline Search';
@@ -120,12 +119,12 @@ function tweet_feed_feeds_table() {
     $row[] = $data->feed_name;
     $row[] = (array('data' => $query_type, 'align' => 'center'));
     $row[] = (array('data' => $feed_criteria, 'align' => 'center'));
-    $row[] = (array('data' => number_format($data->pull_count * 100), 'align' => 'center'));
+    $row[] = (array('data' => $data->pull_count, 'align' => 'center'));
     $row[] = (array('data' => $data->new_window, 'align' => 'center'));
     $row[] = (array('data' => $data->clear_prior, 'align' => 'center'));
+    $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
     $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
     $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/feeds/delete/' . $data->fid), 'align' => 'center'));
-    $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
     $rows[] = $row;
   }
 
@@ -407,9 +406,9 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   );
   $form['tweet_feed_query_settings']['pull_count'] = array(
     '#type' => 'textfield',
-    '#title' => t('Number of Items to Pull x 100'),
-    '#maxlength' => 3,
-    '#size' => 3,
+    '#title' => t('Number of Tweets to Import Per Run'),
+    '#maxlength' => 4,
+    '#size' => 4,
     '#description' => t('Twitter limits tweet pulling to 1500 every 15 minutes for Timeline and List queries and 18,000 for searches. Keep this in mind when setting the pull count in conjunction with the frequency of cron/drush runs. To say nothing of PHP memory :)'),
     '#required' => TRUE,
     '#default_value' => $pull_count,
@@ -440,29 +439,6 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
     '#weight' => 3,
   );
   return $form;
-}
-
-/**
- * Validation callback for the Tweet Feeds feed form
- *
- * So far all we really need to do is make sure the number of pull requests x 100 to
- * not exceed the amount Twitter will give us for the type of query being done. This is
- * 18,000 for searches and 1,500 for Timeline and List queries.
- */
-function tweet_feed_feeds_form_validate($form, &$form_state) {
-  $pull_count = $form_state['values']['pull_count'];
-  $query_type = $form_state['values']['query_type'];
-
-  if ($query_type == QUERY_SEARCH) {
-    if ($pull_count > 180) {
-      form_set_error('pull_count', t('The pull count for search queries cannot exceed 180 per update interval.'));
-    }
-  }
-  else {
-    if ($pull_count > 15) {
-      form_set_error('pull_count', t('The pull count for timeline/list queries cannot exceed 15 per update interval.'));
-    }
-  }
 }
 
 /**
@@ -674,9 +650,9 @@ function tweet_feed_run_import($fid) {
     $hash = NULL;
     // find out if we already have this tweet, if we do, add the update primary key (pk)
     $result = db_select('tweet_hashes', 't')
-                ->fields('t', array('nid', 'tid', 'hash'))
-                ->condition('t.tid', $tweet->id)
-                ->execute();
+      ->fields('t', array('nid', 'tid', 'hash'))
+      ->condition('t.tid', $tweet->id)
+      ->execute();
     if ($result->rowCount() > 0) {
       $tdata = $result->fetchObject();
       $hash = md5(serialize($tweet));
