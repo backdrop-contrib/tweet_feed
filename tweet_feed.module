@@ -50,28 +50,28 @@ function tweet_feed_settings_form($form, &$form_state) {
   );
   $form['tweet_feed_api_keys']['tweet_feed_consumer_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Consumer Key'),
+    '#title' => t('API Key'),
     '#max_length' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('tweet_feed_consumer_key', NULL),
   );
   $form['tweet_feed_api_keys']['tweet_feed_consumer_secret'] = array(
     '#type' => 'textfield',
-    '#title' => t('Consumer Secret'),
+    '#title' => t('API Secret'),
     '#max_length' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('tweet_feed_consumer_secret', NULL),
   );
   $form['tweet_feed_api_keys']['tweet_feed_oauth_token'] = array(
     '#type' => 'textfield',
-    '#title' => t('Oauth Token'),
+    '#title' => t('Access Token'),
     '#max_length' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('tweet_feed_oauth_token',NULL),
   );
   $form['tweet_feed_api_keys']['tweet_feed_oauth_token_secret'] = array(
     '#type' => 'textfield',
-    '#title' => t('Oauth Token Secret'),
+    '#title' => t('Access Secret'),
     '#max_length' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('tweet_feed_oauth_token_secret', NULL),
@@ -194,7 +194,11 @@ function tweet_feed_cron() {
   $query_type = variable_get('tweet_feed_query_type', 'search');
   switch ($query_type) {
     case 'timeline':
-      $params = array('user_id' => variable_get('tweet_feed_user_id', NULL), 'count' => $number_to_get);
+      $params = array(
+        'user_id' => variable_get('tweet_feed_user_id', NULL), 
+        'count' => $number_to_get,
+        'tweet_mode' => 'extended',
+      );
       break;
     case 'list':
       $list_name = variable_get('tweet_feed_timeline_list', NULL);
@@ -202,10 +206,15 @@ function tweet_feed_cron() {
         'owner_id' => variable_get('tweet_feed_user_id', NULL), 
         'count' => 100,
         'slug' => $list_name,
+        'tweet_mode' => 'extended',
       );
       break;
     default:
-      $params = array('q' => variable_get('tweet_feed_search_query', NULL), 'count' => 100);
+      $params = array(
+        'q' => variable_get('tweet_feed_search_query', NULL), 
+        'count' => 100,
+        'tweet_mode' => 'extended',
+      );
       break;
   }
   $lowest_id = -1;  
@@ -315,8 +324,8 @@ function tweet_feed_process_tweets($tdata) {
       foreach($tdata as $key => $tweet) {
         // find out if we already have this tweet, if we do, add it to the update pk
         $count = db_query("SELECT COUNT(*) 
-                           FROM {tweet_feed} 
-                           WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id_str))->fetchField();
+          FROM {tweet_feed} 
+          WHERE tweet_id = :tweet_id", array(':tweet_id' => $tweet->id_str))->fetchField();
         $exists = ($count > 0) ? TRUE : FALSE;
         
         $creation_timestamp = strtotime($tweet->created_at);
@@ -324,7 +333,7 @@ function tweet_feed_process_tweets($tdata) {
         $lowest_id = ($key == 0) ? $tweet->id_str : $lowest_id;
         $lowest_id = ($tweet->id_str <= $lowest_id) ? $tweet->id_str : $lowest_id;
 
-        $tweet_html = tweet_feed_format_output($tweet->text);
+        $tweet_html = tweet_feed_format_output($tweet->full_text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
 
         if (!empty($tweet->entities->media)) {

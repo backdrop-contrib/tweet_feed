@@ -174,9 +174,9 @@ function tweet_feed_update_7109() {
     $result = db_query('SELECT created_at, user_id FROM {tweet_feed}');
     while ($data = $result->fetchObject()) {
       db_update('tweet_feed')->fields(array('tweet_id' => $id++))
-                             ->condition('created_at', $data->created_at, '=')
-                             ->condition('user_id', $data->user_id, '=')
-                             ->execute();
+        ->condition('created_at', $data->created_at, '=')
+        ->condition('user_id', $data->user_id, '=')
+        ->execute();
     }
     db_add_primary_key('tweet_feed', array('tweet_id'));
   }
