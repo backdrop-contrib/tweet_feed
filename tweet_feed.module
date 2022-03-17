@@ -195,7 +195,7 @@ function tweet_feed_cron() {
   switch ($query_type) {
     case 'timeline':
       $params = array(
-        'user_id' => variable_get('tweet_feed_user_id', NULL), 
+        'user_id' => variable_get('tweet_feed_user_id', NULL),
         'count' => $number_to_get,
         'tweet_mode' => 'extended',
       );
@@ -333,6 +333,11 @@ function tweet_feed_process_tweets($tdata) {
         $lowest_id = ($key == 0) ? $tweet->id_str : $lowest_id;
         $lowest_id = ($tweet->id_str <= $lowest_id) ? $tweet->id_str : $lowest_id;
 
+        // Re-tweets are getting truncated, so lets combat that.
+        if (substr($tweet->full_text, 0, 2) == 'RT' && !empty($tweet->retweeted_status->full_text)) {
+          $tweet->full_text = 'RT ' . $tweet->retweeted_status->user->screen_name . ': ' . $tweet->retweeted_status->full_text;
+        }
+
         $tweet_html = tweet_feed_format_output($tweet->full_text);
         $hashtags = tweet_feed_get_hashtags($tweet->entities->hashtags);
 
@@ -350,15 +355,14 @@ function tweet_feed_process_tweets($tdata) {
         // tweets processed.
         $exclude_replies = variable_get('tweet_feed_exclude_replies', 0);
         $is_reply = (!empty($tweet->in_reply_to_status_id)) ? 1 : 0;
-
         $data = array(
           'tweet' => utf8_encode($tweet_html),
           'created_at' => $creation_timestamp,
           'user_id' => $tweet->user->id_str,
           'profile_image_url' => $tweet->user->profile_image_url,
           'profile_image_https_url' => $tweet->user->profile_image_url_https,
-          'screen_name' => $tweet->user->screen_name,
-          'name' => $tweet->user->name,
+          'screen_name' => utf8_encode($tweet->user->screen_name),
+          'name' => utf8_encode($tweet->user->name),
           'hashtags' => $hashtags,
           'tweet_id' => $tweet->id_str,
           'is_reply' => $is_reply,
