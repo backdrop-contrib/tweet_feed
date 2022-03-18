@@ -101,7 +101,7 @@ function tweet_feed_field_formatter_view($entity_type, $entity, $field, $instanc
       break;
     // Give us a way to display emoji.
     case 'emoji_formatter':
-      foreach ($items as $delta=>$item) {
+      foreach ($items as $delta => $item) {
         if ($utf8 === TRUE) {
           $element[$delta] = array(
             '#markup' => $item['value'],

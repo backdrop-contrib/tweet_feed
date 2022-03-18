@@ -16,7 +16,7 @@ define('QUERY_LIST', 3);
  */
 function tweet_feed_menu() {
   $items = array();
-  $items['admin/config/services/tweet_feed'] = array(
+  $items['admin/content/tweet_feed'] = array(
     'title' => t('Tweet Feed'),
     'description' => t('The settings for the Tweet Feed module.'),
     'page callback' => 'tweet_feed_menu_page',
@@ -26,7 +26,7 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 1,
   );
-  $items['admin/config/services/tweet_feed/settings'] = array(
+  $items['admin/content/tweet_feed/settings'] = array(
     'title' => t('Settings'),
     'description' => t('The settings for the Tweet Feed module.'),
     'page callback' => 'drupal_get_form',
@@ -37,7 +37,7 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 2,
   );
-  $items['admin/config/services/tweet_feed/accounts'] = array(
+  $items['admin/content/tweet_feed/accounts'] = array(
     'title' => t('Twitter API Accounts'),
     'description' => t('List of available API accounts used to collect feeds.'),
     'page callback' => 'tweet_feed_accounts_table',
@@ -47,7 +47,7 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 3,
   );
-  $items['admin/config/services/tweet_feed/feeds'] = array(
+  $items['admin/content/tweet_feed/feeds'] = array(
     'title' => t('Twitter Feeds'),
     'description' => t('List of configured feeds to aggregate.'),
     'page callback' => 'tweet_feed_feeds_table',
@@ -57,7 +57,7 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 4,
   );
-  $items['admin/config/services/tweet_feed/import-form'] = array(
+  $items['admin/content/tweet_feed/import-form'] = array(
     'title' => t('Import Config'),
     'description' => t('Import feed and account settings from JSON'),
     'page callback' => 'drupal_get_form',
@@ -68,7 +68,7 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 5,
   );
-  $items['admin/config/services/tweet_feed/export'] = array(
+  $items['admin/content/tweet_feed/export'] = array(
     'title' => t('Export Config'),
     'description' => t('Export all current feed and accounts settings'),
     'page callback' => 'tweet_feed_export',
@@ -78,17 +78,17 @@ function tweet_feed_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 6,
   );
-  $items['admin/config/services/tweet_feed/feeds/run/%tweet_feed_id'] = array(
+  $items['admin/content/tweet_feed/feeds/run/%tweet_feed_id'] = array(
     'title' => t('Import Feed'),
     'description' => t('Import tweets from a specific feed.'),
     'page callback' => 'tweet_feed_run_import',
-    'page arguments' => array(6),
+    'page arguments' => array(5),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/config/services/tweet_feed/accounts/add'] = array(
+  $items['admin/content/tweet_feed/accounts/add'] = array(
     'title' => t('Add Account'),
     'description' => t('Add a new Twitter API account.'),
     'page callback' => 'drupal_get_form',
@@ -98,27 +98,27 @@ function tweet_feed_menu() {
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_LOCAL_ACTION,
   );
-  $items['admin/config/services/tweet_feed/accounts/edit/%tweet_feed_id'] = array(
+  $items['admin/content/tweet_feed/accounts/edit/%tweet_feed_id'] = array(
     'title' => t('Add Account'),
     'description' => t('Add a new Twitter API account.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_account_form', 6),
+    'page arguments' => array('tweet_feed_account_form', 5),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/config/services/tweet_feed/accounts/delete/%tweet_feed_id'] = array(
+  $items['admin/content/tweet_feed/accounts/delete/%tweet_feed_id'] = array(
     'title' => t('Add Account'),
     'description' => t('Delete Twitter API account.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_delete_account_form', 6),
+    'page arguments' => array('tweet_feed_delete_account_form', 5),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/config/services/tweet_feed/feeds/add'] = array(
+  $items['admin/content/tweet_feed/feeds/add'] = array(
     'title' => t('Add Feed'),
     'description' => t('Add a new feed to the list of aggregated feeds.'),
     'page callback' => 'drupal_get_form',
@@ -128,21 +128,21 @@ function tweet_feed_menu() {
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_LOCAL_ACTION,
   );
-  $items['admin/config/services/tweet_feed/feeds/edit/%tweet_feed_id'] = array(
+  $items['admin/content/tweet_feed/feeds/edit/%tweet_feed_id'] = array(
     'title' => t('Edit Feed'),
     'description' => t('Edit one of the listed feeds.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_feeds_form', 6),
+    'page arguments' => array('tweet_feed_feeds_form', 5),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/config/services/tweet_feed/feeds/delete/%tweet_feed_id'] = array(
+  $items['admin/content/tweet_feed/feeds/delete/%tweet_feed_id'] = array(
     'title' => t('Delete Feed'),
     'description' => t('Delete a feed from the list of aggregated feeds.'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tweet_feed_delete_feed_form', 6),
+    'page arguments' => array('tweet_feed_delete_feed_form', 5),
     'access callback' => 'user_access',
     'access arguments' => array('administer tweet feed settings'),
     'file' => 'tweet_feed_admin.inc',
@@ -187,9 +187,9 @@ function tweet_feed_cron() {
   // Get a list of all the available feeds
   $feed = array();
   $result = db_select('tweet_feeds', 'f')
-              ->fields('f', array('fid'))
-              ->orderBy('fid', 'ASC')
-              ->execute();
+    ->fields('f', array('fid'))
+    ->orderBy('fid', 'ASC')
+    ->execute();
   while ($fdata = $result->fetchObject()) {
     $feed[] = $fdata->fid;
   }

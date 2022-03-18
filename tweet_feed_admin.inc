@@ -9,10 +9,10 @@
 function tweet_feed_menu_page() {
   $all_blocks = array();
   $blocks = system_admin_menu_block(
-    array('tab_root' => 'admin/config/services/tweet_feed',
-          'path' => 'admin/config/services/tweet_feed')
+    array('tab_root' => 'admin/content/tweet_feed',
+          'path' => 'admin/content/tweet_feed')
   );
-  foreach($blocks as $key=>$block) {
+  foreach ($blocks as $key => $block) {
     $new_block = $block;
     $new_block['show'] = TRUE;
     $all_blocks[] = $new_block;
@@ -41,23 +41,23 @@ function tweet_feed_accounts_table() {
     'delete' => array('data' => t('Delete'), 'style' => 'text-align: center;'),
   );
   $result = db_select('tweet_accounts', 'a')
-              ->fields('a')
-              ->orderBy('account_name', 'ASC')
-              ->execute();
+    ->fields('a')
+    ->orderBy('account_name', 'ASC')
+    ->execute();
   while ($data = $result->fetchObject()) {
     // Determine how many queries this feed is responsible for
     $cresult = db_select('tweet_feeds', 'f')
-                 ->fields('f')
-                 ->condition('f.aid', $data->aid)
-                 ->execute();
+      ->fields('f')
+      ->condition('f.aid', $data->aid)
+      ->execute();
     $count = $cresult->rowCount();
     $row = array();
     $row[] = $data->account_name;
     $row[] = (array('data' => $count, 'align' => 'center'));
     $row[] = (array('data' => $data->consumer_key, 'align' => 'center'));
     $row[] = (array('data' => $data->oauth_token, 'align' => 'center'));
-    $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/accounts/edit/' . $data->aid), 'align' => 'center'));
-    $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/accounts/delete/' . $data->aid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Edit'), 'admin/content/tweet_feed/accounts/edit/' . $data->aid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Delete'), 'admin/content/tweet_feed/accounts/delete/' . $data->aid), 'align' => 'center'));
     $rows[] = $row;
   }
 
@@ -99,15 +99,15 @@ function tweet_feed_feeds_table() {
   while ($data = $result->fetchObject()) {
     switch ($data->query_type) {
       case QUERY_SEARCH:
-        $query_type = 'Timeline Search';
+        $query_type = t('Timeline Search');
         $feed_criteria = $data->search_term;
         break;
       case QUERY_TIMELINE:
-        $query_type = 'User Timeline';
+        $query_type = t('User Timeline');
         $feed_criteria = $data->timeline_id;
         break;
       case QUERY_LIST:
-        $query_type = 'User List';
+        $query_type = t('User List');
         $feed_criteria = $data->timeline_id . '/' . $data->list_name;
         break;
       default:
@@ -122,9 +122,9 @@ function tweet_feed_feeds_table() {
     $row[] = (array('data' => $data->pull_count, 'align' => 'center'));
     $row[] = (array('data' => $data->new_window, 'align' => 'center'));
     $row[] = (array('data' => $data->clear_prior, 'align' => 'center'));
-    $row[] = (array('data' => l(t('Import'), 'admin/config/services/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
-    $row[] = (array('data' => l(t('Edit'), 'admin/config/services/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
-    $row[] = (array('data' => l(t('Delete'), 'admin/config/services/tweet_feed/feeds/delete/' . $data->fid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Import'), 'admin/content/tweet_feed/feeds/run/' . $data->fid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Edit'), 'admin/content/tweet_feed/feeds/edit/' . $data->fid), 'align' => 'center'));
+    $row[] = (array('data' => l(t('Delete'), 'admin/content/tweet_feed/feeds/delete/' . $data->fid), 'align' => 'center'));
     $rows[] = $row;
   }
 
@@ -253,19 +253,19 @@ function tweet_feed_account_form_submit($form, &$form_state) {
   }
 
   // Go back to the list of accounts when we are done.
-  $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+  $form_state['redirect'] = 'admin/content/tweet_feed/accounts';
 
   // Set the status message based on the result we get from writing our record.
   switch ($status) {
     case SAVED_NEW:
-      drupal_set_message('New Twitter account has been successfully added.', 'status');
+      drupal_set_message(t('New Twitter account has been successfully added.'), 'status');
       break;
     case SAVED_UPDATED:
-      drupal_set_message('Twitter account has been successfully updated.', 'status');
+      drupal_set_message(t('Twitter account has been successfully updated.'), 'status');
       break;
     case FALSE:
     default:
-      drupal_set_message('The Twitter details provided could not be properly saved to the database.', 'error');
+      drupal_set_message(t('The Twitter details provided could not be properly saved to the database.'), 'error');
       break;
   }
 }
@@ -283,10 +283,10 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   // the values and tell the processor that we are updating and not creating new.
   if (!empty($fid)) {
     $result = db_select('tweet_feeds', 'f')
-                ->fields('f')
-                ->condition('f.fid', $fid)
-                ->execute()
-                ->fetchObject();
+      ->fields('f')
+      ->condition('f.fid', $fid)
+      ->execute()
+      ->fetchObject();
     $fid = $result->fid;
     $aid = $result->aid;
     $feed_name = $result->feed_name;
@@ -333,9 +333,9 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   // API account for pulling and allow user to select which one to use.
   $accounts = array();
   $result = db_select('tweet_accounts', 'a')
-              ->fields('a', array('aid', 'account_name'))
-              ->orderBy('account_name', 'ASC')
-              ->execute();
+    ->fields('a', array('aid', 'account_name'))
+    ->orderBy('account_name', 'ASC')
+    ->execute();
   while($adata = $result->fetchObject()) {
     $accounts[$adata->aid] = $adata->account_name;
   }
@@ -343,8 +343,8 @@ function tweet_feed_feeds_form($form, &$form_state, $fid = 0) {
   // You must have an account to add a feed. If you don't then everything falls apart.
   // Warn the user here if they are trying to add a feed without an account.
   if (count($accounts) < 1) {
-    drupal_set_message('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.', 'error');
-    drupal_goto('admin/config/services/tweet_feed/accounts');
+    drupal_set_message(t('You cannot create a feed until you have added an account. Please add an account here before proceeding to add a feed.'), 'error');
+    drupal_goto('admin/content/tweet_feed/accounts');
   }
 
   $form['tweet_feed_query_settings']['aid'] = array(
@@ -477,19 +477,19 @@ function tweet_feed_feeds_form_submit($form, &$form_state) {
   }
 
   // Go back to the list of accounts when we are done.
-  $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+  $form_state['redirect'] = 'admin/content/tweet_feed/feeds';
 
   // Set the status message based on the result we get from writing our record.
   switch ($status) {
     case SAVED_NEW:
-      drupal_set_message('New Twitter feed has been successfully added.', 'status');
+      drupal_set_message(t('New Twitter feed has been successfully added.'), 'status');
       break;
     case SAVED_UPDATED:
-      drupal_set_message('Twitter feed has been successfully updated.', 'status');
+      drupal_set_message(t('Twitter feed has been successfully updated.'), 'status');
       break;
     case FALSE:
     default:
-      drupal_set_message('The Twitter feed details provided could not be properly saved to the database.', 'error');
+      drupal_set_message(t('The Twitter feed details provided could not be properly saved to the database.'), 'error');
       break;
   }
 }
@@ -534,7 +534,7 @@ function tweet_feed_delete_feed_form($form, &$form_state, $fid) {
   return confirm_form(
     $form,
     t('Are you sure that you wish to delete this feed?'),
-    'admin/config/services/tweet_feed/feeds',
+    'admin/content/tweet_feed/feeds',
     t('There is no way to undo this action once it has been taken. Consider that carefully before proceeding.'),
     t('Delete Feed'),
     t('Cancel')
@@ -551,17 +551,17 @@ function tweet_feed_delete_feed_form_submit($form, &$form_state) {
       ->condition('fid', $fid)
       ->execute();
     if ($number_deleted > 0) {
-      drupal_set_message('You have successfully deleted the selected feed.', 'status');
-      $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+      drupal_set_message(t('You have successfully deleted the selected feed.'), 'status');
+      $form_state['redirect'] = 'admin/content/tweet_feed/feeds';
     }
     else {
-      drupal_set_message('The selected feed could not be deleted.', 'error');
-      $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+      drupal_set_message(t('The selected feed could not be deleted.'), 'error');
+      $form_state['redirect'] = 'admin/content/tweet_feed/feeds';
     }
   }
   else {
-    drupal_set_message('There was an internal error and the request could not be processed.', 'error');
-    $form_state['redirect'] = 'admin/config/services/tweet_feed/feeds';
+    drupal_set_message(t('There was an internal error and the request could not be processed.'), 'error');
+    $form_state['redirect'] = 'admin/content/tweet_feed/feeds';
   }
 }
 
@@ -577,7 +577,7 @@ function tweet_feed_delete_account_form($form, &$form_state, $aid) {
   return confirm_form(
     $form,
     t('Are you sure that you wish to delete this account?'),
-    'admin/config/services/tweet_feed/accounts',
+    'admin/content/tweet_feed/accounts',
     t('There is no way to undo this action once it has been taken. Consider that carefully before proceeding.'),
     t('Delete Account'),
     t('Cancel')
@@ -594,17 +594,17 @@ function tweet_feed_delete_account_form_submit($form, &$form_state) {
       ->condition('aid', $aid)
       ->execute();
     if ($number_deleted > 0) {
-      drupal_set_message('You have successfully deleted the selected account.', 'status');
-      $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+      drupal_set_message(t('You have successfully deleted the selected account.'), 'status');
+      $form_state['redirect'] = 'admin/content/tweet_feed/accounts';
     }
     else {
-      drupal_set_message('The selected account could not be deleted.', 'error');
-      $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+      drupal_set_message(t('The selected account could not be deleted.'), 'error');
+      $form_state['redirect'] = 'admin/content/tweet_feed/accounts';
     }
   }
   else {
-    drupal_set_message('There was an internal error and the request could not be processed.', 'error');
-    $form_state['redirect'] = 'admin/config/services/tweet_feed/accounts';
+    drupal_set_message(t('There was an internal error and the request could not be processed.'), 'error');
+    $form_state['redirect'] = 'admin/content/tweet_feed/accounts';
   }
 }
 
@@ -620,15 +620,15 @@ function tweet_feed_run_import($fid) {
   $feed = tweet_feed_get_feed_object($fid);
   switch ($feed->query_type) {
     case QUERY_SEARCH:
-      $query_type = 'Timeline Search';
+      $query_type = t('Timeline Search');
       $feed_criteria = $feed->search_term;
       break;
     case QUERY_TIMELINE:
-      $query_type = 'User Timeline';
+      $query_type = t('User Timeline');
       $feed_criteria = $feed->timeline_id;
       break;
     case QUERY_LIST:
-      $query_type = 'User List';
+      $query_type = t('User List');
       $feed_criteria = $feed->timeline_id . '/' . $feed->list_name;
       break;
     default:
@@ -668,7 +668,7 @@ function tweet_feed_run_import($fid) {
   }
 
   batch_set($batch);
-  batch_process('admin/config/services/tweet_feed/feeds');
+  batch_process('admin/content/tweet_feed/feeds');
 }
 
 /**
@@ -762,9 +762,9 @@ function tweet_feed_import_form_submit($form, &$form_state) {
     }
   }
   else {
-    drupal_set_message('Settings could not be imported.');
+    drupal_set_message(t('Settings could not be imported.'));
     return FALSE;
   }
   drupal_set_message('Settings imported.');
-  drupal_goto('admin/config/services/tweet_feed/accounts');
+  drupal_goto('admin/content/tweet_feed/accounts');
 }
