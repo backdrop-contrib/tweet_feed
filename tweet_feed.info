@@ -2,6 +2,7 @@ name = Tweet Feed
 description = A Twitter integration module that pulls profiles of people and tweets who tweet according to search, list or user timeline.
 backdrop = 1.x
 package = Other
+type = module
 configure = admin/content/tweet_feed
 
 dependencies[] = oauth_common
