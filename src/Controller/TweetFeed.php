@@ -27,11 +27,13 @@ class TweetFeed extends ControllerBase {
    */
   public function saveTweet($tweet, $feed, $process_specific_tweet = FALSE) {
     $language = Language::LANGCODE_DEFAULT;
+    $fileRepository = \Drupal::service('file.repository');
 
     // Check to see if we already have this tweet in play.
     // If so, don't reimport it.
     $entities = \Drupal::entityQuery('tweet_entity')
       ->condition('tweet_id', $tweet->id_str, '=')
+      ->accessCheck(FALSE)
       ->execute();
     if (!empty($entities)) {
       return FALSE;
@@ -65,7 +67,6 @@ class TweetFeed extends ControllerBase {
     $entity->setTweetFullText(tweet_feed_format_output($tweet->full_text, $feed['new_window'], $feed['hash_taxonomy'], $feed['mentions_taxonomy'], $hashtags));
     $entity->setTweetUserProfileId($tweet->user->id);
     $entity->setIsVerifiedUser((int) $tweet->user->verified);
-    $entity->setUserMentions($tweet->entities->user_mentions);
 
     /** Re-Tweet*/
     if (!empty($tweet->retweeted_status->id_str)) {
@@ -98,7 +99,7 @@ class TweetFeed extends ControllerBase {
           $image = file_get_contents($media->media_url . ':large');
           if (!empty($image)) {
             $this->checkPath('public://tweet-feed-tweet-images', TRUE);
-            $file_temp = file_save_data($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', 1);
+            $file_temp = $fileRepository->writeData($image, 'public://tweet-feed-tweet-images/' . date('Y-m') . '/' . $tweet->id_str . '.jpg', 1);
             if (is_object($file_temp)) {
               $fid = $file_temp->fid->getvalue()[$key]['value'];
               $files[] = [
@@ -141,12 +142,17 @@ class TweetFeed extends ControllerBase {
 
     $entity->setTweetUserProfileId($tweet->user->id);
 
-    $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
-    $file = $this->processTwitterImage($tweet->user->profile_image_url, 'profile', $tweet->user->id_str, FALSE);
-    if ($file !== FALSE) {
-      $file_array = [];
-      $file_array[] = $file;
-      $entity->setProfileImage($file_array);
+    if (!empty($tweet->user->profile_image_url)) {
+      $tweet->user->profile_image_url = str_replace('_normal', '', $tweet->user->profile_image_url);
+    }
+
+    if (!empty($tweet->user->profile_image_url)) {
+      $file = $this->processTwitterImage($tweet->user->profile_image_url, 'profile', $tweet->user->id_str, FALSE);
+      if ($file !== FALSE) {
+        $file_array = [];
+        $file_array[] = $file;
+        $entity->setProfileImage($file_array);
+      }
     }
 
     \Drupal::moduleHandler()->alter('tweet_feed_tweet_save', $entity, $tweet);
@@ -170,6 +176,7 @@ class TweetFeed extends ControllerBase {
       $profile_hash = md5(serialize($tweet->user));
       $query = \Drupal::entityQuery('twitter_profile')
         ->condition('twitter_user_id', $tweet->user->id)
+        ->accessCheck(FALSE)
         ->execute();
 
       // If we have a result, then we have a profile! Then we need to check to see if the hash
@@ -199,11 +206,13 @@ class TweetFeed extends ControllerBase {
       $entity->setHash($profile_hash);
 
       // Handle the user profile image obtained from twitter.com
-      $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
-      if ($file !== FALSE) {
-        $file_array = [];
-        $file_array[] = $file;
-        $entity->setProfileImage($file_array);
+      if (!empty($tweet->user->profile_image_url)) {
+        $file = $this->processTwitterImage($tweet->user->profile_image_url, 'user-profile', $tweet->user->id_str, FALSE);
+        if ($file !== FALSE) {
+          $file_array = [];
+          $file_array[] = $file;
+          $entity->setProfileImage($file_array);
+        }
       }
 
       // Handle the user profile banner image obtained from twitter.com
@@ -216,7 +225,7 @@ class TweetFeed extends ControllerBase {
         }
       }
 
-      \Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
+      //\Drupal::moduleHandler()->alter('tweet_feed_twitter_profile_save', $entity, $tweet->user);
 
       $entity->save();
     }
@@ -291,6 +300,7 @@ class TweetFeed extends ControllerBase {
         }
         $entities = \Drupal::entityQuery('tweet_entity')
           ->condition('feed_machine_name', $feed_machine_name, '=')
+          ->accessCheck(FALSE)
           ->execute();
         if (isset($entities)) {
           foreach ($entities as $entity_id) {
@@ -303,6 +313,7 @@ class TweetFeed extends ControllerBase {
           }
         }
       }
+
       // Build TwitterOAuth object with client credentials
       $con = new TwitterOAuth2($account['consumer_key'], $account['consumer_secret'], $account['oauth_token'], $account['oauth_token_secret']);
 
@@ -312,18 +323,17 @@ class TweetFeed extends ControllerBase {
       $max_id = 0;
       $process = TRUE;
       $number_to_get = $feed['pull_count'];
-      $iterations = ceil($number_to_get / 200);
+      $iterations = ceil($number_to_get / 100);
 
       $params = ($feed['query_type'] == 3 || $feed['query_type'] == 2) ?
-        ['screen_name' => $feed['timeline_id'], 'count' => 200, 'tweet_mode' => 'extended'] :
-        ['q' => $feed['search_term'], 'count' => 200, 'tweet_mode' => 'extended'];
-
-      // $max_id overrides $since_id
-      if (!empty($max_id)) {
-        $params['max_id'] = $max_id;
-      }
+        ['screen_name' => $feed['timeline_id'], 'count' => 100, 'tweet_mode' => 'extended'] :
+        ['q' => $feed['search_term'], 'count' => 100, 'tweet_mode' => 'extended'];
 
       for ($i = 0; $i < $iterations; $i++) {
+        // $max_id overrides $since_id
+        if (!empty($max_id)) {
+          $params['max_id'] = $max_id;
+        }
         switch ($feed['query_type']) {
           case 2:
             $response = $con->get('statuses/user_timeline', $params);
@@ -337,7 +347,7 @@ class TweetFeed extends ControllerBase {
             $params += [
               'slug' => $feed['list_name'],
               'owner_screen_name' => $feed['timeline_id'],
-              'count' => 200,
+              'count' => 100,
               'tweet_mode' => 'extended',
             ];
             $tdata = $con->get('lists/statuses', $params);
@@ -348,7 +358,6 @@ class TweetFeed extends ControllerBase {
             break;
         }
 
-
         if (!empty($tdata)) {
           if (!empty($tdata->errors)) {
             foreach ($tdata->errors as $error) {
@@ -358,14 +367,15 @@ class TweetFeed extends ControllerBase {
           }
           else {
             if ($feed['query_type'] == 2 || $feed['query_type'] == 3) {
-              $end_of_the_line = array_pop($tdata);
-              array_unshift($tdata, $end_of_the_line);
-              $max_id = $end_of_the_line->id_str;
               $tweet_data = $tdata;
             }
             else {
               $tweet_data = $tdata->statuses;
             }
+
+            $end_of_the_line = array_pop($tweet_data);
+            array_unshift($tweet_data, $end_of_the_line);
+            $max_id = $end_of_the_line->id_str;
 
             // If this is FALSE, then we have hit an error and need to stop processing
             if (isset($tweet_data['tweets']) && $tweet_data['tweets'] === FALSE) {
@@ -391,7 +401,7 @@ class TweetFeed extends ControllerBase {
           'finished' => 'save_tweet_batch_finished',
         ];
         batch_set($batch);
-        return batch_process('admin/structure/tweet_entity/twitter_feeds');
+        return batch_process('admin/structure/tweet-feed/twitter-feeds');
       }
       else {
         for ($i = 0; $i < $number_to_get; $i++) {
@@ -475,6 +485,9 @@ class TweetFeed extends ControllerBase {
    *   The file object for the retrieved image or NULL if unable to retrieve
    */
   private function processTwitterImage($url, $type, $id, $add_date = FALSE) {
+
+    $fileRepository = \Drupal::service('file.repository');
+
     // I hate myself for this next line.
     $image = @file_get_contents($url);
     if (!empty($image)) {
@@ -482,10 +495,10 @@ class TweetFeed extends ControllerBase {
       list($width, $height) = getimagesize($url);
       $this->checkPath('public://tweet-feed-' . $type . '-images/', $add_date);
       if ($add_date == TRUE) {
-        $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
+        $file_temp = $fileRepository->writeData($image, 'public://tweet-feed-' . $type . '-images/' . date('Y-m') . '/' . $id . '.jpg', 1);
       }
       else {
-        $file_temp = file_save_data($image, 'public://tweet-feed-' . $type . '-images/' . $id . '.jpg', 1);
+        $file_temp = $fileRepository->writeData($image, 'public://tweet-feed-' . $type . '-images/' . $id . '.jpg', 1);
       }
       if (is_object($file_temp)) {
         $fid = $file_temp->fid->getValue()[0]['value'];

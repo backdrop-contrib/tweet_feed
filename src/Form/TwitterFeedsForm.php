@@ -70,7 +70,7 @@ class TwitterFeedsForm extends ConfigFormBase {
       $aid = $query_type = $search_term = $list_name = $feed_name = NULL;
       $timeline_id = $new_window = $clear_prior = NULL;
       $twitter_feed_name_disabled = FALSE;
-      $hash_taxonomy = NULL;
+      $hash_taxonomy = $mentions_taxonomy = NULL;
       $pull_count = 200;
     }
 
