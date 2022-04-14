@@ -35,7 +35,6 @@ This module requires the following modules are also enabled:
 - [entityreference](https://github.com/backdrop-contrib/entityreference)
 - [oauth](https://github.com/backdrop-contrib/oauth)
 - [date](https://github.com/backdrop-contrib/date)
-- [ctools](https://github.com/backdrop-contrib/ctools)
 - [views](https://github.com/backdrop-contrib/views)
 
 The following access tokens from Twitter are also required:
