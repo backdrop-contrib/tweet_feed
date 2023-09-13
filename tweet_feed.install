@@ -246,6 +246,14 @@ function tweet_feed_requirements($phase) {
       $requirements['tweet_feed']['severity'] = REQUIREMENT_WARNING;
     }
   }
+
+  $requirements['tweet_feed_api']['title'] = $t('Tweet Feed API Changes');
+  if ($phase == 'runtime') {
+    $requirements['tweet_feed_api']['value'] = 'Not Supported.';
+    $requirements['tweet_feed_api']['description'] = $t('Due to changes in the Twitter/X API, You must now have a paid account in order to use Tweet Feed. If you do not have one, we recommend disabling and uninstalling this module. No further development is planned until this API requirement changes.');
+    $requirements['tweet_feed_api']['severity'] = REQUIREMENT_WARNING;
+  }
+
   /**
    * Keeping this code here for when we stop supporting non UTF-8 multibyte database tables.
    */

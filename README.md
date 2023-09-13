@@ -1,5 +1,7 @@
 # Tweet Feed v1.x - Overview
 
+***Please Note: Due to changes in the Twitter/X API requirements, you must have a paid API account in order for this module to work. There really isn't much I can do about this and, as such, I have had to suspend further development of this module until that policy changes. I apologize for the inconvenience. If you have a paid account, this module should work as expected.**  
+
 The Tweet Feed module is an advanced importing, displaying and data association
 module that allows you to pull in tweets by search, user, or list. The
 parameters of what is pulled in falls under the guidelines of
